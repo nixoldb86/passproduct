@@ -427,7 +427,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
         type="file"
         accept="image/*,application/pdf"
         onChange={handleFileSelect}
-        className="hidden"
+        className="absolute opacity-0 w-0 h-0 pointer-events-none"
       />
 
       <AnimatePresence mode="wait">
