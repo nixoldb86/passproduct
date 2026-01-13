@@ -1,0 +1,657 @@
+"use client";
+
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Check,
+  Camera,
+  X,
+  Zap,
+  Scale,
+  Crown,
+  Eye,
+  Shield,
+  Tag,
+  Package,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button, Card, Input, Select, Badge } from "@/components/ui";
+import { useWalletStore, useMarketplaceStore } from "@/store";
+import { getProductById, mockCategories, getPriceRecommendations } from "@/lib/mock-data";
+import { formatPrice } from "@/lib/utils";
+import { Product, Listing, ProductCondition, CONDITION_LABELS } from "@/types";
+
+function SellPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { products } = useWalletStore();
+  const { createListing } = useMarketplaceStore();
+
+  const productId = searchParams.get("productId");
+  const [step, setStep] = useState(1);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    price: "",
+    priceStrategy: "fair" as "fast" | "fair" | "max",
+    photos: [] as string[],
+    shippingEnabled: true,
+    shippingCost: "5.99",
+    location: "Madrid",
+  });
+
+  useEffect(() => {
+    if (productId) {
+      const product = getProductById(productId);
+      if (product) {
+        setSelectedProduct(product);
+        setFormData((prev) => ({
+          ...prev,
+          title: `${product.brand} ${product.model}${product.variant ? ` - ${product.variant}` : ""}`,
+          description: generateDescription(product),
+          photos: product.photos,
+          price: product.estimatedValue
+            ? getPriceRecommendations(product.estimatedValue).fair.toString()
+            : "",
+        }));
+        setStep(2); // Skip product selection
+      }
+    }
+  }, [productId]);
+
+  const updateFormData = (key: string, value: unknown) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handlePhotoUpload = () => {
+    const mockPhoto = "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800";
+    updateFormData("photos", [...formData.photos, mockPhoto]);
+  };
+
+  const removePhoto = (index: number) => {
+    updateFormData(
+      "photos",
+      formData.photos.filter((_, i) => i !== index)
+    );
+  };
+
+  const handlePriceStrategy = (strategy: "fast" | "fair" | "max") => {
+    updateFormData("priceStrategy", strategy);
+    if (selectedProduct?.estimatedValue) {
+      const prices = getPriceRecommendations(selectedProduct.estimatedValue);
+      updateFormData("price", prices[strategy].toString());
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedProduct) return;
+
+    setIsSubmitting(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const newListing: Listing = {
+      id: `list-${Date.now()}`,
+      productId: selectedProduct.id,
+      product: selectedProduct,
+      sellerId: "user-1",
+      categoryId: selectedProduct.categoryId,
+      category: selectedProduct.category,
+      title: formData.title,
+      description: formData.description,
+      price: parseFloat(formData.price),
+      location: formData.location,
+      shippingEnabled: formData.shippingEnabled,
+      shippingCost: formData.shippingEnabled
+        ? parseFloat(formData.shippingCost)
+        : undefined,
+      verificationLevel: selectedProduct.proofOfPurchaseUrl
+        ? selectedProduct.serialLast4 || selectedProduct.imeiLast4
+          ? "LEVEL_2"
+          : "LEVEL_1"
+        : "LEVEL_0",
+      hasVerifiedPurchase: !!selectedProduct.proofOfPurchaseUrl,
+      hasValidWarranty: selectedProduct.warrantyEndDate
+        ? new Date(selectedProduct.warrantyEndDate) > new Date()
+        : false,
+      hasVerifiedAccessories: !!selectedProduct.accessories,
+      hasVerifiedIdentifier: !!(
+        selectedProduct.serialLast4 || selectedProduct.imeiLast4
+      ),
+      status: "PUBLISHED",
+      photos: formData.photos,
+      isBoosted: false,
+      viewCount: 0,
+      favoriteCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      publishedAt: new Date(),
+    };
+
+    await createListing(newListing);
+    setIsSubmitting(false);
+    router.push("/marketplace");
+  };
+
+  const priceRecommendations = selectedProduct?.estimatedValue
+    ? getPriceRecommendations(selectedProduct.estimatedValue)
+    : null;
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      {/* Back button */}
+      <Link
+        href={productId ? `/wallet/${productId}` : "/wallet"}
+        className="inline-flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors mb-6"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>Volver</span>
+      </Link>
+
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-foreground">
+          Vender en PassProduct
+        </h1>
+        <p className="text-foreground-muted mt-1">Paso {step} de 4</p>
+      </div>
+
+      {/* Step indicators */}
+      <div className="flex gap-2 mb-8">
+        {[1, 2, 3, 4].map((s) => (
+          <div
+            key={s}
+            className={`h-1.5 flex-1 rounded-full transition-colors ${
+              s <= step ? "bg-accent" : "bg-surface-2"
+            }`}
+          />
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        {/* Step 1: Select Product */}
+        {step === 1 && (
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <Card padding="md">
+              <h2 className="font-medium text-foreground mb-4">
+                Selecciona el producto a vender
+              </h2>
+              <div className="space-y-3">
+                {products.map((product) => (
+                  <button
+                    key={product.id}
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setFormData((prev) => ({
+                        ...prev,
+                        title: `${product.brand} ${product.model}${product.variant ? ` - ${product.variant}` : ""}`,
+                        description: generateDescription(product),
+                        photos: product.photos,
+                        price: product.estimatedValue
+                          ? getPriceRecommendations(product.estimatedValue).fair.toString()
+                          : "",
+                      }));
+                      setStep(2);
+                    }}
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-colors ${
+                      selectedProduct?.id === product.id
+                        ? "border-accent bg-accent/5"
+                        : "border-border hover:border-border-hover"
+                    }`}
+                  >
+                    <div className="relative h-16 w-16 rounded-lg bg-surface-2 overflow-hidden flex-shrink-0">
+                      {product.photos[0] ? (
+                        <Image
+                          src={product.photos[0]}
+                          alt=""
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-2xl">
+                          {product.category?.icon || "📦"}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-medium text-foreground">
+                        {product.brand} {product.model}
+                      </p>
+                      <p className="text-sm text-foreground-muted">
+                        {product.variant}
+                      </p>
+                      <p className="text-sm text-foreground-subtle">
+                        Valor estimado: {formatPrice(product.estimatedValue || 0)}
+                      </p>
+                    </div>
+                    {selectedProduct?.id === product.id && (
+                      <Check className="h-5 w-5 text-accent" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Step 2: Photos & Condition */}
+        {step === 2 && selectedProduct && (
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            {/* Photos */}
+            <Card padding="md">
+              <h2 className="font-medium text-foreground mb-4">
+                Fotos del producto
+              </h2>
+              <div className="grid grid-cols-3 gap-3">
+                {formData.photos.map((photo, i) => (
+                  <div
+                    key={i}
+                    className="relative aspect-square rounded-xl bg-surface-2 overflow-hidden group"
+                  >
+                    <Image src={photo} alt="" fill className="object-cover" />
+                    <button
+                      onClick={() => removePhoto(i)}
+                      className="absolute top-2 right-2 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {formData.photos.length < 6 && (
+                  <button
+                    onClick={handlePhotoUpload}
+                    className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-border-hover flex flex-col items-center justify-center gap-2 text-foreground-subtle hover:text-foreground-muted transition-colors"
+                  >
+                    <Camera className="h-6 w-6" />
+                    <span className="text-xs">Añadir</span>
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-foreground-subtle mt-3">
+                Mínimo 2 fotos. Añade fotos claras del producto y accesorios.
+              </p>
+            </Card>
+
+            {/* Condition info */}
+            <Card padding="md">
+              <h2 className="font-medium text-foreground mb-2">
+                Estado del producto
+              </h2>
+              <p className="text-foreground-muted">
+                {CONDITION_LABELS[selectedProduct.condition]}
+              </p>
+              <p className="text-xs text-foreground-subtle mt-2">
+                El estado se hereda de tu wallet. Si ha cambiado, actualízalo
+                primero.
+              </p>
+            </Card>
+
+            {/* Verification badges preview */}
+            <Card padding="md">
+              <h2 className="font-medium text-foreground mb-4">
+                Verificaciones incluidas
+              </h2>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`h-6 w-6 rounded-full flex items-center justify-center ${
+                      selectedProduct.proofOfPurchaseUrl
+                        ? "bg-jade/15 text-jade"
+                        : "bg-surface-2 text-foreground-subtle"
+                    }`}
+                  >
+                    <Check className="h-3 w-3" />
+                  </div>
+                  <span className="text-sm text-foreground">
+                    Compra verificada
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`h-6 w-6 rounded-full flex items-center justify-center ${
+                      selectedProduct.warrantyEndDate &&
+                      new Date(selectedProduct.warrantyEndDate) > new Date()
+                        ? "bg-jade/15 text-jade"
+                        : "bg-surface-2 text-foreground-subtle"
+                    }`}
+                  >
+                    <Shield className="h-3 w-3" />
+                  </div>
+                  <span className="text-sm text-foreground">Garantía activa</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`h-6 w-6 rounded-full flex items-center justify-center ${
+                      selectedProduct.serialLast4 || selectedProduct.imeiLast4
+                        ? "bg-jade/15 text-jade"
+                        : "bg-surface-2 text-foreground-subtle"
+                    }`}
+                  >
+                    <Tag className="h-3 w-3" />
+                  </div>
+                  <span className="text-sm text-foreground">
+                    Identificador verificado
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Step 3: Price */}
+        {step === 3 && selectedProduct && priceRecommendations && (
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <Card padding="md">
+              <h2 className="font-medium text-foreground mb-4">
+                Precio de venta
+              </h2>
+
+              {/* Price strategies */}
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <button
+                  onClick={() => handlePriceStrategy("fast")}
+                  className={`p-4 rounded-xl border transition-colors ${
+                    formData.priceStrategy === "fast"
+                      ? "border-jade bg-jade/5"
+                      : "border-border hover:border-border-hover"
+                  }`}
+                >
+                  <Zap
+                    className={`h-5 w-5 mx-auto mb-2 ${
+                      formData.priceStrategy === "fast"
+                        ? "text-jade"
+                        : "text-foreground-subtle"
+                    }`}
+                  />
+                  <p className="text-xs text-foreground-muted mb-1">Rápido</p>
+                  <p
+                    className={`font-semibold ${
+                      formData.priceStrategy === "fast"
+                        ? "text-jade"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {formatPrice(priceRecommendations.fast)}
+                  </p>
+                </button>
+                <button
+                  onClick={() => handlePriceStrategy("fair")}
+                  className={`p-4 rounded-xl border transition-colors ${
+                    formData.priceStrategy === "fair"
+                      ? "border-accent bg-accent/5"
+                      : "border-border hover:border-border-hover"
+                  }`}
+                >
+                  <Scale
+                    className={`h-5 w-5 mx-auto mb-2 ${
+                      formData.priceStrategy === "fair"
+                        ? "text-accent"
+                        : "text-foreground-subtle"
+                    }`}
+                  />
+                  <p className="text-xs text-foreground-muted mb-1">Justo</p>
+                  <p
+                    className={`font-semibold ${
+                      formData.priceStrategy === "fair"
+                        ? "text-accent"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {formatPrice(priceRecommendations.fair)}
+                  </p>
+                </button>
+                <button
+                  onClick={() => handlePriceStrategy("max")}
+                  className={`p-4 rounded-xl border transition-colors ${
+                    formData.priceStrategy === "max"
+                      ? "border-[#8B5CF6] bg-[#8B5CF6]/5"
+                      : "border-border hover:border-border-hover"
+                  }`}
+                >
+                  <Crown
+                    className={`h-5 w-5 mx-auto mb-2 ${
+                      formData.priceStrategy === "max"
+                        ? "text-[#8B5CF6]"
+                        : "text-foreground-subtle"
+                    }`}
+                  />
+                  <p className="text-xs text-foreground-muted mb-1">Máximo</p>
+                  <p
+                    className={`font-semibold ${
+                      formData.priceStrategy === "max"
+                        ? "text-[#8B5CF6]"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {formatPrice(priceRecommendations.max)}
+                  </p>
+                </button>
+              </div>
+
+              <Input
+                label="O introduce tu precio"
+                type="number"
+                value={formData.price}
+                onChange={(e) => updateFormData("price", e.target.value)}
+                hint="Precio en euros"
+              />
+            </Card>
+
+            {/* Shipping */}
+            <Card padding="md">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-medium text-foreground">Envío</h2>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.shippingEnabled}
+                    onChange={(e) =>
+                      updateFormData("shippingEnabled", e.target.checked)
+                    }
+                    className="h-4 w-4 rounded border-border bg-surface-1 text-accent focus:ring-accent"
+                  />
+                  <span className="text-sm text-foreground-muted">
+                    Ofrecer envío
+                  </span>
+                </label>
+              </div>
+              {formData.shippingEnabled && (
+                <Input
+                  label="Coste de envío"
+                  type="number"
+                  value={formData.shippingCost}
+                  onChange={(e) => updateFormData("shippingCost", e.target.value)}
+                  hint="El comprador pagará este importe adicional"
+                />
+              )}
+            </Card>
+
+            {/* Location */}
+            <Card padding="md">
+              <Input
+                label="Ubicación"
+                value={formData.location}
+                onChange={(e) => updateFormData("location", e.target.value)}
+                hint="Ciudad o zona donde está el producto"
+              />
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Step 4: Preview */}
+        {step === 4 && selectedProduct && (
+          <motion.div
+            key="step4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <Card padding="none" className="overflow-hidden">
+              {/* Preview Image */}
+              <div className="relative aspect-video bg-surface-2">
+                {formData.photos[0] && (
+                  <Image
+                    src={formData.photos[0]}
+                    alt=""
+                    fill
+                    className="object-cover"
+                  />
+                )}
+              </div>
+
+              <div className="p-6">
+                {/* Title */}
+                <h2 className="text-xl font-semibold text-foreground mb-3">
+                  {formData.title}
+                </h2>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {selectedProduct.proofOfPurchaseUrl && (
+                    <Badge variant="verified" size="md">
+                      Compra verificada
+                    </Badge>
+                  )}
+                  {selectedProduct.warrantyEndDate &&
+                    new Date(selectedProduct.warrantyEndDate) > new Date() && (
+                      <Badge variant="warranty" size="md">
+                        Garantía activa
+                      </Badge>
+                    )}
+                </div>
+
+                {/* Description preview */}
+                <p className="text-foreground-muted text-sm mb-4 line-clamp-3">
+                  {formData.description}
+                </p>
+
+                {/* Price */}
+                <div className="flex items-end justify-between pt-4 border-t border-border">
+                  <div>
+                    <p className="text-2xl font-semibold text-foreground">
+                      {formatPrice(parseFloat(formData.price) || 0)}
+                    </p>
+                    {formData.shippingEnabled && (
+                      <p className="text-sm text-foreground-muted">
+                        + {formatPrice(parseFloat(formData.shippingCost))} envío
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-sm text-foreground-subtle">
+                    {formData.location}
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Fee info */}
+            <Card padding="md" className="bg-surface-2/50">
+              <h3 className="font-medium text-foreground mb-3">
+                Resumen de comisiones
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-foreground-muted">Precio de venta</span>
+                  <span className="text-foreground">
+                    {formatPrice(parseFloat(formData.price) || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-foreground-muted">
+                    Comisión PassProduct (7%)
+                  </span>
+                  <span className="text-error">
+                    -{formatPrice((parseFloat(formData.price) || 0) * 0.07)}
+                  </span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-border">
+                  <span className="font-medium text-foreground">Recibirás</span>
+                  <span className="font-semibold text-jade">
+                    {formatPrice((parseFloat(formData.price) || 0) * 0.93)}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
+        <Button
+          variant="ghost"
+          onClick={() => (step > 1 ? setStep(step - 1) : router.back())}
+        >
+          {step > 1 ? "Atrás" : "Cancelar"}
+        </Button>
+        {step < 4 ? (
+          <Button
+            onClick={() => setStep(step + 1)}
+            disabled={
+              (step === 1 && !selectedProduct) ||
+              (step === 2 && formData.photos.length < 2) ||
+              (step === 3 && !formData.price)
+            }
+          >
+            Siguiente
+          </Button>
+        ) : (
+          <Button onClick={handleSubmit} isLoading={isSubmitting}>
+            Publicar anuncio
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function SellPage() {
+  return (
+    <Suspense fallback={<div className="animate-pulse">Cargando...</div>}>
+      <SellPageContent />
+    </Suspense>
+  );
+}
+
+function generateDescription(product: Product): string {
+  const parts = [
+    `${product.brand} ${product.model}`,
+    product.variant,
+    `Estado: ${CONDITION_LABELS[product.condition]}`,
+  ];
+
+  if (product.accessories) {
+    const included = Object.entries(product.accessories)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    if (included.length > 0) {
+      parts.push(`Incluye: ${included.join(", ")}`);
+    }
+  }
+
+  return parts.filter(Boolean).join("\n");
+}

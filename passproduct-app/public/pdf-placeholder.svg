@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#1A1A1C"/>
+  <rect x="120" y="60" width="160" height="180" rx="8" fill="#262626" stroke="#404040" stroke-width="2"/>
+  <rect x="140" y="100" width="120" height="8" rx="2" fill="#404040"/>
+  <rect x="140" y="120" width="100" height="8" rx="2" fill="#404040"/>
+  <rect x="140" y="140" width="80" height="8" rx="2" fill="#404040"/>
+  <rect x="140" y="160" width="110" height="8" rx="2" fill="#404040"/>
+  <rect x="140" y="180" width="90" height="8" rx="2" fill="#404040"/>
+  <text x="200" y="260" text-anchor="middle" fill="#A3A3A3" font-family="system-ui" font-size="14">Factura PDF</text>
+</svg>
