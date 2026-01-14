@@ -112,6 +112,11 @@ export interface Product {
   warrantyEndDate?: Date;
   warrantyNotes?: string;
   warrantyContact?: WarrantyContact;
+  // Seguro adicional
+  hasAdditionalInsurance?: boolean;
+  additionalInsuranceEndDate?: Date;
+  additionalInsuranceProvider?: string;
+  additionalInsuranceNotes?: string;
   imeiHash?: string;
   imeiLast4?: string;
   serialHash?: string;

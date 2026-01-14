@@ -11,6 +11,7 @@ interface ModalProps {
   title?: string;
   description?: string;
   children: ReactNode;
+  footer?: ReactNode;
   size?: "sm" | "md" | "lg" | "xl" | "full";
   showClose?: boolean;
 }
@@ -21,6 +22,7 @@ const Modal = ({
   title,
   description,
   children,
+  footer,
   size = "md",
   showClose = true,
 }: ModalProps) => {
@@ -47,21 +49,23 @@ const Modal = ({
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               className={cn(
-                "w-full bg-surface-1 border border-border rounded-[20px] shadow-lg overflow-hidden",
+                "w-full bg-surface-1 border border-border shadow-lg flex flex-col",
+                "rounded-t-[20px] sm:rounded-[20px]",
+                "max-h-[90vh] sm:max-h-[85vh]",
                 sizes[size]
               )}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
               {(title || showClose) && (
-                <div className="flex items-start justify-between p-5 border-b border-border">
+                <div className="flex items-start justify-between p-5 border-b border-border flex-shrink-0">
                   <div>
                     {title && (
                       <h2 className="text-lg font-semibold text-foreground">
@@ -85,8 +89,15 @@ const Modal = ({
                 </div>
               )}
 
-              {/* Content */}
-              <div className="p-5">{children}</div>
+              {/* Content - scrollable */}
+              <div className="p-5 overflow-y-auto flex-1 overscroll-contain">{children}</div>
+
+              {/* Footer - fixed at bottom */}
+              {footer && (
+                <div className="p-5 pt-4 border-t border-border flex-shrink-0 bg-surface-1">
+                  {footer}
+                </div>
+              )}
             </motion.div>
           </div>
         </Fragment>

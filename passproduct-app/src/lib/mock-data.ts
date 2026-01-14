@@ -2472,6 +2472,21 @@ export function getListingById(id: string): Listing | undefined {
   return mockListings.find((l) => l.id === id);
 }
 
+// Get listings by seller ID
+export function getListingsBySellerId(sellerId: string): Listing[] {
+  return mockListings.filter((l) => l.sellerId === sellerId);
+}
+
+// Get active listings by seller ID (published)
+export function getActiveListingsBySellerId(sellerId: string): Listing[] {
+  return mockListings.filter((l) => l.sellerId === sellerId && l.status === "PUBLISHED");
+}
+
+// Get sold listings by seller ID
+export function getSoldListingsBySellerId(sellerId: string): Listing[] {
+  return mockListings.filter((l) => l.sellerId === sellerId && l.status === "SOLD");
+}
+
 export function getCategoryById(id: string): Category | undefined {
   return mockCategories.find((c) => c.id === id);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, Camera, X, Check, Sparkles, Loader2, Image as ImageIcon, Receipt, AlertCircle, FileText, Package } from "lucide-react";
+import { Upload, Camera, X, Check, Sparkles, Loader2, Image as ImageIcon, Receipt, AlertCircle, FileText, Package, ShieldPlus, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/ui/modal";
 import { Button, Input, Select } from "@/components/ui";
@@ -113,6 +113,11 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
     hasSerial: false,
     serialLast4: "",
     accessories: {} as Record<string, boolean>,
+    // Seguro adicional
+    hasAdditionalInsurance: false,
+    additionalInsuranceEndDate: "",
+    additionalInsuranceProvider: "",
+    additionalInsuranceNotes: "",
   });
 
   const updateFormData = (key: string, value: unknown) => {
@@ -367,6 +372,13 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
       // Fotos de stock solo si no hay fotos reales (para visualización en wallet)
       stockPhotos: formData.photos.length === 0 ? enrichedData?.stockImages || undefined : undefined,
       accessories: formData.accessories,
+      // Seguro adicional
+      hasAdditionalInsurance: formData.hasAdditionalInsurance || undefined,
+      additionalInsuranceEndDate: formData.additionalInsuranceEndDate 
+        ? new Date(formData.additionalInsuranceEndDate) 
+        : undefined,
+      additionalInsuranceProvider: formData.additionalInsuranceProvider || undefined,
+      additionalInsuranceNotes: formData.additionalInsuranceNotes || undefined,
       // Usar precio de reventa de la IA si está disponible, sino calcular
       estimatedValue: enrichedData?.resaleValue?.maxPrice || 
         (formData.purchasePrice ? parseFloat(formData.purchasePrice) * 0.8 : undefined),
@@ -400,6 +412,10 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
       hasSerial: false,
       serialLast4: "",
       accessories: {},
+      hasAdditionalInsurance: false,
+      additionalInsuranceEndDate: "",
+      additionalInsuranceProvider: "",
+      additionalInsuranceNotes: "",
     });
     setExtractedData(null);
     setEnrichedData(null);
@@ -430,6 +446,57 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
     return cat?.icon || "📦";
   };
 
+  // Footer para el modal
+  const modalFooter = step > 1 ? (
+    <div className="flex items-center justify-between">
+      <Button
+        variant="ghost"
+        onClick={() => (step > 1 ? setStep(step - 1) : resetAndClose())}
+      >
+        {step > 1 ? "Atrás" : "Cancelar"}
+      </Button>
+      <div className="flex items-center gap-3">
+        {/* Step indicators */}
+        <div className="flex gap-1.5">
+          {[1, 2, 3].map((s) => (
+            <div
+              key={s}
+              className={`h-1.5 w-6 rounded-full transition-colors ${
+                s <= step ? "bg-accent" : "bg-surface-2"
+              }`}
+            />
+          ))}
+        </div>
+        {step < 3 ? (
+          <Button 
+            onClick={() => {
+              // Al pasar de paso 1 a 2, enriquecer producto (buscar foto si no hay)
+              if (step === 1 && formData.brand && formData.model) {
+                const noPhotos = formData.photos.length === 0;
+                enrichProduct(
+                  formData.brand,
+                  formData.model,
+                  formData.variant || "",
+                  formData.categoryId,
+                  formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
+                  noPhotos // needsImages = true si no hay fotos
+                );
+              }
+              setStep(step + 1);
+            }} 
+            disabled={!canProceed()}
+          >
+            Siguiente
+          </Button>
+        ) : (
+          <Button onClick={handleSubmit} isLoading={isSubmitting || isEnriching} disabled={!canProceed()}>
+            {isEnriching ? "Cargando info..." : "Guardar producto"}
+          </Button>
+        )}
+      </div>
+    </div>
+  ) : null;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -437,6 +504,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
       title="Añadir producto"
       description={step === 1 ? "Sube tu factura o ticket de compra" : step === 1.5 ? "Selecciona un producto" : `Paso ${Math.floor(step)} de 3`}
       size="lg"
+      footer={modalFooter}
     >
       <input
         ref={fileInputRef}
@@ -789,6 +857,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
             {/* Accessories - Dynamic based on product */}
             <div>
               <label className="block text-sm font-medium text-foreground-muted mb-2">
+                <Package className="inline h-4 w-4 mr-1" />
                 Accesorios incluidos
                 {isEnriching && (
                   <span className="ml-2 text-xs text-accent">
@@ -797,10 +866,12 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                   </span>
                 )}
               </label>
-              <div className="flex flex-wrap gap-2">
+              
+              {/* Accesorios sugeridos del producto */}
+              <div className="flex flex-wrap gap-2 mb-3">
                 {(enrichedData?.accessories && enrichedData.accessories.length > 0
                   ? enrichedData.accessories.map((acc) => acc.name)
-                  : ["Cargador", "Cable", "Caja", "Manual"]
+                  : [] // No mostrar genéricos si no hay datos enriquecidos
                 ).map((acc) => {
                   const key = acc.toLowerCase();
                   const isSelected = formData.accessories[key];
@@ -830,7 +901,91 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                     </button>
                   );
                 })}
+                
+                {/* Accesorios personalizados añadidos por el usuario */}
+                {Object.entries(formData.accessories)
+                  .filter(([key]) => {
+                    // Mostrar solo los que NO están en la lista de enriquecimiento
+                    const enrichedKeys = (enrichedData?.accessories || []).map(a => a.name.toLowerCase());
+                    return !enrichedKeys.includes(key);
+                  })
+                  .map(([key, isSelected]) => (
+                    <div
+                      key={key}
+                      className={`group flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                        isSelected
+                          ? "bg-jade/15 text-jade border border-jade/30"
+                          : "bg-surface-2 text-foreground-muted border border-border"
+                      }`}
+                    >
+                      <button
+                        onClick={() =>
+                          updateFormData("accessories", {
+                            ...formData.accessories,
+                            [key]: !isSelected,
+                          })
+                        }
+                      >
+                        {isSelected && <Check className="inline h-3 w-3 mr-1" />}
+                        {key.charAt(0).toUpperCase() + key.slice(1)}
+                      </button>
+                      <button
+                        onClick={() => {
+                          const newAccessories = { ...formData.accessories };
+                          delete newAccessories[key];
+                          updateFormData("accessories", newAccessories);
+                        }}
+                        className="ml-1 p-0.5 rounded-full hover:bg-error/20 text-foreground-subtle hover:text-error transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
               </div>
+
+              {/* Input para añadir accesorio personalizado */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Añadir otro accesorio..."
+                  className="flex-1 px-3 py-2 bg-surface-1 border border-border rounded-xl text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-accent/50 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const input = e.target as HTMLInputElement;
+                      const value = input.value.trim();
+                      if (value) {
+                        updateFormData("accessories", {
+                          ...formData.accessories,
+                          [value.toLowerCase()]: true,
+                        });
+                        input.value = "";
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const input = document.querySelector('input[placeholder="Añadir otro accesorio..."]') as HTMLInputElement;
+                    const value = input?.value?.trim();
+                    if (value) {
+                      updateFormData("accessories", {
+                        ...formData.accessories,
+                        [value.toLowerCase()]: true,
+                      });
+                      input.value = "";
+                    }
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-foreground-subtle mt-1.5">
+                Pulsa en un accesorio para marcarlo como incluido. Puedes añadir más con el campo de arriba.
+              </p>
             </div>
 
             {/* Manual purchase data if not extracted */}
@@ -862,60 +1017,60 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                 />
               </div>
             )}
+
+            {/* Seguro adicional */}
+            <div className="p-4 rounded-xl bg-surface-2 border border-border space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldPlus className="h-4 w-4 text-info" />
+                  <p className="text-sm font-medium text-foreground">
+                    ¿Tienes un seguro adicional?
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateFormData("hasAdditionalInsurance", !formData.hasAdditionalInsurance)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    formData.hasAdditionalInsurance ? "bg-info" : "bg-gray-300 dark:bg-gray-600"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
+                      formData.hasAdditionalInsurance ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-foreground-subtle">
+                Seguro de rotura de pantalla, AppleCare+, extensión de garantía, etc.
+              </p>
+
+              {formData.hasAdditionalInsurance && (
+                <div className="space-y-3 pt-2 border-t border-border">
+                  <Input
+                    label="Fecha de vencimiento del seguro"
+                    type="date"
+                    value={formData.additionalInsuranceEndDate}
+                    onChange={(e) => updateFormData("additionalInsuranceEndDate", e.target.value)}
+                  />
+                  <Input
+                    label="Proveedor del seguro (opcional)"
+                    placeholder="Ej: AppleCare+, MediaMarkt Protect..."
+                    value={formData.additionalInsuranceProvider}
+                    onChange={(e) => updateFormData("additionalInsuranceProvider", e.target.value)}
+                  />
+                  <Input
+                    label="Notas (opcional)"
+                    placeholder="Ej: Cubre rotura de pantalla..."
+                    value={formData.additionalInsuranceNotes}
+                    onChange={(e) => updateFormData("additionalInsuranceNotes", e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Footer */}
-      {step > 1 && (
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-          <Button
-            variant="ghost"
-            onClick={() => (step > 1 ? setStep(step - 1) : resetAndClose())}
-          >
-            {step > 1 ? "Atrás" : "Cancelar"}
-          </Button>
-          <div className="flex items-center gap-3">
-            {/* Step indicators */}
-            <div className="flex gap-1.5">
-              {[1, 2, 3].map((s) => (
-                <div
-                  key={s}
-                  className={`h-1.5 w-6 rounded-full transition-colors ${
-                    s <= step ? "bg-accent" : "bg-surface-2"
-                  }`}
-                />
-              ))}
-            </div>
-            {step < 3 ? (
-              <Button 
-                onClick={() => {
-                  // Al pasar de paso 1 a 2, enriquecer producto (buscar foto si no hay)
-                  if (step === 1 && formData.brand && formData.model) {
-                    const noPhotos = formData.photos.length === 0;
-                    enrichProduct(
-                      formData.brand,
-                      formData.model,
-                      formData.variant || "",
-                      formData.categoryId,
-                      formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
-                      noPhotos // needsImages = true si no hay fotos
-                    );
-                  }
-                  setStep(step + 1);
-                }} 
-                disabled={!canProceed()}
-              >
-                Siguiente
-              </Button>
-            ) : (
-              <Button onClick={handleSubmit} isLoading={isSubmitting || isEnriching} disabled={!canProceed()}>
-                {isEnriching ? "Cargando info..." : "Guardar producto"}
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
     </Modal>
   );
 }

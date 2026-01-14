@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Calendar, Store, Tag, Shield, Plus, Package } from "lucide-react";
+import { X, Calendar, Store, Tag, Shield, Plus, Package, ShieldPlus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product, ProductCondition, CONDITION_LABELS } from "@/types";
 import { Button } from "@/components/ui";
@@ -22,6 +22,11 @@ export function EditProductModal({ isOpen, onClose, product, onSave }: EditProdu
     purchaseDate: "",
     purchaseStore: "",
     warrantyEndDate: "",
+    // Seguro adicional
+    hasAdditionalInsurance: false,
+    additionalInsuranceEndDate: "",
+    additionalInsuranceProvider: "",
+    additionalInsuranceNotes: "",
   });
 
   const [accessories, setAccessories] = useState<Record<string, boolean>>({});
@@ -43,6 +48,12 @@ export function EditProductModal({ isOpen, onClose, product, onSave }: EditProdu
         warrantyEndDate: product.warrantyEndDate
           ? new Date(product.warrantyEndDate).toISOString().split("T")[0]
           : "",
+        hasAdditionalInsurance: product.hasAdditionalInsurance || false,
+        additionalInsuranceEndDate: product.additionalInsuranceEndDate
+          ? new Date(product.additionalInsuranceEndDate).toISOString().split("T")[0]
+          : "",
+        additionalInsuranceProvider: product.additionalInsuranceProvider || "",
+        additionalInsuranceNotes: product.additionalInsuranceNotes || "",
       });
       setAccessories(product.accessories || {});
       setNewAccessory("");
@@ -88,6 +99,13 @@ export function EditProductModal({ isOpen, onClose, product, onSave }: EditProdu
       purchaseStore: formData.purchaseStore || undefined,
       warrantyEndDate: formData.warrantyEndDate ? new Date(formData.warrantyEndDate) : undefined,
       accessories: Object.keys(accessories).length > 0 ? accessories : undefined,
+      // Seguro adicional
+      hasAdditionalInsurance: formData.hasAdditionalInsurance || undefined,
+      additionalInsuranceEndDate: formData.additionalInsuranceEndDate 
+        ? new Date(formData.additionalInsuranceEndDate) 
+        : undefined,
+      additionalInsuranceProvider: formData.additionalInsuranceProvider || undefined,
+      additionalInsuranceNotes: formData.additionalInsuranceNotes || undefined,
       updatedAt: new Date(),
     };
 
@@ -274,6 +292,79 @@ export function EditProductModal({ isOpen, onClose, product, onSave }: EditProdu
                   }
                   className="w-full px-3 py-2.5 bg-surface-1 border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
                 />
+              </div>
+
+              {/* Seguro adicional */}
+              <div className="p-4 rounded-xl bg-surface-1 border border-border space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldPlus className="h-4 w-4 text-info" />
+                    <p className="text-sm font-medium text-foreground">
+                      Seguro adicional
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, hasAdditionalInsurance: !formData.hasAdditionalInsurance })
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      formData.hasAdditionalInsurance ? "bg-info" : "bg-gray-300 dark:bg-gray-600"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
+                        formData.hasAdditionalInsurance ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {formData.hasAdditionalInsurance && (
+                  <div className="space-y-3 pt-2 border-t border-border">
+                    <div>
+                      <label className="block text-xs font-medium text-foreground-muted mb-1">
+                        Fecha de vencimiento
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.additionalInsuranceEndDate}
+                        onChange={(e) =>
+                          setFormData({ ...formData, additionalInsuranceEndDate: e.target.value })
+                        }
+                        className="w-full px-3 py-2 bg-surface-2 border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-foreground-muted mb-1">
+                        Proveedor (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.additionalInsuranceProvider}
+                        onChange={(e) =>
+                          setFormData({ ...formData, additionalInsuranceProvider: e.target.value })
+                        }
+                        placeholder="Ej: AppleCare+, MediaMarkt Protect..."
+                        className="w-full px-3 py-2 bg-surface-2 border border-border rounded-xl text-foreground placeholder:text-foreground-subtle text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-foreground-muted mb-1">
+                        Notas (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.additionalInsuranceNotes}
+                        onChange={(e) =>
+                          setFormData({ ...formData, additionalInsuranceNotes: e.target.value })
+                        }
+                        placeholder="Ej: Cubre rotura de pantalla..."
+                        className="w-full px-3 py-2 bg-surface-2 border border-border rounded-xl text-foreground placeholder:text-foreground-subtle text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Accesorios incluidos */}

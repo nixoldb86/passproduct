@@ -174,7 +174,13 @@ Si no puedes identificar con certeza, devuelve nulls.`
 JSON sin markdown:
 {"brand":"str","model":"str","variant":"str|null","category":"slug"}
 Categorías: ${CATEGORIES}
-IMPORTANTE: Devuelve la marca y modelo REAL que aparece en los resultados, no inventes.`
+
+REGLAS IMPORTANTES:
+- brand: La MARCA REAL de la empresa fabricante (ej: Sonpura, Apple, Samsung)
+- model: El MODELO específico del producto (ej: Brisa V8 Titanio, iPhone 15 Pro)
+- variant: Tecnologías o variantes (ej: Multisac, USB-C, 256GB)
+- Si "Multisac" aparece como tecnología de Sonpura, marca=Sonpura, variant=Multisac
+- Devuelve la marca y modelo REAL que aparece en los resultados, no inventes.`
         },
         {
           role: "user",

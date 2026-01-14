@@ -3,10 +3,118 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, Tag, MoreVertical, ImageOff, Pencil, Trash2 } from "lucide-react";
+import { Calendar, Tag, MoreVertical, ImageOff, Pencil, Trash2, ShieldCheck, ShieldAlert, ShieldX, ShieldOff, ShieldPlus } from "lucide-react";
 import { Product, CONDITION_LABELS } from "@/types";
 import { Card, Badge } from "@/components/ui";
-import { formatPrice, formatDate, isWarrantyValid, getDaysUntilWarrantyExpires } from "@/lib/utils";
+import { formatPrice, formatDate } from "@/lib/utils";
+
+type WarrantyStatus = "active" | "expiring" | "expired" | "none";
+
+function getWarrantyStatus(warrantyEndDate: Date | string | null | undefined): {
+  status: WarrantyStatus;
+  daysLeft: number | null;
+  label: string;
+  icon: React.ReactNode;
+  colorClass: string;
+} {
+  if (!warrantyEndDate) {
+    return {
+      status: "none",
+      daysLeft: null,
+      label: "Sin garantía",
+      icon: <ShieldOff className="h-3.5 w-3.5" />,
+      colorClass: "text-foreground-subtle bg-surface-2",
+    };
+  }
+
+  const endDate = typeof warrantyEndDate === "string" ? new Date(warrantyEndDate) : warrantyEndDate;
+  const now = new Date();
+  const diffTime = endDate.getTime() - now.getTime();
+  const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (daysLeft < 0) {
+    return {
+      status: "expired",
+      daysLeft,
+      label: "Garantía expirada",
+      icon: <ShieldX className="h-3.5 w-3.5" />,
+      colorClass: "text-error bg-error/10",
+    };
+  }
+
+  if (daysLeft <= 30) {
+    return {
+      status: "expiring",
+      daysLeft,
+      label: `${daysLeft}d restantes`,
+      icon: <ShieldAlert className="h-3.5 w-3.5" />,
+      colorClass: "text-warning bg-warning/10",
+    };
+  }
+
+  // Más de 30 días
+  const months = Math.floor(daysLeft / 30);
+  return {
+    status: "active",
+    daysLeft,
+    label: months > 1 ? `${months} meses` : `${daysLeft}d`,
+    icon: <ShieldCheck className="h-3.5 w-3.5" />,
+    colorClass: "text-jade bg-jade/10",
+  };
+}
+
+type InsuranceStatus = "active" | "expiring" | "expired" | "none";
+
+function getInsuranceStatus(
+  hasInsurance: boolean | undefined,
+  endDate: Date | string | null | undefined
+): {
+  status: InsuranceStatus;
+  daysLeft: number | null;
+  label: string;
+  provider?: string;
+  colorClass: string;
+} {
+  if (!hasInsurance || !endDate) {
+    return {
+      status: "none",
+      daysLeft: null,
+      label: "",
+      colorClass: "",
+    };
+  }
+
+  const insuranceEndDate = typeof endDate === "string" ? new Date(endDate) : endDate;
+  const now = new Date();
+  const diffTime = insuranceEndDate.getTime() - now.getTime();
+  const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (daysLeft < 0) {
+    return {
+      status: "expired",
+      daysLeft,
+      label: "Seguro expirado",
+      colorClass: "text-error bg-error/10",
+    };
+  }
+
+  if (daysLeft <= 30) {
+    return {
+      status: "expiring",
+      daysLeft,
+      label: `Seguro: ${daysLeft}d`,
+      colorClass: "text-warning bg-warning/10",
+    };
+  }
+
+  const months = Math.floor(daysLeft / 30);
+  return {
+    status: "active",
+    daysLeft,
+    label: `Seguro: ${months > 1 ? `${months} meses` : `${daysLeft}d`}`,
+    colorClass: "text-info bg-info/10",
+  };
+}
 
 interface ProductCardProps {
   product: Product;
@@ -18,8 +126,8 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   
-  const warrantyValid = isWarrantyValid(product.warrantyEndDate || null);
-  const daysUntilExpiry = getDaysUntilWarrantyExpires(product.warrantyEndDate || null);
+  const warranty = getWarrantyStatus(product.warrantyEndDate);
+  const insurance = getInsuranceStatus(product.hasAdditionalInsurance, product.additionalInsuranceEndDate);
 
   // Determinar imagen a mostrar: real > stock > placeholder
   const hasRealPhoto = product.photos && product.photos.length > 0 && product.photos[0];
@@ -151,21 +259,41 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
                 Verificado
               </Badge>
             )}
-            {warrantyValid && daysUntilExpiry !== null && (
-              <Badge
-                variant={daysUntilExpiry < 30 ? "warning" : "warranty"}
-                size="sm"
-              >
-                {daysUntilExpiry < 30
-                  ? `${daysUntilExpiry}d restantes`
-                  : formatDate(product.warrantyEndDate!, { month: "short", year: "2-digit" })}
-              </Badge>
-            )}
             {product.serialLast4 || product.imeiLast4 ? (
               <Badge variant="serial" size="sm">
                 ID verificado
               </Badge>
             ) : null}
+          </div>
+
+          {/* Warranty & Insurance Status */}
+          <div className="space-y-2 mb-4">
+            {/* Warranty */}
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${warranty.colorClass}`}>
+              {warranty.icon}
+              <span className="text-sm font-medium">{warranty.label}</span>
+              {warranty.status === "active" && product.warrantyEndDate && (
+                <span className="text-xs opacity-70 ml-auto">
+                  hasta {formatDate(product.warrantyEndDate, { day: "2-digit", month: "short", year: "2-digit" })}
+                </span>
+              )}
+            </div>
+
+            {/* Insurance (only if has insurance) */}
+            {insurance.status !== "none" && (
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${insurance.colorClass}`}>
+                <ShieldPlus className="h-3.5 w-3.5" />
+                <span className="text-sm font-medium">{insurance.label}</span>
+                {product.additionalInsuranceProvider && (
+                  <span className="text-xs opacity-70">({product.additionalInsuranceProvider})</span>
+                )}
+                {insurance.status === "active" && product.additionalInsuranceEndDate && (
+                  <span className="text-xs opacity-70 ml-auto">
+                    hasta {formatDate(product.additionalInsuranceEndDate, { day: "2-digit", month: "short", year: "2-digit" })}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Condition & Purchase info */}

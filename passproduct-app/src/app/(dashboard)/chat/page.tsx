@@ -10,6 +10,7 @@ import {
   Check,
   CheckCheck,
   DollarSign,
+  ArrowLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatStore } from "@/store";
@@ -31,10 +32,40 @@ export default function ChatPage() {
   const [messageText, setMessageText] = useState("");
   const [showOfferInput, setShowOfferInput] = useState(false);
   const [offerAmount, setOfferAmount] = useState("");
+  const [showConversationList, setShowConversationList] = useState(true);
 
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations]);
+
+  // En móvil, ocultar lista cuando hay conversación activa
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        // En móvil: mostrar lista solo si NO hay conversación activa
+        setShowConversationList(!activeConversation);
+      } else {
+        // En desktop: siempre mostrar lista
+        setShowConversationList(true);
+      }
+    };
+    
+    checkMobile();
+    
+    // Escuchar cambios de tamaño de ventana
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [activeConversation]);
+
+  const handleBackToList = () => {
+    // En móvil, mostrar la lista (esto ocultará el chat automáticamente)
+    setShowConversationList(true);
+    // En desktop, también limpiar la conversación activa
+    if (window.innerWidth >= 768) {
+      setActiveConversation(null);
+    }
+  };
 
   const handleSendMessage = () => {
     if (!activeConversation || !messageText.trim()) return;
@@ -65,9 +96,17 @@ export default function ChatPage() {
         </p>
       </div>
 
-      <div className="flex-1 flex gap-4 min-h-0">
+      <div className="flex-1 flex gap-4 min-h-0 relative">
         {/* Conversations List */}
-        <div className="w-80 flex-shrink-0 flex flex-col bg-surface-1 border border-border rounded-2xl overflow-hidden">
+        <AnimatePresence>
+          {showConversationList && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="absolute md:relative inset-0 md:inset-auto w-full md:w-80 flex-shrink-0 flex flex-col bg-surface-1 border border-border rounded-2xl overflow-hidden z-10 md:z-auto"
+            >
           {/* Search */}
           <div className="p-4 border-b border-border">
             <div className="relative">
@@ -95,7 +134,13 @@ export default function ChatPage() {
               conversations.map((conv) => (
                 <button
                   key={conv.id}
-                  onClick={() => setActiveConversation(conv)}
+                  onClick={() => {
+                    setActiveConversation(conv);
+                    // En móvil, ocultar lista al seleccionar conversación
+                    if (window.innerWidth < 768) {
+                      setShowConversationList(false);
+                    }
+                  }}
                   className={`w-full p-4 flex gap-3 border-b border-border hover:bg-surface-2 transition-colors text-left ${
                     activeConversation?.id === conv.id ? "bg-surface-2" : ""
                   }`}
@@ -140,15 +185,34 @@ export default function ChatPage() {
               ))
             )}
           </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-surface-1 border border-border rounded-2xl overflow-hidden">
+        <AnimatePresence>
+          {activeConversation && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+              className={`absolute md:relative inset-0 md:inset-auto w-full md:flex-1 flex flex-col bg-surface-1 border border-border rounded-2xl overflow-hidden z-10 md:z-auto ${
+                showConversationList ? "hidden md:flex" : ""
+              }`}
+            >
           {activeConversation ? (
             <>
               {/* Chat Header */}
               <div className="p-4 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                  {/* Botón volver (solo en móvil) */}
+                  <button
+                    onClick={handleBackToList}
+                    className="md:hidden p-2 rounded-lg hover:bg-surface-2 transition-colors -ml-2"
+                  >
+                    <ArrowLeft className="h-5 w-5 text-foreground-muted" />
+                  </button>
                   <div className="relative h-10 w-10 rounded-lg bg-surface-2 overflow-hidden">
                     {activeConversation.listing?.photos[0] ? (
                       <Image
@@ -306,7 +370,9 @@ export default function ChatPage() {
               </p>
             </div>
           )}
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

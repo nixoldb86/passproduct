@@ -235,26 +235,6 @@ export default function ListingDetailPage() {
               <div className="flex items-center gap-3">
                 <div
                   className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                    listing.hasVerifiedAccessories
-                      ? "bg-jade/15 text-jade"
-                      : "bg-surface-2 text-foreground-subtle"
-                  }`}
-                >
-                  <Tag className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-sm text-foreground">Accesorios verificados</p>
-                  <p className="text-xs text-foreground-subtle">
-                    {listing.hasVerifiedAccessories
-                      ? "Accesorios listados comprobados"
-                      : "No verificado"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center ${
                     listing.hasVerifiedIdentifier
                       ? "bg-jade/15 text-jade"
                       : "bg-surface-2 text-foreground-subtle"
@@ -520,6 +500,7 @@ export default function ListingDetailPage() {
           isOpen={isSellerModalOpen}
           onClose={() => setIsSellerModalOpen(false)}
           seller={listing.seller}
+          currentListingId={listing.id}
           onContact={() => {
             setIsSellerModalOpen(false);
             // TODO: Navigate to chat

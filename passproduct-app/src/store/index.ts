@@ -27,6 +27,21 @@ interface WalletState {
   fetchProducts: () => Promise<void>;
 }
 
+// Función para limpiar fotos base64 antes de guardar en localStorage
+const sanitizeProductForStorage = (product: Product): Product => {
+  return {
+    ...product,
+    // No guardar fotos base64 en localStorage (son muy grandes)
+    // Solo guardar URLs (empiezan con http)
+    photos: (product.photos || []).filter(p => p.startsWith("http")),
+    stockPhotos: (product.stockPhotos || []).filter(p => p.startsWith("http")),
+    // No guardar proofOfPurchaseUrl si es base64
+    proofOfPurchaseUrl: product.proofOfPurchaseUrl?.startsWith("http") 
+      ? product.proofOfPurchaseUrl 
+      : undefined,
+  };
+};
+
 export const useWalletStore = create<WalletState>()(
   persist(
     (set, get) => ({
@@ -66,7 +81,17 @@ export const useWalletStore = create<WalletState>()(
     }),
     {
       name: "passproduct-wallet", // Nombre en localStorage
-      partialize: (state) => ({ products: state.products }), // Solo persistir products
+      // Sanitizar productos antes de guardar para evitar QuotaExceededError
+      partialize: (state) => ({ 
+        products: state.products.map(sanitizeProductForStorage)
+      }),
+      // Manejar errores de storage
+      onRehydrateStorage: () => (state) => {
+        // Si hay error al cargar, usar productos mock
+        if (!state) {
+          console.warn("Error al cargar datos del localStorage, usando datos por defecto");
+        }
+      },
     }
   )
 );

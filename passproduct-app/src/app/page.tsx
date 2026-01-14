@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useUser } from "@clerk/nextjs";
 import {
@@ -52,9 +53,9 @@ const features = [
   },
   {
     icon: Fingerprint,
-    title: "Identificadores verificados",
+    title: "Identificaciones verificadas",
     description:
-      "IMEI, número de serie y códigos únicos guardados de forma segura.",
+      "Convierte el mercado de segunda mano en un mercado digital seguro y transparente.",
   },
   {
     icon: Camera,
@@ -144,7 +145,7 @@ export default function LandingPage() {
               <span className="text-accent">valor de reventa</span>
             </h1>
             <p className="mt-6 text-lg md:text-xl text-foreground-muted max-w-2xl mx-auto text-balance">
-              Guarda tus tickets de compras, conoce cuánto valen hoy y vende con
+              Guarda tus tickets de compra, conoce cuánto valen hoy y vende con
               confianza en nuestro marketplace verificado.
             </p>
 
@@ -230,7 +231,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Benefits */}
+      {/* Wallet Benefits */}
       <section className="py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -241,25 +242,86 @@ export default function LandingPage() {
               transition={{ duration: 0.6 }}
             >
               <h2 className="text-3xl md:text-4xl font-semibold text-foreground">
-                Marketplace con{" "}
-                <span className="text-jade">confianza superior</span>
+                Tu wallet de{" "}
+                <span className="text-accent">Productos</span>
               </h2>
               <p className="mt-4 text-foreground-muted">
-                Los anuncios nacen de datos verificados. Ticket, garantía e
-                identificador comprobados para una compraventa sin sorpresas.
+                Gestiona todos tus productos con total control. Tickets, garantías, valor de reventa y mucho más en un solo lugar.
               </p>
 
               <ul className="mt-8 space-y-3">
-                {benefits.map((benefit, i) => (
-                  <li key={i} className="flex items-center gap-3">
-                    <div className="h-5 w-5 rounded-full bg-jade/15 flex items-center justify-center flex-shrink-0">
-                      <Check className="h-3 w-3 text-jade" />
-                    </div>
-                    <span className="text-foreground-muted text-sm">
-                      {benefit}
-                    </span>
-                  </li>
-                ))}
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-accent" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Tickets digitalizados</strong> — Nunca más pierdas un comprobante de compra
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-accent" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Alertas de garantía</strong> — Te avisamos antes de que expire
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-accent" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Valor de reventa actualizado</strong> — Conoce cuánto valen tus productos hoy
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-accent" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Control de accesorios</strong> — Registra cables, cargadores y extras
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-accent" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Patrimonio en un vistazo</strong> — Visualiza el valor total de todos tus productos
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-accent" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Registro de seguros adicionales</strong> — AppleCare+, seguros de rotura, etc.
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-accent" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Manuales unificados</strong> — Accede a todos los manuales en un solo lugar
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-accent" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Alertas de mejor momento para vender</strong> — Te avisamos cuando el precio es óptimo
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-accent" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Galería de fotos</strong> — Documenta el estado actual de cada producto
+                  </span>
+                </li>
               </ul>
 
               <div className="mt-8">
@@ -271,7 +333,7 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Mock card */}
+            {/* Wallet Mock Card */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -280,31 +342,231 @@ export default function LandingPage() {
               className="relative"
             >
               <div className="absolute inset-0 bg-accent/10 rounded-3xl blur-3xl" />
-              <div className="relative bg-surface-1 border border-border rounded-2xl p-6 shadow-lg">
-                <div className="aspect-[4/3] bg-surface-2 rounded-xl mb-4 flex items-center justify-center">
-                  <span className="text-4xl">📱</span>
-                </div>
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h4 className="font-semibold text-foreground">
-                      iPhone 15 Pro
-                    </h4>
-                    <p className="text-sm text-foreground-muted">
-                      256GB Titanio Natural
-                    </p>
+              <div className="relative bg-surface-1 border border-border rounded-2xl overflow-hidden shadow-lg">
+                {/* Image section */}
+                <div className="relative aspect-[4/3] bg-gradient-to-br from-surface-2 to-surface-1 overflow-hidden">
+                  <Image
+                    src="https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&h=600&fit=crop"
+                    alt="iPhone 15 Pro"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-blue-500/90 text-white backdrop-blur-sm">
+                      📱 Smartphones
+                    </span>
                   </div>
-                  <p className="text-lg font-semibold text-foreground tabular-nums">
-                    1.050 €
-                  </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-jade/15 text-jade border border-jade/20">
-                    ✓ Compra verificada
-                  </span>
-                  <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-accent/15 text-accent border border-accent/20">
-                    ✓ Garantía hasta 2026
-                  </span>
+
+                {/* Content */}
+                <div className="p-4">
+                  <div className="mb-3">
+                    <h4 className="font-semibold text-foreground">iPhone 15 Pro</h4>
+                    <p className="text-sm text-foreground-muted">256GB Titanio Natural</p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-jade/15 text-jade border border-jade/20">
+                      ✓ Verificado
+                    </span>
+                    <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20">
+                      ID verificado
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-jade/10 text-jade mb-3">
+                    <Shield className="h-4 w-4" />
+                    <span className="text-sm font-medium">18 meses</span>
+                    <span className="text-xs opacity-70 ml-auto">hasta sep 2026</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 text-blue-400 mb-3">
+                    <Shield className="h-4 w-4" />
+                    <span className="text-sm font-medium">Seguro: 12 meses</span>
+                    <span className="text-xs opacity-70">(AppleCare+)</span>
+                  </div>
+
+                  <div className="flex items-end justify-between pt-3 border-t border-border">
+                    <div>
+                      <p className="text-xs text-foreground-subtle">Valor estimado</p>
+                      <p className="text-xl font-semibold text-foreground tabular-nums">1.050 €</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-foreground-subtle">Compra: 1.329 €</p>
+                      <p className="text-xs text-error">-21%</p>
+                    </div>
+                  </div>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Marketplace Benefits */}
+      <section className="py-20 px-4 bg-surface-1/50">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Marketplace Mock Card */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="relative order-2 md:order-1"
+            >
+              <div className="absolute inset-0 bg-jade/10 rounded-3xl blur-3xl" />
+              <div className="relative bg-surface-1 border border-border rounded-2xl overflow-hidden shadow-lg">
+                {/* Image section */}
+                <div className="relative aspect-[4/3] bg-gradient-to-br from-surface-2 to-surface-1 overflow-hidden">
+                  <Image
+                    src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&h=600&fit=crop"
+                    alt="MacBook Air"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-amber-500/90 text-white backdrop-blur-sm">
+                      ⭐ Destacado
+                    </span>
+                  </div>
+                  <div className="absolute bottom-3 left-3 flex items-center gap-1 px-2 py-1 rounded-full bg-black/60 text-white text-xs backdrop-blur-sm">
+                    <span>📍</span> Madrid
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 className="font-semibold text-foreground">MacBook Air M2 13" 512GB - Midnight</h4>
+                      <p className="text-sm text-foreground-muted">💻 Portátiles</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-jade/15 text-jade border border-jade/20 flex items-center gap-1">
+                      <Check className="h-3 w-3" /> Compra verificada
+                    </span>
+                    <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-accent/15 text-accent border border-accent/20 flex items-center gap-1">
+                      <Shield className="h-3 w-3" /> Garantía activa
+                    </span>
+                    <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20">
+                      ID verificado
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-2 mb-4">
+                    <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center text-lg">
+                      👤
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">Carlos G.</p>
+                      <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                        <span className="text-amber-500">★ 4.9</span>
+                        <span>•</span>
+                        <span>47 ventas</span>
+                        <span>•</span>
+                        <span className="text-jade">✓ Verificado</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-jade/5 border border-jade/20">
+                    <div>
+                      <p className="text-2xl font-bold text-foreground tabular-nums">1.149 €</p>
+                      <p className="text-xs text-jade flex items-center gap-1">
+                        <Shield className="h-3 w-3" /> Protección comprador incluida
+                      </p>
+                    </div>
+                    <div className="px-4 py-2 rounded-lg bg-accent text-white font-medium text-sm">
+                      Comprar
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="order-1 md:order-2"
+            >
+              <h2 className="text-3xl md:text-4xl font-semibold text-foreground">
+                Marketplace con{" "}
+                <span className="text-jade">confianza superior</span>
+              </h2>
+              <p className="mt-4 text-foreground-muted">
+                Los anuncios nacen de datos verificados. Ticket, garantía e identificador comprobados para una compraventa sin sorpresas.
+              </p>
+
+              <ul className="mt-8 space-y-3">
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-jade/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-jade" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Siempre con factura</strong> — Todos los productos tienen ticket verificado, más legítimos que comprar a ciegas
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-jade/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-jade" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Vendedores verificados</strong> — Identidades siempre comprobadas para eliminar fraude
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-jade/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-jade" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Compradores verificados</strong> — También los compradores están verificados para eliminar cualquier fricción de fraude
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-jade/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-jade" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Anuncios verificados</strong> — Ticket, garantía e identificador comprobados
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-jade/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-jade" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Pago protegido</strong> — El dinero se retiene hasta confirmar entrega
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-jade/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-jade" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Protección comprador</strong> — Incluida en cada compra sin coste adicional
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="h-5 w-5 rounded-full bg-jade/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-3 w-3 text-jade" />
+                  </div>
+                  <span className="text-foreground-muted text-sm">
+                    <strong className="text-foreground">Vende más rápido</strong> — Badges de verificación aumentan la confianza
+                  </span>
+                </li>
+              </ul>
+
+              <div className="mt-8">
+                <Link href="/marketplace">
+                  <Button variant="secondary" rightIcon={<ArrowRight className="h-4 w-4" />}>
+                    Explorar marketplace
+                  </Button>
+                </Link>
               </div>
             </motion.div>
           </div>

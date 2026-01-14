@@ -143,13 +143,14 @@ export default function MarketplacePage() {
         </div>
 
         {/* Filter & Sort */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="secondary"
             leftIcon={<SlidersHorizontal className="h-4 w-4" />}
             onClick={() => setShowFilters(!showFilters)}
+            className="flex-shrink-0"
           >
-            Filtros
+            <span className="hidden sm:inline">Filtros</span>
             {activeFilterCount > 0 && (
               <span className="ml-1 h-5 w-5 rounded-full bg-accent text-[10px] text-[#0C0C0E] flex items-center justify-center">
                 {activeFilterCount}
@@ -163,43 +164,43 @@ export default function MarketplacePage() {
             onChange={(e) =>
               handleFilterChange("sortBy", e.target.value as FilterOptions["sortBy"])
             }
-            className="w-44"
+            className="w-32 sm:w-44 flex-shrink-0"
           />
 
           {/* View mode toggle */}
-          <div className="hidden sm:flex items-center gap-1 p-1 bg-surface-1 border border-border rounded-lg">
+          <div className="flex items-center gap-1 p-1 bg-surface-1 border border-border rounded-lg flex-shrink-0">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
                 viewMode === "grid"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
               }`}
               title="Vista mosaico"
             >
-              <Grid3X3 className="h-4 w-4" />
+              <Grid3X3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
                 viewMode === "list"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
               }`}
               title="Vista lista"
             >
-              <List className="h-4 w-4" />
+              <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
             <button
               onClick={() => setViewMode("map")}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
                 viewMode === "map"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
               }`}
               title="Vista mapa"
             >
-              <Map className="h-4 w-4" />
+              <Map className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
           </div>
         </div>
