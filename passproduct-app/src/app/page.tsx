@@ -144,7 +144,7 @@ export default function LandingPage() {
               <span className="text-accent">valor de reventa</span>
             </h1>
             <p className="mt-6 text-lg md:text-xl text-foreground-muted max-w-2xl mx-auto text-balance">
-              Guarda tus compras, conoce cuánto valen hoy y vende con
+              Guarda tus tickets de compras, conoce cuánto valen hoy y vende con
               confianza en nuestro marketplace verificado.
             </p>
 

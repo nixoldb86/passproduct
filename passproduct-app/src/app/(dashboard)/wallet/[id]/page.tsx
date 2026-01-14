@@ -27,6 +27,8 @@ import {
   Clock,
   AlertTriangle,
   Info,
+  ImageOff,
+  Camera,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useWalletStore } from "@/store";
@@ -44,7 +46,7 @@ import { Product, CONDITION_LABELS } from "@/types";
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { products } = useWalletStore();
+  const { products, updateProduct } = useWalletStore();
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -56,6 +58,36 @@ export default function ProductDetailPage() {
     setProduct(found || null);
     setIsLoading(false);
   }, [params.id, products]);
+
+  // Buscar imágenes de stock si el producto no tiene fotos
+  useEffect(() => {
+    if (!product) return;
+    
+    const hasPhotos = product.photos && product.photos.length > 0;
+    const hasStockPhotos = product.stockPhotos && product.stockPhotos.length > 0;
+    
+    if (!hasPhotos && !hasStockPhotos && product.brand && product.model) {
+      // Buscar imágenes de stock para este producto
+      fetch("/api/enrich-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brand: product.brand,
+          model: product.model,
+          variant: product.variant,
+          needsImages: true,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data?.stockImages?.length > 0) {
+            // Actualizar producto con las imágenes de stock
+            updateProduct(product.id, { stockPhotos: data.data.stockImages });
+          }
+        })
+        .catch(console.error);
+    }
+  }, [product?.id, product?.photos, product?.stockPhotos, product?.brand, product?.model, product?.variant, updateProduct]);
 
   if (isLoading) {
     return (
@@ -91,6 +123,16 @@ export default function ProductDetailPage() {
     ? getPriceRecommendations(product.estimatedValue)
     : null;
 
+  // Combinar fotos reales y de stock para galería
+  const hasRealPhotos = product.photos && product.photos.length > 0;
+  const hasStockPhotos = product.stockPhotos && product.stockPhotos.length > 0;
+  const allPhotos: { url: string; isStock: boolean }[] = [
+    ...(product.photos || []).map(url => ({ url, isStock: false })),
+    ...(product.stockPhotos || []).map(url => ({ url, isStock: true })),
+  ];
+  const currentPhoto = allPhotos[selectedImage];
+  const needsRealPhotos = !hasRealPhotos && hasStockPhotos;
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Back button */}
@@ -111,14 +153,22 @@ export default function ProductDetailPage() {
         >
           {/* Main image */}
           <div className="relative aspect-square rounded-2xl bg-surface-1 border border-border overflow-hidden mb-4">
-            {product.photos[selectedImage] ? (
-              <Image
-                src={product.photos[selectedImage]}
-                alt={`${product.brand} ${product.model}`}
-                fill
-                className="object-cover"
-                priority
-              />
+            {currentPhoto ? (
+              <>
+                <Image
+                  src={currentPhoto.url}
+                  alt={`${product.brand} ${product.model}`}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                {currentPhoto.isStock && (
+                  <div className="absolute bottom-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/70 text-white text-xs">
+                    <ImageOff className="h-3.5 w-3.5" />
+                    Imagen de referencia
+                  </div>
+                )}
+              </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-6xl">{product.category?.icon || "📦"}</span>
@@ -126,10 +176,25 @@ export default function ProductDetailPage() {
             )}
           </div>
 
+          {/* Aviso: se necesitan fotos reales para vender */}
+          {needsRealPhotos && (
+            <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <div className="flex items-start gap-2">
+                <Camera className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-amber-600">Foto de referencia</p>
+                  <p className="text-xs text-amber-500/80 mt-0.5">
+                    Para vender este producto necesitarás añadir fotos reales.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Thumbnails */}
-          {product.photos.length > 1 && (
+          {allPhotos.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-2">
-              {product.photos.map((photo, i) => (
+              {allPhotos.map((photo, i) => (
                 <button
                   key={i}
                   onClick={() => setSelectedImage(i)}
@@ -140,11 +205,16 @@ export default function ProductDetailPage() {
                   }`}
                 >
                   <Image
-                    src={photo}
+                    src={photo.url}
                     alt={`Thumbnail ${i + 1}`}
                     fill
                     className="object-cover"
                   />
+                  {photo.isStock && (
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <ImageOff className="h-3 w-3 text-white" />
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -378,16 +448,31 @@ export default function ProductDetailPage() {
 
           {/* Warranty Status Card */}
           {product.warrantyEndDate && (
-            <Card padding="md" className={daysUntilExpiry && daysUntilExpiry < 60 
-              ? "border-warning/30 bg-warning/5" 
-              : "border-jade/30 bg-jade/5"
+            <Card padding="md" className={
+              daysUntilExpiry !== null && daysUntilExpiry <= 0
+                ? "border-error/30 bg-error/5" // Expirada
+                : daysUntilExpiry && daysUntilExpiry < 60 
+                  ? "border-warning/30 bg-warning/5" // Próxima a expirar
+                  : "border-jade/30 bg-jade/5" // Válida
             }>
               <div className="flex items-start justify-between mb-3">
                 <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Shield className={`h-4 w-4 ${daysUntilExpiry && daysUntilExpiry < 60 ? "text-warning" : "text-jade"}`} />
+                  <Shield className={`h-4 w-4 ${
+                    daysUntilExpiry !== null && daysUntilExpiry <= 0 
+                      ? "text-error" 
+                      : daysUntilExpiry && daysUntilExpiry < 60 
+                        ? "text-warning" 
+                        : "text-jade"
+                  }`} />
                   Estado de la garantía
                 </h3>
-                {daysUntilExpiry && daysUntilExpiry < 60 && (
+                {daysUntilExpiry !== null && daysUntilExpiry <= 0 && (
+                  <Badge variant="error" size="sm">
+                    <AlertTriangle className="h-3 w-3" />
+                    Expirada
+                  </Badge>
+                )}
+                {daysUntilExpiry && daysUntilExpiry > 0 && daysUntilExpiry < 60 && (
                   <Badge variant="warning" size="sm">
                     <AlertTriangle className="h-3 w-3" />
                     Próxima a expirar
@@ -405,7 +490,13 @@ export default function ProductDetailPage() {
                 {daysUntilExpiry !== null && (
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-foreground-muted">Tiempo restante</span>
-                    <span className={`text-sm font-medium ${daysUntilExpiry < 60 ? "text-warning" : "text-jade"}`}>
+                    <span className={`text-sm font-medium ${
+                      daysUntilExpiry <= 0 
+                        ? "text-error" 
+                        : daysUntilExpiry < 60 
+                          ? "text-warning" 
+                          : "text-jade"
+                    }`}>
                       {daysUntilExpiry > 0 
                         ? `${daysUntilExpiry} días` 
                         : "Expirada"}
@@ -525,8 +616,12 @@ export default function ProductDetailPage() {
           {/* Actions */}
           <div className="flex flex-col gap-3 pt-4">
             <Link href={`/sell?productId=${product.id}`}>
-              <Button className="w-full" size="lg">
-                Vender en PassProduct
+              <Button 
+                className="w-full" 
+                size="lg"
+                leftIcon={needsRealPhotos ? <Camera className="h-4 w-4" /> : undefined}
+              >
+                {needsRealPhotos ? "Añadir fotos y vender" : "Vender en PassProduct"}
               </Button>
             </Link>
             <Button variant="secondary" size="lg" leftIcon={<Bell className="h-4 w-4" />}>

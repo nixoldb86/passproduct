@@ -10,8 +10,9 @@ import {
   Eye,
   Heart,
   Sparkles,
+  Star,
 } from "lucide-react";
-import { Listing } from "@/types";
+import { Listing, SellerProfile } from "@/types";
 import { Card, Badge } from "@/components/ui";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -19,10 +20,19 @@ import { cn } from "@/lib/utils";
 interface ListingCardProps {
   listing: Listing;
   viewMode?: "grid" | "list";
+  onSellerClick?: (seller: SellerProfile) => void;
 }
 
-export function ListingCard({ listing, viewMode = "grid" }: ListingCardProps) {
+export function ListingCard({ listing, viewMode = "grid", onSellerClick }: ListingCardProps) {
   const isGrid = viewMode === "grid";
+
+  const handleSellerClick = (e: React.MouseEvent) => {
+    if (listing.seller && onSellerClick) {
+      e.preventDefault();
+      e.stopPropagation();
+      onSellerClick(listing.seller);
+    }
+  };
 
   return (
     <Link href={`/marketplace/${listing.id}`}>
@@ -105,6 +115,30 @@ export function ListingCard({ listing, viewMode = "grid" }: ListingCardProps) {
                 </Badge>
               )}
             </div>
+
+            {/* Seller info */}
+            {listing.seller && (
+              <button
+                onClick={handleSellerClick}
+                className="flex items-center gap-2 mb-3 hover:bg-surface-1 rounded-lg p-1 -ml-1 transition-colors"
+              >
+                <div className="relative h-6 w-6 rounded-full overflow-hidden flex-shrink-0">
+                  <Image
+                    src={listing.seller.avatarUrl}
+                    alt={listing.seller.firstName}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <span className="text-xs text-foreground-muted truncate">
+                  {listing.seller.firstName} {listing.seller.lastName.charAt(0)}.
+                </span>
+                <div className="flex items-center gap-0.5">
+                  <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                  <span className="text-xs text-foreground-muted">{listing.seller.rating.toFixed(1)}</span>
+                </div>
+              </button>
+            )}
 
             {/* Location & Shipping */}
             <div className="flex items-center gap-3 text-xs text-foreground-subtle mb-3">

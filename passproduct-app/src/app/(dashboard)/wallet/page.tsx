@@ -5,14 +5,30 @@ import { Plus, Filter, SlidersHorizontal, TrendingUp, Package } from "lucide-rea
 import { motion, AnimatePresence } from "framer-motion";
 import { useWalletStore, useUIStore } from "@/store";
 import { Button, Card, SkeletonCard } from "@/components/ui";
-import { ProductCard } from "@/components/wallet/product-card";
+import { ProductCard, EditProductModal } from "@/components/wallet";
 import { formatPrice } from "@/lib/utils";
 import { mockProducts, calculateWalletValue } from "@/lib/mock-data";
+import { Product } from "@/types";
 
 export default function WalletPage() {
-  const { products, isLoading, fetchProducts } = useWalletStore();
+  const { products, isLoading, fetchProducts, deleteProduct, updateProduct } = useWalletStore();
   const { setAddProductModalOpen } = useUIStore();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteProduct = (productId: string) => {
+    deleteProduct(productId);
+  };
+
+  const handleSaveProduct = (productId: string, updates: Partial<Product>) => {
+    updateProduct(productId, updates);
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -146,7 +162,11 @@ export default function WalletPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
               >
-                <ProductCard product={product} />
+                <ProductCard
+                  product={product}
+                  onEdit={handleEditProduct}
+                  onDelete={handleDeleteProduct}
+                />
               </motion.div>
             ))
           ) : (
@@ -177,6 +197,17 @@ export default function WalletPage() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Edit Product Modal */}
+      <EditProductModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingProduct(null);
+        }}
+        product={editingProduct}
+        onSave={handleSaveProduct}
+      />
     </div>
   );
 }

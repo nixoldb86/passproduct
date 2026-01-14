@@ -43,6 +43,30 @@ export interface User {
   updatedAt: Date;
 }
 
+export interface SellerProfile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string;
+  location: string;
+  // Estadísticas
+  totalSales: number;
+  totalProducts: number;
+  rating: number; // 0-5
+  reviewCount: number;
+  responseTime: string; // ej: "< 1 hora", "< 24 horas"
+  responseRate: number; // 0-100%
+  // Verificaciones
+  isVerified: boolean;
+  isIdentityVerified: boolean;
+  hasPhoneVerified: boolean;
+  // Fechas
+  memberSince: Date;
+  lastActive: Date;
+  // Bio
+  bio?: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -93,6 +117,8 @@ export interface Product {
   serialHash?: string;
   serialLast4?: string;
   photos: string[];
+  // Imágenes de stock (solo visualización, NO válidas para venta)
+  stockPhotos?: string[];
   accessories?: Record<string, boolean>;
   attributes?: Record<string, unknown>;
   estimatedValue?: number;
@@ -109,7 +135,7 @@ export interface Listing {
   productId?: string;
   product?: Product;
   sellerId: string;
-  seller?: User;
+  seller?: SellerProfile;
   categoryId: string;
   category?: Category;
   title: string;
@@ -232,12 +258,14 @@ export interface PriceRecommendation {
 
 export interface FilterOptions {
   categoryId?: string;
+  categoryGroupId?: string;
   minPrice?: number;
   maxPrice?: number;
   condition?: ProductCondition[];
   location?: string;
   shippingEnabled?: boolean;
   hasVerifiedPurchase?: boolean;
+  hasWarranty?: boolean;
   sortBy?: "price_asc" | "price_desc" | "date_desc" | "date_asc";
 }
 

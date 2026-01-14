@@ -389,3 +389,16 @@ body {
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-lg) !important;
 }
+
+/* ==========================================
+   UTILITIES
+   ========================================== */
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

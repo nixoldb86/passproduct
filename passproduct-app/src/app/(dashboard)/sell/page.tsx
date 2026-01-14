@@ -49,22 +49,25 @@ function SellPageContent() {
 
   useEffect(() => {
     if (productId) {
-      const product = getProductById(productId);
+      // Buscar primero en el store (productos del usuario), luego en mock-data
+      const product = products.find(p => p.id === productId) || getProductById(productId);
       if (product) {
         setSelectedProduct(product);
+        // SOLO usar fotos reales (stockPhotos NO son válidas para venta)
+        const realPhotos = product.photos?.length > 0 ? product.photos : [];
         setFormData((prev) => ({
           ...prev,
           title: `${product.brand} ${product.model}${product.variant ? ` - ${product.variant}` : ""}`,
           description: generateDescription(product),
-          photos: product.photos,
+          photos: realPhotos, // Solo fotos reales
           price: product.estimatedValue
             ? getPriceRecommendations(product.estimatedValue).fair.toString()
             : "",
         }));
-        setStep(2); // Skip product selection
+        setStep(2); // Ya sabemos qué producto es, ir directo a fotos
       }
     }
-  }, [productId]);
+  }, [productId, products]);
 
   const updateFormData = (key: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [key]: value }));

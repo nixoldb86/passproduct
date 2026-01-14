@@ -1,33 +1,89 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, Tag, MoreVertical } from "lucide-react";
+import { Calendar, Tag, MoreVertical, ImageOff, Pencil, Trash2 } from "lucide-react";
 import { Product, CONDITION_LABELS } from "@/types";
 import { Card, Badge } from "@/components/ui";
 import { formatPrice, formatDate, isWarrantyValid, getDaysUntilWarrantyExpires } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
+  onEdit?: (product: Product) => void;
+  onDelete?: (productId: string) => void;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  
   const warrantyValid = isWarrantyValid(product.warrantyEndDate || null);
   const daysUntilExpiry = getDaysUntilWarrantyExpires(product.warrantyEndDate || null);
+
+  // Determinar imagen a mostrar: real > stock > placeholder
+  const hasRealPhoto = product.photos && product.photos.length > 0 && product.photos[0];
+  const hasStockPhoto = product.stockPhotos && product.stockPhotos.length > 0;
+  const displayImage = hasRealPhoto ? product.photos[0] : (hasStockPhoto ? product.stockPhotos![0] : null);
+  const isStockImage = !hasRealPhoto && hasStockPhoto;
+
+  // Cerrar menú al hacer clic fuera
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMenu]);
+
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowMenu(!showMenu);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowMenu(false);
+    onEdit?.(product);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowMenu(false);
+    if (confirm(`¿Estás seguro de eliminar "${product.brand} ${product.model}"?`)) {
+      onDelete?.(product.id);
+    }
+  };
 
   return (
     <Link href={`/wallet/${product.id}`}>
       <Card variant="interactive" padding="none" className="group overflow-hidden">
         {/* Image */}
         <div className="relative aspect-[4/3] bg-surface-2 overflow-hidden">
-          {product.photos[0] ? (
-            <Image
-              src={product.photos[0]}
-              alt={`${product.brand} ${product.model}`}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
+          {displayImage ? (
+            <>
+              <Image
+                src={displayImage}
+                alt={`${product.brand} ${product.model}`}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              />
+              {/* Badge para imagen de referencia */}
+              {isStockImage && (
+                <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded bg-black/60 text-white text-[10px]">
+                  <ImageOff className="h-3 w-3" />
+                  Referencia
+                </div>
+              )}
+            </>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-4xl">{product.category?.icon || "📦"}</span>
@@ -44,15 +100,34 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
 
           {/* More options */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              // TODO: Show options menu
-            }}
-            className="absolute top-3 right-3 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <MoreVertical className="h-4 w-4" />
-          </button>
+          <div className="absolute top-3 right-3" ref={menuRef}>
+            <button
+              onClick={handleMenuClick}
+              className="p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+            
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <div className="absolute right-0 mt-1 w-36 bg-surface-1 border border-border rounded-lg shadow-lg overflow-hidden z-50">
+                <button
+                  onClick={handleEdit}
+                  className="w-full px-3 py-2.5 text-sm text-left flex items-center gap-2 hover:bg-surface-2 transition-colors text-foreground"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="w-full px-3 py-2.5 text-sm text-left flex items-center gap-2 hover:bg-error/10 transition-colors text-error"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Content */}

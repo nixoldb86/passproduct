@@ -6,115 +6,189 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Categorías compactas (slug: ejemplos)
-const CATEGORIES = "smartphones,tablets,laptops,desktops,monitors,consoles,audio,wearables,cameras,tv,projectors,appliances-large,appliances-small,climate,ebikes,scooters,drones,gaming,networking,storage,peripherals,other";
+// Categorías disponibles (ampliadas para cualquier producto)
+const CATEGORIES = `smartphones,tablets,laptops,desktops,monitors,consoles,audio,wearables,cameras,tv,projectors,appliances-large,appliances-small,climate,ebikes,scooters,drones,gaming,networking,storage,peripherals,baby-strollers,baby-car-seats,baby-furniture,toys,furniture,garden,lighting,home-decor,fitness,bikes,sports,outdoor,fashion-luxury,watches-jewelry,bags,instruments,music-equipment,tools,power-tools,motorcycles,car-parts,collectibles,books-media,other`;
 
-// Prompt compacto para imágenes - captura códigos de referencia
-const SYSTEM_PROMPT_IMAGE = `Extrae info del producto en la imagen. JSON sin markdown:
-{"brand":"str|null","model":"str|null","variant":"str|null","category":"slug","purchasePrice":num|null,"purchaseDate":"YYYY-MM-DD|null","purchaseStore":"str|null","serialNumber":"4 últimos|null","refCodes":["todos los códigos"],"rawDescription":"descripción exacta del ticket","confidence":"high|medium|low","imageType":"product|invoice"}
+// Prompt unificado para imágenes de facturas/tickets - detecta múltiples productos
+const SYSTEM_PROMPT_IMAGE = `Analiza la imagen de factura/ticket y extrae TODOS los productos. JSON sin markdown:
+
+Si es una FOTO DE PRODUCTO (no factura):
+{"imageType":"product","multipleProducts":false,"products":[{"brand":"str|null","model":"str|null","variant":"str|null","category":"slug","purchasePrice":null,"lineDescription":"descripción del producto","refCodes":[]}],"purchaseDate":null,"purchaseStore":null,"confidence":"high|medium|low"}
+
+Si es una FACTURA/TICKET con productos:
+{"imageType":"invoice","multipleProducts":bool,"products":[{"brand":"str|null","model":"str|null","variant":"str|null","category":"slug","purchasePrice":num|null,"lineDescription":"descripción exacta de la línea","refCodes":["TODOS los códigos de esta línea"]}],"purchaseDate":"YYYY-MM-DD","purchaseStore":"str|null","confidence":"high|medium|low"}
 
 Categorías: ${CATEGORIES}
+
 REGLAS CRÍTICAS:
-- brand/model: SOLO si es una marca/modelo REAL (Apple, Samsung, Dyson V15...). NO códigos numéricos.
-- Si el ticket dice "ASPIRADOR RECARGABLE" sin marca, brand=null, model=null
-- refCodes: TODOS los códigos encontrados (Modelo:446986-01, Código:07746288500, SKU, EAN, Ref)
-- rawDescription: copiar descripción exacta del ticket (ej: "ASPIRADOR RECARGABLE")
+- purchaseDate: OBLIGATORIO en facturas. Buscar "Fecha", "Date", día/mes/año. Formato YYYY-MM-DD
+- multipleProducts: true si hay MÁS DE 1 producto en la factura
+- products: array con CADA producto encontrado (puede ser 1 o varios)
+- brand/model: SOLO marcas/modelos REALES (Apple, Samsung, Dyson V15...). NO códigos numéricos.
+- Si dice "ASPIRADOR RECARGABLE" sin marca, brand=null, model=null
+- refCodes: TODOS los códigos de cada línea (Modelo:446986-01, Código:07746288500, SKU, EAN, Dpto, Ref)
+- lineDescription: copiar descripción EXACTA del ticket para cada producto
+- purchasePrice: precio de CADA producto individual
+- Ignora líneas de envío, seguros, descuentos, IVA - solo productos físicos >20€
 - Solo JSON`;
 
-// Prompt compacto para texto/PDF - captura códigos de referencia  
-const SYSTEM_PROMPT_TEXT = `Extrae productos de factura. JSON sin markdown:
-{"multipleProducts":bool,"products":[{"brand":"str|null","model":"str|null","variant":"str|null","category":"slug","purchasePrice":num|null,"lineDescription":"descripción exacta","refCodes":["todos los códigos de esta línea"]}],"purchaseDate":"YYYY-MM-DD|null","purchaseStore":"str|null","confidence":"high|medium|low"}
+// Prompt para texto/PDF - igual formato que imágenes
+const SYSTEM_PROMPT_TEXT = `Extrae TODOS los productos de la factura. JSON sin markdown:
+{"imageType":"invoice","multipleProducts":bool,"products":[{"brand":"str|null","model":"str|null","variant":"str|null","category":"slug","purchasePrice":num|null,"lineDescription":"descripción exacta","refCodes":["todos los códigos de esta línea"]}],"purchaseDate":"YYYY-MM-DD","purchaseStore":"str|null","confidence":"high|medium|low"}
 
 Categorías: ${CATEGORIES}
+
 REGLAS CRÍTICAS:
-- brand/model: SOLO marcas/modelos REALES. NO poner códigos como "446986-01" en model.
+- purchaseDate: OBLIGATORIO. Buscar "Fecha", "Date", día/mes/año en el texto. Formato YYYY-MM-DD
+- multipleProducts: true si hay MÁS DE 1 producto
+- products: array con CADA producto (1 o más)
+- brand/model: SOLO marcas/modelos REALES. NO códigos como "446986-01" en model.
 - Si dice "ASPIRADOR RECARGABLE" sin marca específica, brand=null, model=null
 - refCodes: CAPTURAR TODO (Dpto:0077, Código:07746288500, Modelo:446986-01, SKU, EAN, Ref)
 - lineDescription: descripción exacta del ticket
 - Ignora envíos/seguros/servicios, solo productos >20€
 - Solo JSON`;
 
-// Función para buscar producto por código de referencia
-async function searchProductByRef(refCodes: string[], description: string, store: string, model?: string): Promise<{ brand: string; model: string; variant: string | null; category: string } | null> {
+// Función para buscar producto por código de referencia usando búsqueda web
+async function searchProductByRef(refCodes: string[], description: string, store: string, model?: string, price?: number): Promise<{ brand: string; model: string; variant: string | null; category: string } | null> {
   // Combinar refCodes con el modelo si parece ser un código
   const allCodes = [...(refCodes || [])];
   if (model && /^\d{5,}|^\d+-\d+$|^[A-Z0-9]{6,}$/i.test(model)) {
     allCodes.push(model);
   }
   
-  if (allCodes.length === 0) return null;
+  if (allCodes.length === 0 && !description) return null;
   
-  // Construir query de búsqueda optimizada
-  const searchTerms = [
-    ...allCodes,
+  // Construir query de búsqueda
+  const searchQuery = [
+    ...allCodes.slice(0, 2), // Primeros 2 códigos
     description,
     store,
-    "especificaciones producto"
   ].filter(Boolean).join(" ");
   
-  console.log(`Búsqueda web: "${searchTerms}"`);
+  console.log(`🔍 Búsqueda web: "${searchQuery}"`);
   
   try {
-    // Intentar con Tavily primero
-    const tavilyKey = process.env.TAVILY_API_KEY;
     let searchResults = "";
     
-    if (tavilyKey) {
-      const tavilyResponse = await fetch("https://api.tavily.com/search", {
+    // Opción 1: Serper.dev (recomendado, gratuito hasta 2500/mes)
+    const serperKey = process.env.SERPER_API_KEY;
+    if (serperKey) {
+      console.log("Usando Serper.dev para búsqueda...");
+      const serperResponse = await fetch("https://google.serper.dev/search", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "X-API-KEY": serperKey,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          api_key: tavilyKey,
-          query: `${searchTerms} producto especificaciones`,
-          search_depth: "basic",
-          max_results: 3,
+          q: searchQuery,
+          gl: "es",
+          hl: "es",
+          num: 5,
         }),
       });
       
-      if (tavilyResponse.ok) {
-        const tavilyData = await tavilyResponse.json();
-        searchResults = tavilyData.results
-          ?.map((r: { title: string; content: string }) => `${r.title}: ${r.content}`)
+      if (serperResponse.ok) {
+        const serperData = await serperResponse.json();
+        searchResults = serperData.organic
+          ?.map((r: { title: string; snippet: string }) => `${r.title}: ${r.snippet}`)
           .join("\n") || "";
-      }
-    }
-    
-    // Fallback a DuckDuckGo si no hay resultados
-    if (!searchResults) {
-      const ddgResponse = await fetch(
-        `https://api.duckduckgo.com/?q=${encodeURIComponent(searchTerms)}&format=json&no_html=1`
-      );
-      if (ddgResponse.ok) {
-        const ddgData = await ddgResponse.json();
-        if (ddgData.Abstract) {
-          searchResults = ddgData.Abstract;
+        
+        // Incluir también el knowledge graph si existe
+        if (serperData.knowledgeGraph?.description) {
+          searchResults = `${serperData.knowledgeGraph.title}: ${serperData.knowledgeGraph.description}\n${searchResults}`;
         }
       }
     }
     
-    if (!searchResults) return null;
+    // Opción 2: Tavily (alternativa)
+    if (!searchResults) {
+      const tavilyKey = process.env.TAVILY_API_KEY;
+      if (tavilyKey) {
+        console.log("Usando Tavily para búsqueda...");
+        const tavilyResponse = await fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_key: tavilyKey,
+            query: searchQuery,
+            search_depth: "basic",
+            max_results: 5,
+          }),
+        });
+        
+        if (tavilyResponse.ok) {
+          const tavilyData = await tavilyResponse.json();
+          searchResults = tavilyData.results
+            ?.map((r: { title: string; content: string }) => `${r.title}: ${r.content}`)
+            .join("\n") || "";
+        }
+      }
+    }
     
-    // Usar IA para extraer marca y modelo de los resultados
+    // Si no hay API de búsqueda configurada
+    if (!searchResults) {
+      console.warn("⚠️ No hay API de búsqueda configurada (SERPER_API_KEY o TAVILY_API_KEY)");
+      console.warn("Para identificar productos por referencia, configura una de estas APIs en .env.local");
+      
+      // Fallback: intentar con GPT y su conocimiento (menos preciso)
+      const fallbackCompletion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `Intenta identificar el producto basándote en tu conocimiento. JSON sin markdown:
+{"brand":"str|null","model":"str|null","variant":"str|null","category":"slug"}
+Categorías: ${CATEGORIES}
+Si no puedes identificar con certeza, devuelve nulls.`
+          },
+          {
+            role: "user",
+            content: `Producto: ${description}, Tienda: ${store}, Precio: ${price}€, Códigos: ${allCodes.join(", ")}`
+          }
+        ],
+        max_tokens: 100,
+        temperature: 0,
+      });
+      
+      const fallbackText = fallbackCompletion.choices[0]?.message?.content?.trim() || "";
+      const fallbackJson = fallbackText.replace(/```json\n?|\n?```/g, "").trim();
+      const fallbackResult = JSON.parse(fallbackJson);
+      
+      if (fallbackResult.brand && fallbackResult.model) {
+        return fallbackResult;
+      }
+      return null;
+    }
+    
+    console.log(`📄 Resultados encontrados (${searchResults.length} chars)`);
+    
+    // Usar GPT para extraer marca y modelo de los resultados de búsqueda
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `Identifica marca y modelo del producto. JSON sin markdown:
+          content: `Extrae la marca y modelo EXACTO del producto de los resultados de búsqueda.
+JSON sin markdown:
 {"brand":"str","model":"str","variant":"str|null","category":"slug"}
 Categorías: ${CATEGORIES}
-Solo JSON, sin explicaciones.`
+IMPORTANTE: Devuelve la marca y modelo REAL que aparece en los resultados, no inventes.`
         },
         {
           role: "user",
-          content: `Códigos de referencia: ${refCodes.join(", ")}
-Descripción en ticket: ${description}
-Tienda: ${store}
+          content: `Identifica el producto exacto:
 
-Resultados de búsqueda:
+Códigos buscados: ${allCodes.join(", ")}
+Descripción original: ${description}
+Tienda: ${store}
+Precio: ${price ? `${price}€` : "N/A"}
+
+Resultados de búsqueda web:
 ${searchResults}
 
-¿Qué producto es exactamente?`
+¿Qué marca y modelo específico es?`
         }
       ],
       max_tokens: 150,
@@ -123,9 +197,16 @@ ${searchResults}
     
     const responseText = completion.choices[0]?.message?.content?.trim() || "";
     const cleanJson = responseText.replace(/```json\n?|\n?```/g, "").trim();
-    return JSON.parse(cleanJson);
+    const result = JSON.parse(cleanJson);
+    
+    if (result.brand && result.model && result.brand.length > 1) {
+      console.log(`✅ Producto identificado: ${result.brand} ${result.model}`);
+      return result;
+    }
+    
+    return null;
   } catch (error) {
-    console.error("Error searching product by ref:", error);
+    console.error("Error en búsqueda de producto:", error);
     return null;
   }
 }
@@ -173,6 +254,7 @@ function isGenericDescription(brand: string | null, model: string | null, descri
 }
 
 const CATEGORY_MAP: Record<string, string> = {
+  // Electrónica
   smartphones: "cat-smartphones",
   tablets: "cat-tablets",
   laptops: "cat-laptops",
@@ -194,6 +276,37 @@ const CATEGORY_MAP: Record<string, string> = {
   networking: "cat-networking",
   storage: "cat-storage",
   peripherals: "cat-peripherals",
+  // Bebés y niños
+  "baby-strollers": "cat-baby-strollers",
+  "baby-car-seats": "cat-baby-car-seats",
+  "baby-furniture": "cat-baby-furniture",
+  toys: "cat-toys",
+  // Hogar
+  furniture: "cat-furniture",
+  garden: "cat-garden",
+  lighting: "cat-lighting",
+  "home-decor": "cat-home-decor",
+  // Deporte
+  fitness: "cat-fitness",
+  bikes: "cat-bikes",
+  sports: "cat-sports",
+  outdoor: "cat-outdoor",
+  // Moda y lujo
+  "fashion-luxury": "cat-fashion-luxury",
+  "watches-jewelry": "cat-watches-jewelry",
+  bags: "cat-bags",
+  // Música
+  instruments: "cat-instruments",
+  "music-equipment": "cat-music-equipment",
+  // Herramientas
+  tools: "cat-tools",
+  "power-tools": "cat-power-tools",
+  // Vehículos
+  motorcycles: "cat-motorcycles",
+  "car-parts": "cat-car-parts",
+  // Otros
+  collectibles: "cat-collectibles",
+  "books-media": "cat-books-media",
   other: "cat-other",
 };
 
@@ -251,13 +364,13 @@ export async function POST(request: Request) {
             content: [
               {
                 type: "text",
-                text: "Analiza esta imagen y extrae toda la información del producto:",
+                text: "Analiza esta imagen de factura/ticket y extrae TODOS los productos que encuentres:",
               },
               imageContent,
             ],
           },
         ],
-        max_tokens: 400,
+        max_tokens: 800, // Aumentado para soportar múltiples productos
         temperature: 0,
       });
     }
@@ -334,7 +447,8 @@ export async function POST(request: Request) {
               p.refCodes || [],
               p.lineDescription || "",
               extractedData.purchaseStore || "",
-              model
+              model,
+              p.purchasePrice
             );
             
             if (searchResult) {
@@ -361,6 +475,39 @@ export async function POST(request: Request) {
 
       // Si hay múltiples productos, devolver la lista para que el usuario elija
       if (extractedData.multipleProducts && enrichedProducts.length > 1) {
+        // Calcular garantía para cada producto
+        let commonWarrantyEndDate: string | null = null;
+        let commonWarrantyYears: number | null = null;
+        let commonWarrantyType: string | null = null;
+        let commonWarrantyNotes: string | null = null;
+
+        // Si hay fecha de compra, calcular garantía (será la misma para todos los productos de la factura)
+        if (extractedData.purchaseDate) {
+          try {
+            const purchaseDate = new Date(extractedData.purchaseDate);
+            if (!isNaN(purchaseDate.getTime())) {
+              // Usar garantía legal española por defecto (3 años desde 2022)
+              const isAfter2022 = purchaseDate >= new Date("2022-01-01");
+              const defaultYears = isAfter2022 ? 3 : 2;
+
+              const endDate = new Date(purchaseDate);
+              endDate.setFullYear(endDate.getFullYear() + defaultYears);
+
+              commonWarrantyEndDate = endDate.toISOString().split("T")[0];
+              commonWarrantyYears = defaultYears;
+              commonWarrantyType = "legal";
+              commonWarrantyNotes = `Garantía legal española de ${defaultYears} años`;
+
+              console.log("✅ Garantía calculada para múltiples productos:", {
+                commonWarrantyEndDate,
+                commonWarrantyYears,
+              });
+            }
+          } catch {
+            // Ignorar errores
+          }
+        }
+
         return NextResponse.json({
           success: true,
           multipleProducts: true,
@@ -368,7 +515,10 @@ export async function POST(request: Request) {
           // Datos comunes de la factura
           purchaseDate: extractedData.purchaseDate || "",
           purchaseStore: extractedData.purchaseStore || "",
-          warrantyYears: extractedData.warrantyYears,
+          warrantyEndDate: commonWarrantyEndDate || "",
+          warrantyYears: commonWarrantyYears,
+          warrantyType: commonWarrantyType,
+          warrantyNotes: commonWarrantyNotes,
           confidence: extractedData.confidence || "medium",
           imageType: "invoice",
         });
@@ -407,7 +557,8 @@ export async function POST(request: Request) {
           refCodes,
           rawDesc,
           extractedData.purchaseStore || "",
-          model
+          model,
+          extractedData.purchasePrice
         );
         
         if (searchResult) {
@@ -446,6 +597,13 @@ export async function POST(request: Request) {
     let warrantyType: string | null = null;
     let warrantyNotes: string | null = null;
 
+    console.log("📅 Datos para cálculo de garantía:", {
+      purchaseDate: validPurchaseDate,
+      purchaseDateObj: purchaseDateObj?.toISOString(),
+      categoryId,
+      brand: extractedData.brand,
+    });
+
     if (purchaseDateObj && categoryId) {
       try {
         const warrantyResult = calculateWarranty({
@@ -462,22 +620,42 @@ export async function POST(request: Request) {
         warrantyYears = warrantyResult.warrantyYears;
         warrantyType = warrantyResult.warrantyType;
         warrantyNotes = warrantyResult.notes;
+        
+        console.log("✅ Garantía calculada:", {
+          warrantyEndDate,
+          warrantyYears,
+          warrantyType,
+          warrantyNotes,
+        });
       } catch (error) {
         console.warn("Error calculating warranty:", error);
       }
-    } else if (extractedData.purchaseDate && extractedData.warrantyYears) {
-      // Fallback: si no tenemos categoría pero sí años de garantía de la factura
+    } else {
+      console.log("⚠️ No se puede calcular garantía - falta:", {
+        purchaseDateObj: !purchaseDateObj ? "❌ fecha" : "✅",
+        categoryId: !categoryId ? "❌ categoría" : "✅",
+      });
+    }
+    
+    // Fallback: Si no se calculó garantía, usar garantía legal por defecto (3 años en España desde 2022)
+    if (!warrantyEndDate && purchaseDateObj) {
       try {
-        const date = new Date(extractedData.purchaseDate);
-        if (!isNaN(date.getTime())) {
-          const endDate = new Date(date);
-          endDate.setFullYear(endDate.getFullYear() + Number(extractedData.warrantyYears));
-          if (!isNaN(endDate.getTime())) {
-            warrantyEndDate = endDate.toISOString().split("T")[0];
-            warrantyYears = Number(extractedData.warrantyYears);
-            warrantyType = "manufacturer";
-          }
-        }
+        // Aplicar garantía legal española por defecto
+        const isAfter2022 = purchaseDateObj >= new Date("2022-01-01");
+        const defaultYears = isAfter2022 ? 3 : 2;
+        
+        const endDate = new Date(purchaseDateObj);
+        endDate.setFullYear(endDate.getFullYear() + defaultYears);
+        
+        warrantyEndDate = endDate.toISOString().split("T")[0];
+        warrantyYears = defaultYears;
+        warrantyType = "legal";
+        warrantyNotes = `Garantía legal española de ${defaultYears} años`;
+        
+        console.log("📋 Garantía legal por defecto aplicada:", {
+          warrantyEndDate,
+          warrantyYears,
+        });
       } catch {
         // Ignorar errores
       }

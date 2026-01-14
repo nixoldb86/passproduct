@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { Product, Listing, Conversation, Order, Alert, FilterOptions } from "@/types";
 import {
   mockProducts,
@@ -9,7 +10,7 @@ import {
 } from "@/lib/mock-data";
 
 // ==========================================
-// WALLET STORE
+// WALLET STORE (con persistencia)
 // ==========================================
 
 interface WalletState {
@@ -26,41 +27,49 @@ interface WalletState {
   fetchProducts: () => Promise<void>;
 }
 
-export const useWalletStore = create<WalletState>((set, get) => ({
-  products: mockProducts, // Inicializar con los productos mock
-  isLoading: false,
-  selectedProduct: null,
+export const useWalletStore = create<WalletState>()(
+  persist(
+    (set, get) => ({
+      products: mockProducts, // Inicializar con los productos mock
+      isLoading: false,
+      selectedProduct: null,
 
-  setProducts: (products) => set({ products }),
-  
-  addProduct: (product) =>
-    set((state) => ({ products: [product, ...state.products] })), // Añadir al principio
-  
-  updateProduct: (id, updates) =>
-    set((state) => ({
-      products: state.products.map((p) =>
-        p.id === id ? { ...p, ...updates } : p
-      ),
-    })),
-  
-  deleteProduct: (id) =>
-    set((state) => ({
-      products: state.products.filter((p) => p.id !== id),
-    })),
-  
-  selectProduct: (product) => set({ selectedProduct: product }),
-  
-  fetchProducts: async () => {
-    // Solo cargar si no hay productos (primera vez)
-    if (get().products.length > 0) {
-      return;
+      setProducts: (products) => set({ products }),
+      
+      addProduct: (product) =>
+        set((state) => ({ products: [product, ...state.products] })), // Añadir al principio
+      
+      updateProduct: (id, updates) =>
+        set((state) => ({
+          products: state.products.map((p) =>
+            p.id === id ? { ...p, ...updates } : p
+          ),
+        })),
+      
+      deleteProduct: (id) =>
+        set((state) => ({
+          products: state.products.filter((p) => p.id !== id),
+        })),
+      
+      selectProduct: (product) => set({ selectedProduct: product }),
+      
+      fetchProducts: async () => {
+        // Solo cargar si no hay productos (primera vez)
+        if (get().products.length > 0) {
+          return;
+        }
+        set({ isLoading: true });
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        set({ products: mockProducts, isLoading: false });
+      },
+    }),
+    {
+      name: "passproduct-wallet", // Nombre en localStorage
+      partialize: (state) => ({ products: state.products }), // Solo persistir products
     }
-    set({ isLoading: true });
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    set({ products: mockProducts, isLoading: false });
-  },
-}));
+  )
+);
 
 // ==========================================
 // MARKETPLACE STORE

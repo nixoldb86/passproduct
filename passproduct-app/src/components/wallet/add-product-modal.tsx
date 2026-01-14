@@ -59,6 +59,7 @@ type EnrichedData = {
     notes: string | null;
   } | null;
   specs: Array<{ label: string; value: string }>;
+  stockImages: string[] | null;
 };
 
 type DetectedProduct = {
@@ -90,6 +91,8 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
   const [commonInvoiceData, setCommonInvoiceData] = useState<{
     purchaseDate: string;
     purchaseStore: string;
+    warrantyEndDate: string;
+    warrantyNotes: string;
     warrantyYears: number | null;
   } | null>(null);
 
@@ -128,6 +131,8 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
       purchasePrice: product.purchasePrice?.toString() || "",
       purchaseDate: commonInvoiceData?.purchaseDate || "",
       purchaseStore: commonInvoiceData?.purchaseStore || "",
+      warrantyEndDate: commonInvoiceData?.warrantyEndDate || "",
+      warrantyNotes: commonInvoiceData?.warrantyNotes || "",
       hasTicket: true,
       photos: [],
     }));
@@ -136,12 +141,15 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
     setMultipleProducts(null);
 
     // Enriquecer el producto seleccionado
+    // Si no hay foto real del producto (solo factura), buscar imagen de referencia
+    const needsStockImage = !uploadedImage || formData.hasTicket;
     enrichProduct(
       product.brand || "",
       product.model || "",
       product.variant || "",
       product.categoryId || "",
-      product.purchasePrice || undefined
+      product.purchasePrice || undefined,
+      needsStockImage
     );
 
     // Avanzar al paso 2
@@ -149,7 +157,8 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
   };
 
   // Enriquecer producto con IA (accesorios, manual, precio reventa, contacto garantía)
-  const enrichProduct = async (brand: string, model: string, variant: string, categoryId: string, purchasePrice?: number) => {
+  // needsImages: buscar foto de referencia si el usuario no subió foto
+  const enrichProduct = async (brand: string, model: string, variant: string, categoryId: string, purchasePrice?: number, needsImages: boolean = false) => {
     if (!brand || !model) return;
     
     setIsEnriching(true);
@@ -157,7 +166,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
       const response = await fetch("/api/enrich-product", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brand, model, variant, categoryId, purchasePrice }),
+        body: JSON.stringify({ brand, model, variant, categoryId, purchasePrice, needsImages }),
       });
 
       if (response.ok) {
@@ -262,6 +271,8 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
         setCommonInvoiceData({
           purchaseDate: result.purchaseDate || "",
           purchaseStore: result.purchaseStore || "",
+          warrantyEndDate: result.warrantyEndDate || "",
+          warrantyNotes: result.warrantyNotes || "",
           warrantyYears: result.warrantyYears || null,
         });
         // Ir al paso de selección de producto
@@ -287,12 +298,15 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
         }));
 
         // Enriquecer producto con información adicional
+        // Si es factura/PDF, buscar imagen de referencia del producto
+        const isInvoiceOrPdf = result.data.imageType === "invoice" || isPdf;
         enrichProduct(
           result.data.brand || "",
           result.data.model || "",
           result.data.variant || "",
           result.data.categoryId || "",
-          result.data.purchasePrice || undefined
+          result.data.purchasePrice || undefined,
+          isInvoiceOrPdf // needsImages
         );
 
         // Avanzar al paso 2
@@ -350,6 +364,8 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
       warrantyContact: enrichedData?.warrantyContact || undefined,
       proofOfPurchaseUrl: formData.hasTicket ? uploadedImage || "/mock/ticket.jpg" : undefined,
       photos: formData.photos,
+      // Fotos de stock solo si no hay fotos reales (para visualización en wallet)
+      stockPhotos: formData.photos.length === 0 ? enrichedData?.stockImages || undefined : undefined,
       accessories: formData.accessories,
       // Usar precio de reventa de la IA si está disponible, sino calcular
       estimatedValue: enrichedData?.resaleValue?.maxPrice || 
@@ -872,7 +888,24 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
               ))}
             </div>
             {step < 3 ? (
-              <Button onClick={() => setStep(step + 1)} disabled={!canProceed()}>
+              <Button 
+                onClick={() => {
+                  // Al pasar de paso 1 a 2, enriquecer producto (buscar foto si no hay)
+                  if (step === 1 && formData.brand && formData.model) {
+                    const noPhotos = formData.photos.length === 0;
+                    enrichProduct(
+                      formData.brand,
+                      formData.model,
+                      formData.variant || "",
+                      formData.categoryId,
+                      formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
+                      noPhotos // needsImages = true si no hay fotos
+                    );
+                  }
+                  setStep(step + 1);
+                }} 
+                disabled={!canProceed()}
+              >
                 Siguiente
               </Button>
             ) : (

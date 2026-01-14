@@ -22,12 +22,14 @@ import {
   Lock,
   Clock,
   Package,
+  Star,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button, Card, Badge, SkeletonProductDetail } from "@/components/ui";
+import { SellerProfileModal } from "@/components/marketplace";
 import { getListingById } from "@/lib/mock-data";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { Listing } from "@/types";
+import { Listing, SellerProfile } from "@/types";
 
 export default function ListingDetailPage() {
   const params = useParams();
@@ -36,6 +38,7 @@ export default function ListingDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isSellerModalOpen, setIsSellerModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -448,27 +451,81 @@ export default function ListingDetailPage() {
 
           {/* Seller Card */}
           <Card padding="md">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center text-accent font-semibold">
-                JD
+            {listing.seller ? (
+              <>
+                <button
+                  onClick={() => setIsSellerModalOpen(true)}
+                  className="flex items-center gap-3 mb-4 w-full text-left hover:bg-surface-1 rounded-lg p-1 -m-1 transition-colors"
+                >
+                  <div className="relative h-12 w-12 rounded-full overflow-hidden flex-shrink-0">
+                    <Image
+                      src={listing.seller.avatarUrl}
+                      alt={listing.seller.firstName}
+                      fill
+                      className="object-cover"
+                    />
+                    {/* Online indicator */}
+                    {new Date().getTime() - new Date(listing.seller.lastActive).getTime() < 15 * 60 * 1000 && (
+                      <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-jade border-2 border-white" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground">
+                      {listing.seller.firstName} {listing.seller.lastName.charAt(0)}.
+                    </p>
+                    <p className="text-xs text-foreground-subtle">
+                      Miembro desde {formatDate(listing.seller.memberSince, { month: "short", year: "numeric" })} • {listing.seller.totalSales} ventas
+                    </p>
+                  </div>
+                </button>
+                <div className="flex items-center gap-4 text-sm text-foreground-muted">
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {listing.seller.responseTime}
+                  </span>
+                  <span className="flex items-center gap-1 text-amber-500">
+                    <Star className="h-4 w-4 fill-current" />
+                    {listing.seller.rating.toFixed(1)} ({listing.seller.reviewCount})
+                  </span>
+                </div>
+                {listing.seller.isVerified && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <div className="flex items-center gap-2 text-jade text-sm">
+                      <Check className="h-4 w-4" />
+                      <span>Vendedor verificado</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center text-accent font-semibold">
+                  ?
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Vendedor</p>
+                  <p className="text-xs text-foreground-subtle">
+                    Información no disponible
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium text-foreground">Juan D.</p>
-                <p className="text-xs text-foreground-subtle">
-                  Miembro desde 2024 • 12 ventas
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 text-sm text-foreground-muted">
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Responde en &lt;2h
-              </span>
-              <span className="text-jade">★ 4.9 (8 reseñas)</span>
-            </div>
+            )}
           </Card>
         </motion.div>
       </div>
+
+      {/* Seller Profile Modal */}
+      {listing.seller && (
+        <SellerProfileModal
+          isOpen={isSellerModalOpen}
+          onClose={() => setIsSellerModalOpen(false)}
+          seller={listing.seller}
+          onContact={() => {
+            setIsSellerModalOpen(false);
+            // TODO: Navigate to chat
+          }}
+        />
+      )}
     </div>
   );
 }
