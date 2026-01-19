@@ -53,7 +53,7 @@ function SellPageContent() {
     shippingEnabled: true,
     shippingCost: "5.99",
     location: "Madrid",
-    condition: "good" as ProductCondition,
+    condition: "GOOD" as ProductCondition,
   });
 
   // Check verification status
@@ -407,13 +407,13 @@ function SellPageContent() {
               </h2>
               <Select
                 value={formData.condition}
-                onChange={(e) => updateFormData("condition", e.target.value)}
+                onChange={(e) => updateFormData("condition", e.target.value as ProductCondition)}
                 options={[
-                  { value: "new", label: CONDITION_LABELS.new },
-                  { value: "like_new", label: CONDITION_LABELS.like_new },
-                  { value: "excellent", label: CONDITION_LABELS.excellent },
-                  { value: "good", label: CONDITION_LABELS.good },
-                  { value: "fair", label: CONDITION_LABELS.fair },
+                  { value: "NEW", label: CONDITION_LABELS.NEW },
+                  { value: "LIKE_NEW", label: CONDITION_LABELS.LIKE_NEW },
+                  { value: "VERY_GOOD", label: CONDITION_LABELS.VERY_GOOD },
+                  { value: "GOOD", label: CONDITION_LABELS.GOOD },
+                  { value: "ACCEPTABLE", label: CONDITION_LABELS.ACCEPTABLE },
                 ]}
               />
               <p className="text-xs text-foreground-subtle mt-3">
