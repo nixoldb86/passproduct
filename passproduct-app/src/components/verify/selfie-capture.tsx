@@ -46,6 +46,7 @@ export function SelfieCapture({
   const [turnedLeft, setTurnedLeft] = useState(false);
   const [currentHeadAngle, setCurrentHeadAngle] = useState<number>(0); // -1 = left, 0 = center, 1 = right
   const [idFaceStatus, setIdFaceStatus] = useState<string>("Esperando imagen del ID...");
+  const [readyToStart, setReadyToStart] = useState(false); // Stable state for showing start button
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -59,8 +60,12 @@ export function SelfieCapture({
   const positionHistoryRef = useRef<Array<{ x: number; y: number; size: number }>>([]);
   const statusHistoryRef = useRef<Array<"ok" | "position" | "size" | "no-face">>([]);
   const lastDetectionTimeRef = useRef<number>(0);
+  const okStartTimeRef = useRef<number | null>(null); // When status became "ok"
+  const notOkStartTimeRef = useRef<number | null>(null); // When status became "not ok"
   const SMOOTHING_FRAMES = 5; // Number of frames to average
   const MIN_DETECTION_INTERVAL = 100; // Minimum ms between detections
+  const READY_DELAY_MS = 800; // Must be "ok" for this long to show button
+  const NOT_READY_DELAY_MS = 1200; // Must be "not ok" for this long to hide button
 
   // Load face-api models
   useEffect(() => {
@@ -457,6 +462,61 @@ export function SelfieCapture({
     }
   }, [cameraActive, modelsLoaded, startFaceDetection]);
 
+  // Debounced "ready to start" state - prevents button flickering
+  useEffect(() => {
+    const isCurrentlyOk = faceDetected && stableStatus === "ok";
+    
+    if (isCurrentlyOk) {
+      // Face is in good position
+      notOkStartTimeRef.current = null; // Reset not-ok timer
+      
+      if (!okStartTimeRef.current) {
+        okStartTimeRef.current = Date.now();
+      }
+      
+      // Only set readyToStart after being "ok" for READY_DELAY_MS
+      const elapsed = Date.now() - okStartTimeRef.current;
+      if (elapsed >= READY_DELAY_MS && !readyToStart) {
+        setReadyToStart(true);
+      } else if (!readyToStart) {
+        // Schedule check after remaining delay
+        const timeout = setTimeout(() => {
+          if (okStartTimeRef.current) {
+            const currentElapsed = Date.now() - okStartTimeRef.current;
+            if (currentElapsed >= READY_DELAY_MS) {
+              setReadyToStart(true);
+            }
+          }
+        }, READY_DELAY_MS - elapsed);
+        return () => clearTimeout(timeout);
+      }
+    } else {
+      // Face is not in good position
+      okStartTimeRef.current = null; // Reset ok timer
+      
+      if (!notOkStartTimeRef.current) {
+        notOkStartTimeRef.current = Date.now();
+      }
+      
+      // Only hide button after being "not ok" for NOT_READY_DELAY_MS
+      const elapsed = Date.now() - notOkStartTimeRef.current;
+      if (elapsed >= NOT_READY_DELAY_MS && readyToStart) {
+        setReadyToStart(false);
+      } else if (readyToStart) {
+        // Schedule check after remaining delay
+        const timeout = setTimeout(() => {
+          if (notOkStartTimeRef.current) {
+            const currentElapsed = Date.now() - notOkStartTimeRef.current;
+            if (currentElapsed >= NOT_READY_DELAY_MS) {
+              setReadyToStart(false);
+            }
+          }
+        }, NOT_READY_DELAY_MS - elapsed);
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [faceDetected, stableStatus, readyToStart]);
+
   const startLivenessCheck = useCallback(() => {
     setLivenessStep("turn-right");
     setTurnedRight(false);
@@ -571,7 +631,10 @@ export function SelfieCapture({
     setTurnedLeft(false);
     setFaceDetected(false);
     setStableStatus("no-face");
+    setReadyToStart(false);
     centerFaceXRef.current = null;
+    okStartTimeRef.current = null;
+    notOkStartTimeRef.current = null;
     positionHistoryRef.current = [];
     statusHistoryRef.current = [];
     startCamera();
@@ -756,7 +819,7 @@ export function SelfieCapture({
 
       {/* Liveness instructions */}
       <AnimatePresence mode="wait">
-        {livenessStep === "ready" && cameraActive && faceDetected && positionStatus.status === "ok" && (
+        {livenessStep === "ready" && cameraActive && readyToStart && (
           <motion.div
             key="ready"
             initial={{ opacity: 0, y: 20 }}
