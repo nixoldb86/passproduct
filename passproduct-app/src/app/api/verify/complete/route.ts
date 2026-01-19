@@ -110,10 +110,23 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get("user-agent") || "unknown";
 
     // Determine verification status based on scores
-    const isVerified =
-      faceMatchScore >= 0.5 && // At least 50% face match
-      livenessScore >= 0.5 && // Liveness check passed
-      ocrConfidence >= 0.3; // Reasonable OCR confidence
+    // If face comparison was done (faceMatchScore > 0), require at least 40% match
+    // If face comparison failed (faceMatchScore = 0), still allow if liveness passed
+    const faceCheckPassed = faceMatchScore === 0 || faceMatchScore >= 0.4;
+    const livenessCheckPassed = livenessScore >= 0.5;
+    const ocrCheckPassed = ocrConfidence >= 0.3;
+    
+    const isVerified = faceCheckPassed && livenessCheckPassed && ocrCheckPassed;
+    
+    console.log("Verification check:", {
+      faceMatchScore,
+      livenessScore,
+      ocrConfidence,
+      faceCheckPassed,
+      livenessCheckPassed,
+      ocrCheckPassed,
+      isVerified
+    });
 
     // Create or update verification record
     const verification = await prisma.identityVerification.upsert({

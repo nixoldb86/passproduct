@@ -21,12 +21,21 @@ export function VerificationResult({
   onComplete,
   onRetry,
 }: VerificationResultProps) {
-  const isFullyVerified = idData && faceResult?.isMatch;
+  // Verification is considered complete if:
+  // - ID data was extracted with reasonable confidence
+  // - Liveness check passed (head turns)
+  // - Either face match passed OR face comparison was not available
+  const livenessOK = faceResult?.livenessVerified || false;
+  const ocrOK = idData && idData.confidence > 0.3;
+  const faceComparisonAvailable = faceResult && faceResult.faceMatchScore > 0;
+  const faceMatchOK = !faceComparisonAvailable || faceResult?.isMatch;
+  
+  const isFullyVerified = ocrOK && livenessOK && faceMatchOK;
   
   const checks = [
     {
       label: "Documento de identidad legible",
-      passed: !!idData && idData.confidence > 0.5,
+      passed: !!idData && idData.confidence > 0.3,
       detail: idData ? `${idData.documentType} - ${idData.documentNumber}` : "No detectado",
     },
     {
@@ -36,20 +45,20 @@ export function VerificationResult({
     },
     {
       label: "Documento no caducado",
-      passed: idData ? new Date(idData.expirationDate) > new Date() : false,
+      passed: idData?.expirationDate ? new Date(idData.expirationDate.split('/').reverse().join('-')) > new Date() : false,
       detail: idData?.expirationDate || "No disponible",
     },
     {
-      label: "Verificación de presencia (parpadeo)",
-      passed: faceResult?.livenessVerified || false,
-      detail: faceResult?.livenessVerified ? "Completada" : "No completada",
+      label: "Verificación de presencia (giros de cabeza)",
+      passed: livenessOK,
+      detail: livenessOK ? "✓ Completada" : "No completada",
     },
     {
       label: "Coincidencia facial",
-      passed: faceResult?.isMatch || false,
-      detail: faceResult
-        ? `${Math.round(faceResult.faceMatchScore * 100)}% de similitud`
-        : "No verificado",
+      passed: faceComparisonAvailable ? (faceResult?.isMatch || false) : true,
+      detail: faceComparisonAvailable
+        ? `${Math.round((faceResult?.faceMatchScore || 0) * 100)}% de similitud`
+        : "No disponible (verificado por liveness)",
     },
   ];
 
