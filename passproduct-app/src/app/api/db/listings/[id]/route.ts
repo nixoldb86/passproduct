@@ -16,6 +16,7 @@ export async function GET(
         seller: {
           select: {
             id: true,
+            clerkId: true,
             firstName: true,
             lastName: true,
             avatarUrl: true,
@@ -49,6 +50,7 @@ export async function GET(
       sellerId: listing.sellerId,
       seller: listing.seller ? {
         id: listing.seller.id,
+        clerkId: listing.seller.clerkId,
         firstName: listing.seller.firstName || "Usuario",
         lastName: listing.seller.lastName || "",
         avatarUrl: listing.seller.avatarUrl || "/mock/avatars/default.webp",

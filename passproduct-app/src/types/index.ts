@@ -50,6 +50,7 @@ export interface User {
 
 export interface SellerProfile {
   id: string;
+  clerkId?: string;
   firstName: string;
   lastName: string;
   avatarUrl: string;

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -23,6 +24,7 @@ import {
   Clock,
   Package,
   Star,
+  AlertCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button, Card, Badge, SkeletonProductDetail } from "@/components/ui";
@@ -34,6 +36,7 @@ import { Listing, SellerProfile } from "@/types";
 export default function ListingDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useUser();
   const { startConversation } = useChatStore();
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +45,9 @@ export default function ListingDetailPage() {
   const [isSellerModalOpen, setIsSellerModalOpen] = useState(false);
   const [isContacting, setIsContacting] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
+  
+  // Check if current user is the owner of this listing
+  const isOwner = user && listing?.seller?.clerkId === user.id;
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -415,26 +421,63 @@ export default function ListingDetailPage() {
 
           {/* Actions */}
           <div className="space-y-3">
-            <Button 
-              className="w-full" 
-              size="lg"
-              onClick={() => handleContact("Hola, me interesa tu producto. ¿Está disponible?")}
-              isLoading={isContacting}
-            >
-              Comprar ahora
-            </Button>
-            <Button
-              variant="secondary"
-              className="w-full"
-              size="lg"
-              leftIcon={<MessageCircle className="h-4 w-4" />}
-              onClick={() => handleContact()}
-              isLoading={isContacting}
-            >
-              Contactar vendedor
-            </Button>
-            {contactError && (
-              <p className="text-sm text-error text-center">{contactError}</p>
+            {isOwner ? (
+              /* Owner view - cannot buy own product */
+              <Card padding="sm" className="bg-amber-500/10 border-amber-500/30">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-400">
+                      Este es tu anuncio
+                    </p>
+                    <p className="text-xs text-amber-400/80">
+                      No puedes comprar tu propio producto
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => router.push(`/wallet/${listing?.productId}`)}
+                  >
+                    Ver en mi wallet
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    Editar anuncio
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              /* Buyer view - normal purchase flow */
+              <>
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  onClick={() => handleContact("Hola, me interesa tu producto. ¿Está disponible?")}
+                  isLoading={isContacting}
+                >
+                  Comprar ahora
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  size="lg"
+                  leftIcon={<MessageCircle className="h-4 w-4" />}
+                  onClick={() => handleContact()}
+                  isLoading={isContacting}
+                >
+                  Contactar vendedor
+                </Button>
+                {contactError && (
+                  <p className="text-sm text-error text-center">{contactError}</p>
+                )}
+              </>
             )}
           </div>
 
