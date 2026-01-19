@@ -347,52 +347,52 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Preparar datos del producto para guardar en BD
+      const productData = {
+        categoryId: formData.categoryId,
+        brand: formData.brand,
+        model: formData.model,
+        variant: formData.variant || undefined,
+        condition: formData.condition as ProductCondition,
+        purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : undefined,
+        purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
+        purchaseStore: formData.purchaseStore || undefined,
+        warrantyEndDate: formData.warrantyEndDate ? new Date(formData.warrantyEndDate) : undefined,
+        warrantyNotes: formData.warrantyNotes || undefined,
+        warrantyContact: enrichedData?.warrantyContact || undefined,
+        proofOfPurchaseUrl: formData.hasTicket ? uploadedImage || undefined : undefined,
+        photos: formData.photos.filter(p => p.startsWith("http")), // Solo URLs, no base64
+        stockPhotos: formData.photos.length === 0 ? enrichedData?.stockImages || undefined : undefined,
+        accessories: formData.accessories,
+        hasAdditionalInsurance: formData.hasAdditionalInsurance || undefined,
+        additionalInsuranceEndDate: formData.additionalInsuranceEndDate 
+          ? new Date(formData.additionalInsuranceEndDate) 
+          : undefined,
+        additionalInsuranceProvider: formData.additionalInsuranceProvider || undefined,
+        additionalInsuranceNotes: formData.additionalInsuranceNotes || undefined,
+        estimatedValue: enrichedData?.resaleValue?.maxPrice || 
+          (formData.purchasePrice ? parseFloat(formData.purchasePrice) * 0.8 : undefined),
+        resaleValue: enrichedData?.resaleValue || undefined,
+        manualUrl: enrichedData?.manualUrl || undefined,
+        specs: enrichedData?.specs || undefined,
+        serialLast4: formData.serialLast4 || undefined,
+      };
 
-    const selectedCategory = mockCategories.find((c) => c.id === formData.categoryId);
-
-    const newProduct: Product = {
-      id: `prod-${Date.now()}`,
-      userId: "user-1",
-      categoryId: formData.categoryId,
-      category: selectedCategory,
-      brand: formData.brand,
-      model: formData.model,
-      variant: formData.variant || undefined,
-      condition: formData.condition as ProductCondition,
-      purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : undefined,
-      purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
-      purchaseStore: formData.purchaseStore || undefined,
-      warrantyEndDate: formData.warrantyEndDate ? new Date(formData.warrantyEndDate) : undefined,
-      warrantyNotes: formData.warrantyNotes || undefined,
-      warrantyContact: enrichedData?.warrantyContact || undefined,
-      proofOfPurchaseUrl: formData.hasTicket ? uploadedImage || "/mock/ticket.jpg" : undefined,
-      photos: formData.photos,
-      // Fotos de stock solo si no hay fotos reales (para visualización en wallet)
-      stockPhotos: formData.photos.length === 0 ? enrichedData?.stockImages || undefined : undefined,
-      accessories: formData.accessories,
-      // Seguro adicional
-      hasAdditionalInsurance: formData.hasAdditionalInsurance || undefined,
-      additionalInsuranceEndDate: formData.additionalInsuranceEndDate 
-        ? new Date(formData.additionalInsuranceEndDate) 
-        : undefined,
-      additionalInsuranceProvider: formData.additionalInsuranceProvider || undefined,
-      additionalInsuranceNotes: formData.additionalInsuranceNotes || undefined,
-      // Usar precio de reventa de la IA si está disponible, sino calcular
-      estimatedValue: enrichedData?.resaleValue?.maxPrice || 
-        (formData.purchasePrice ? parseFloat(formData.purchasePrice) * 0.8 : undefined),
-      estimatedValueUpdatedAt: new Date(),
-      resaleValue: enrichedData?.resaleValue || undefined,
-      manualUrl: enrichedData?.manualUrl || undefined,
-      specs: enrichedData?.specs || undefined,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    addProduct(newProduct);
-    setIsSubmitting(false);
-    resetAndClose();
+      // Guardar en BD a través de la API
+      const savedProduct = await addProduct(productData);
+      
+      if (savedProduct) {
+        resetAndClose();
+      } else {
+        setAnalyzeError("Error al guardar el producto. Inténtalo de nuevo.");
+      }
+    } catch (error) {
+      console.error("Error saving product:", error);
+      setAnalyzeError("Error al guardar el producto. Inténtalo de nuevo.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetAndClose = () => {

@@ -36,7 +36,7 @@ export function formatDate(
 
 // Calculate marketplace fee (6-8%)
 export function calculateMarketplaceFee(price: number): number {
-  const feeRate = 0.07; // 7%
+  const feeRate = 0.05; // 5%
   return Math.round(price * feeRate * 100) / 100;
 }
 

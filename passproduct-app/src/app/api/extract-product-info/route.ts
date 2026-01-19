@@ -259,61 +259,167 @@ function isGenericDescription(brand: string | null, model: string | null, descri
   return false;
 }
 
+// Mapeo de categorías detectadas por IA -> IDs en BD PostgreSQL
+// Los IDs usan formato cat-{slug} y deben coincidir con mockCategories y seed.ts
 const CATEGORY_MAP: Record<string, string> = {
-  // Electrónica
+  // === ELECTRÓNICA DE CONSUMO ===
   smartphones: "cat-smartphones",
+  phone: "cat-smartphones",
+  mobile: "cat-smartphones",
+  iphone: "cat-smartphones",
+  android: "cat-smartphones",
   tablets: "cat-tablets",
+  tablet: "cat-tablets",
+  ipad: "cat-tablets",
   laptops: "cat-laptops",
+  laptop: "cat-laptops",
+  notebook: "cat-laptops",
+  macbook: "cat-laptops",
   desktops: "cat-desktops",
+  desktop: "cat-desktops",
+  pc: "cat-desktops",
+  computer: "cat-desktops",
   monitors: "cat-monitors",
+  monitor: "cat-monitors",
   consoles: "cat-consoles",
+  console: "cat-consoles",
+  gaming: "cat-consoles",
+  playstation: "cat-consoles",
+  ps5: "cat-consoles",
+  xbox: "cat-consoles",
+  nintendo: "cat-consoles",
   audio: "cat-audio",
+  headphones: "cat-audio",
+  auriculares: "cat-audio",
+  earbuds: "cat-audio",
+  speakers: "cat-audio",
+  speaker: "cat-audio",
+  altavoces: "cat-audio",
+  soundbar: "cat-audio",
   wearables: "cat-wearables",
+  smartwatch: "cat-wearables",
+  smartwatches: "cat-wearables",
+  watch: "cat-wearables",
+  applewatch: "cat-wearables",
+  fitbit: "cat-wearables",
   cameras: "cat-cameras",
+  camera: "cat-cameras",
+  camara: "cat-cameras",
+  dslr: "cat-cameras",
+  gopro: "cat-cameras",
   tv: "cat-tv",
+  tvs: "cat-tv",
+  television: "cat-tv",
   projectors: "cat-projectors",
+  projector: "cat-projectors",
+  proyector: "cat-projectors",
+
+  // === ELECTRODOMÉSTICOS ===
   "appliances-large": "cat-appliances-large",
   "appliances-small": "cat-appliances-small",
+  appliances: "cat-appliances-small",
+  electrodomestico: "cat-appliances-small",
+  electrodomesticos: "cat-appliances-small",
+  vacuums: "cat-appliances-small",
+  vacuum: "cat-appliances-small",
+  aspirador: "cat-appliances-small",
+  aspiradora: "cat-appliances-small",
+  roomba: "cat-appliances-small",
   climate: "cat-climate",
+  aire: "cat-climate",
+  calefaccion: "cat-climate",
+
+  // === MOVILIDAD ===
   ebikes: "cat-ebikes",
+  ebike: "cat-ebikes",
   scooters: "cat-scooters",
+  scooter: "cat-scooters",
+  patinete: "cat-scooters",
   drones: "cat-drones",
-  gaming: "cat-gaming",
-  networking: "cat-networking",
-  storage: "cat-storage",
-  peripherals: "cat-peripherals",
-  // Bebés y niños
+  drone: "cat-drones",
+  dji: "cat-drones",
+
+  // === BEBÉS Y NIÑOS ===
   "baby-strollers": "cat-baby-strollers",
+  stroller: "cat-baby-strollers",
+  cochecito: "cat-baby-strollers",
+  carrito: "cat-baby-strollers",
+  buggy: "cat-baby-strollers",
+  yoyo: "cat-baby-strollers",
+  babyzen: "cat-baby-strollers",
   "baby-car-seats": "cat-baby-car-seats",
+  "car-seat": "cat-baby-car-seats",
+  carseat: "cat-baby-car-seats",
+  silla: "cat-baby-car-seats",
+  maxicosi: "cat-baby-car-seats",
   "baby-furniture": "cat-baby-furniture",
+  cuna: "cat-baby-furniture",
   toys: "cat-toys",
-  // Hogar
+  juguete: "cat-toys",
+  juguetes: "cat-toys",
+
+  // === HOGAR ===
   furniture: "cat-furniture",
+  mueble: "cat-furniture",
+  muebles: "cat-furniture",
+  sofa: "cat-furniture",
   garden: "cat-garden",
+  jardin: "cat-garden",
   lighting: "cat-lighting",
+  lampara: "cat-lighting",
   "home-decor": "cat-home-decor",
-  // Deporte
+  decoracion: "cat-home-decor",
+
+  // === DEPORTE ===
   fitness: "cat-fitness",
+  gym: "cat-fitness",
   bikes: "cat-bikes",
+  bike: "cat-bikes",
+  bicicleta: "cat-bikes",
   sports: "cat-sports",
+  deporte: "cat-sports",
   outdoor: "cat-outdoor",
-  // Moda y lujo
+  camping: "cat-outdoor",
+
+  // === MODA Y LUJO ===
   "fashion-luxury": "cat-fashion-luxury",
+  lujo: "cat-fashion-luxury",
   "watches-jewelry": "cat-watches-jewelry",
+  reloj: "cat-watches-jewelry",
+  relojes: "cat-watches-jewelry",
+  joyeria: "cat-watches-jewelry",
   bags: "cat-bags",
-  // Música
+  bag: "cat-bags",
+  bolso: "cat-bags",
+  mochila: "cat-bags",
+
+  // === MÚSICA ===
   instruments: "cat-instruments",
+  instrument: "cat-instruments",
+  instrumento: "cat-instruments",
+  guitar: "cat-instruments",
+  guitarra: "cat-instruments",
+  piano: "cat-instruments",
   "music-equipment": "cat-music-equipment",
-  // Herramientas
+
+  // === HERRAMIENTAS ===
   tools: "cat-tools",
+  tool: "cat-tools",
+  herramienta: "cat-tools",
+  herramientas: "cat-tools",
   "power-tools": "cat-power-tools",
-  // Vehículos
+
+  // === VEHÍCULOS ===
   motorcycles: "cat-motorcycles",
+  moto: "cat-motorcycles",
   "car-parts": "cat-car-parts",
-  // Otros
+  
+  // === OTROS ===
   collectibles: "cat-collectibles",
   "books-media": "cat-books-media",
+  libros: "cat-books-media",
   other: "cat-other",
+  otros: "cat-other",
 };
 
 export async function POST(request: Request) {

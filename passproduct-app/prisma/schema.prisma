@@ -64,6 +64,14 @@ enum DisputeOutcome {
   RETURN
 }
 
+enum IdentityVerificationStatus {
+  PENDING
+  PROCESSING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
 // ==========================================
 // CORE ENTITIES
 // ==========================================
@@ -77,6 +85,18 @@ model User {
   avatarUrl       String?
   country         String    @default("ES")
   language        String    @default("es")
+  
+  // Activity & Presence
+  lastSeen        DateTime  @default(now())
+  
+  // Privacy settings
+  showLastSeen    Boolean   @default(true)  // Mostrar última conexión a otros
+  showReadReceipts Boolean  @default(true)  // Mostrar checks de lectura a otros
+  
+  // Identity verification
+  isIdentityVerified    Boolean   @default(false)
+  identityVerifiedAt    DateTime?
+  
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -89,9 +109,51 @@ model User {
   sellerConversations  Conversation[] @relation("SellerConversations")
   messages        Message[]
   disputes        Dispute[]
+  identityVerifications IdentityVerification[]
 
   @@index([clerkId])
   @@index([email])
+}
+
+model IdentityVerification {
+  id                    String    @id @default(cuid())
+  
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Document info (hashed for privacy)
+  documentType          String    // "DNI", "NIE", "PASSPORT"
+  documentNumberHash    String    // Hashed document number to detect duplicates
+  documentCountry       String    @default("ES")
+  
+  // Extracted data (encrypted or hashed)
+  firstNameExtracted    String?
+  lastNameExtracted     String?
+  dateOfBirth           DateTime?
+  expirationDate        DateTime?
+  
+  // Verification result
+  status                IdentityVerificationStatus @default(PENDING)
+  faceMatchScore        Float?    // 0.0 - 1.0 similarity score
+  livenessScore         Float?    // 0.0 - 1.0 liveness confidence
+  ocrConfidence         Float?    // 0.0 - 1.0 OCR confidence
+  
+  // Rejection reason if failed
+  rejectionReason       String?
+  
+  // Metadata
+  ipAddress             String?
+  userAgent             String?
+  
+  // Timestamps
+  startedAt             DateTime  @default(now())
+  completedAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([documentNumberHash])
+  @@index([status])
 }
 
 model Category {

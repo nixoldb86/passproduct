@@ -15,7 +15,10 @@
     "db:reset": "prisma migrate reset --force",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:db": "tsx scripts/test-db.ts",
+    "test:api": "tsx scripts/test-api.ts",
+    "test:all": "npm run test:db && npm run test:api"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -24,6 +27,7 @@
     "@clerk/nextjs": "^6.36.7",
     "@prisma/client": "^5.22.0",
     "@types/leaflet": "^1.9.21",
+    "@vladmandic/face-api": "^1.7.15",
     "canvas": "^3.2.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -38,6 +42,7 @@
     "react-leaflet": "^5.0.0",
     "react-leaflet-cluster": "^4.0.0",
     "tailwind-merge": "^3.4.0",
+    "tesseract.js": "^7.0.0",
     "unpdf": "^1.4.0",
     "zustand": "^5.0.9"
   },

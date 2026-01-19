@@ -334,7 +334,7 @@ export const categoryGroups: CategoryGroup[] = [
     id: "grp-other",
     name: "Otros",
     icon: "📦",
-    categoryIds: ["cat-collectibles", "cat-books-media", "cat-other", "cat-other"],
+    categoryIds: ["cat-collectibles", "cat-books-media", "cat-other"],
   },
 ];
 
@@ -537,7 +537,7 @@ export const mockCategories: Category[] = [
     requiresSerial: false,
   },
   {
-    id: "cat-other",
+    id: "cat-other-electronics",
     name: "Otros Electrónica",
     slug: "other-electronics",
     icon: "🔌",

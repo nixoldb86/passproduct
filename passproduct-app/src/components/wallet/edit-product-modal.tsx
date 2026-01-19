@@ -5,15 +5,17 @@ import { X, Calendar, Store, Tag, Shield, Plus, Package, ShieldPlus } from "luci
 import { motion, AnimatePresence } from "framer-motion";
 import { Product, ProductCondition, CONDITION_LABELS } from "@/types";
 import { Button } from "@/components/ui";
+import { useWalletStore } from "@/store";
 
 interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product | null;
-  onSave: (productId: string, updates: Partial<Product>) => void;
+  onSave?: (productId: string, updates: Partial<Product>) => void; // Opcional para compatibilidad
 }
 
 export function EditProductModal({ isOpen, onClose, product, onSave }: EditProductModalProps) {
+  const { updateProduct } = useWalletStore();
   const [formData, setFormData] = useState({
     brand: "",
     model: "",
@@ -106,15 +108,20 @@ export function EditProductModal({ isOpen, onClose, product, onSave }: EditProdu
         : undefined,
       additionalInsuranceProvider: formData.additionalInsuranceProvider || undefined,
       additionalInsuranceNotes: formData.additionalInsuranceNotes || undefined,
-      updatedAt: new Date(),
     };
 
-    // Simular delay de guardado
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Guardar en BD a través de la API
+    const success = await updateProduct(product.id, updates);
     
-    onSave(product.id, updates);
     setIsSaving(false);
-    onClose();
+    
+    if (success) {
+      // También llamar a onSave si se proporciona (para compatibilidad)
+      if (onSave) {
+        onSave(product.id, updates);
+      }
+      onClose();
+    }
   };
 
   if (!product) return null;

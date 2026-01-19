@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   SlidersHorizontal,
@@ -29,11 +30,14 @@ const sortOptions = [
 ];
 
 export default function MarketplacePage() {
+  const searchParams = useSearchParams();
+  const urlSearchQuery = searchParams.get("search") || "";
+  
   const { listings, isLoading, filters, fetchListings, setFilters } =
     useMarketplaceStore();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
   const [showFilters, setShowFilters] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   // Seller profile modal state
@@ -48,9 +52,19 @@ export default function MarketplacePage() {
   // Local filter state
   const [localFilters, setLocalFilters] = useState<FilterOptions>({});
 
+  // Sincronizar searchQuery con la URL
   useEffect(() => {
-    fetchListings();
-  }, [fetchListings]);
+    setSearchQuery(urlSearchQuery);
+  }, [urlSearchQuery]);
+
+  // Cargar listings con búsqueda inicial de URL
+  useEffect(() => {
+    if (urlSearchQuery) {
+      fetchListings({ search: urlSearchQuery });
+    } else {
+      fetchListings();
+    }
+  }, [fetchListings, urlSearchQuery]);
 
   const handleFilterChange = (key: keyof FilterOptions, value: unknown) => {
     const newFilters = { ...localFilters, [key]: value };
@@ -129,30 +143,47 @@ export default function MarketplacePage() {
       </div>
 
       {/* Search & Filters Bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex items-center gap-3">
         {/* Search */}
-        <div className="relative flex-1">
+        <form 
+          className="relative flex-1 max-w-xl"
+          onSubmit={(e) => {
+            e.preventDefault();
+            fetchListings({ ...localFilters, search: searchQuery });
+          }}
+        >
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-subtle" />
           <input
             type="text"
-            placeholder="Buscar productos..."
+            placeholder="Buscar productos... (Enter para buscar)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-10 pl-10 pr-4 bg-surface-1 border border-border rounded-xl text-sm text-foreground placeholder:text-foreground-subtle focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition-all"
           />
-        </div>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                fetchListings({ ...localFilters, search: undefined });
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-surface-2 rounded-full transition-colors"
+            >
+              <X className="h-3 w-3 text-foreground-muted" />
+            </button>
+          )}
+        </form>
 
-        {/* Filter & Sort */}
-        <div className="flex flex-wrap gap-2">
+        {/* Filter & Sort & View Mode - Aligned Right */}
+        <div className="flex items-center gap-2 ml-auto">
           <Button
             variant="secondary"
             leftIcon={<SlidersHorizontal className="h-4 w-4" />}
             onClick={() => setShowFilters(!showFilters)}
-            className="flex-shrink-0"
           >
-            <span className="hidden sm:inline">Filtros</span>
+            Filtros
             {activeFilterCount > 0 && (
-              <span className="ml-1 h-5 w-5 rounded-full bg-accent text-[10px] text-[#0C0C0E] flex items-center justify-center">
+              <span className="ml-1.5 h-5 w-5 rounded-full bg-accent text-[10px] text-[#0C0C0E] flex items-center justify-center font-medium">
                 {activeFilterCount}
               </span>
             )}
@@ -164,43 +195,43 @@ export default function MarketplacePage() {
             onChange={(e) =>
               handleFilterChange("sortBy", e.target.value as FilterOptions["sortBy"])
             }
-            className="w-32 sm:w-44 flex-shrink-0"
+            className="w-44"
           />
 
           {/* View mode toggle */}
-          <div className="flex items-center gap-1 p-1 bg-surface-1 border border-border rounded-lg flex-shrink-0">
+          <div className="flex items-center gap-1 p-1 bg-surface-1 border border-border rounded-lg">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
+              className={`p-2 rounded-md transition-colors ${
                 viewMode === "grid"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
               }`}
               title="Vista mosaico"
             >
-              <Grid3X3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Grid3X3 className="h-4 w-4" />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
+              className={`p-2 rounded-md transition-colors ${
                 viewMode === "list"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
               }`}
               title="Vista lista"
             >
-              <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <List className="h-4 w-4" />
             </button>
             <button
               onClick={() => setViewMode("map")}
-              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
+              className={`p-2 rounded-md transition-colors ${
                 viewMode === "map"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
               }`}
               title="Vista mapa"
             >
-              <Map className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Map className="h-4 w-4" />
             </button>
           </div>
         </div>

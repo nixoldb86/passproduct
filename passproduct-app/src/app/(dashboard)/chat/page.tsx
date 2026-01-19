@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   Search,
@@ -11,6 +12,7 @@ import {
   CheckCheck,
   DollarSign,
   ArrowLeft,
+  Circle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatStore } from "@/store";
@@ -18,12 +20,38 @@ import { Button, Card, Input } from "@/components/ui";
 import { formatPrice } from "@/lib/utils";
 import { Conversation, Message } from "@/types";
 
-export default function ChatPage() {
+// Función para formatear la última conexión
+function formatLastSeen(lastSeen: Date | string | null | undefined): string {
+  if (!lastSeen) return "";
+  
+  const date = new Date(lastSeen);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  // Online si está activo en los últimos 5 minutos
+  if (diffMins < 5) return "En línea";
+  
+  if (diffMins < 60) return `Últ. vez hace ${diffMins} min`;
+  if (diffHours < 24) return `Últ. vez hace ${diffHours}h`;
+  if (diffDays === 1) return "Últ. vez ayer";
+  if (diffDays < 7) return `Últ. vez hace ${diffDays} días`;
+  
+  return `Últ. vez ${date.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}`;
+}
+
+function ChatPageContent() {
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get("id");
+  
   const {
     conversations,
     activeConversation,
     isLoading,
     fetchConversations,
+    fetchConversation,
     setActiveConversation,
     sendMessage,
     makeOffer,
@@ -37,6 +65,13 @@ export default function ChatPage() {
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations]);
+
+  // Cargar conversación específica si viene por query param
+  useEffect(() => {
+    if (conversationId) {
+      fetchConversation(conversationId);
+    }
+  }, [conversationId, fetchConversation]);
 
   // En móvil, ocultar lista cuando hay conversación activa
   useEffect(() => {
@@ -135,7 +170,8 @@ export default function ChatPage() {
                 <button
                   key={conv.id}
                   onClick={() => {
-                    setActiveConversation(conv);
+                    // Cargar conversación completa con todos los mensajes
+                    fetchConversation(conv.id);
                     // En móvil, ocultar lista al seleccionar conversación
                     if (window.innerWidth < 768) {
                       setShowConversationList(false);
@@ -168,11 +204,18 @@ export default function ChatPage() {
                         {conv.listing?.title || "Producto"}
                       </p>
                       <span className="text-xs text-foreground-subtle flex-shrink-0">
-                        12:30
+                        {conv.updatedAt 
+                          ? new Date(conv.updatedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+                          : ""
+                        }
                       </span>
                     </div>
+                    <p className="text-xs text-foreground-subtle truncate">
+                      {(conv as any).otherParticipant?.firstName || "Usuario"}{" "}
+                      {(conv as any).otherParticipant?.lastName?.[0] ? `${(conv as any).otherParticipant.lastName[0]}.` : ""}
+                    </p>
                     <p className="text-sm text-foreground-muted truncate">
-                      {conv.messages[conv.messages.length - 1]?.text ||
+                      {conv.lastMessage?.text ||
                         "Sin mensajes"}
                     </p>
                     {conv.currentOffer && (
@@ -213,7 +256,51 @@ export default function ChatPage() {
                   >
                     <ArrowLeft className="h-5 w-5 text-foreground-muted" />
                   </button>
-                  <div className="relative h-10 w-10 rounded-lg bg-surface-2 overflow-hidden">
+                  {/* Avatar del otro participante */}
+                  <div className="relative">
+                    <div className="relative h-10 w-10 rounded-full bg-surface-2 overflow-hidden">
+                      {(activeConversation as any).otherParticipant?.avatarUrl ? (
+                        <Image
+                          src={(activeConversation as any).otherParticipant.avatarUrl}
+                          alt=""
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-lg">
+                          {(activeConversation as any).otherParticipant?.firstName?.[0] || "👤"}
+                        </div>
+                      )}
+                    </div>
+                    {/* Indicador de online */}
+                    {formatLastSeen((activeConversation as any).otherParticipant?.lastSeen) === "En línea" && (
+                      <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 bg-green-500 rounded-full border-2 border-surface-1" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {(activeConversation as any).otherParticipant?.firstName || "Usuario"}{" "}
+                      {(activeConversation as any).otherParticipant?.lastName?.[0] ? `${(activeConversation as any).otherParticipant.lastName[0]}.` : ""}
+                    </p>
+                    <p className="text-xs text-foreground-muted">
+                      {(activeConversation as any).otherParticipant?.lastSeen 
+                        ? formatLastSeen((activeConversation as any).otherParticipant.lastSeen)
+                        : activeConversation.listing?.title
+                      }
+                    </p>
+                  </div>
+                </div>
+                {/* Info del producto */}
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:block text-right">
+                    <p className="text-sm font-medium text-foreground truncate max-w-[150px]">
+                      {activeConversation.listing?.title}
+                    </p>
+                    <p className="text-xs text-accent">
+                      {formatPrice(activeConversation.listing?.price || 0)}
+                    </p>
+                  </div>
+                  <div className="relative h-10 w-10 rounded-lg bg-surface-2 overflow-hidden flex-shrink-0">
                     {activeConversation.listing?.photos[0] ? (
                       <Image
                         src={activeConversation.listing.photos[0]}
@@ -227,31 +314,34 @@ export default function ChatPage() {
                       </div>
                     )}
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {activeConversation.listing?.title}
-                    </p>
-                    <p className="text-sm text-foreground-muted">
-                      {formatPrice(activeConversation.listing?.price || 0)}
-                    </p>
-                  </div>
+                  <button className="p-2 rounded-lg hover:bg-surface-2 transition-colors">
+                    <MoreVertical className="h-5 w-5 text-foreground-muted" />
+                  </button>
                 </div>
-                <button className="p-2 rounded-lg hover:bg-surface-2 transition-colors">
-                  <MoreVertical className="h-5 w-5 text-foreground-muted" />
-                </button>
               </div>
 
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-pulse text-foreground-muted">
+                      Cargando mensajes...
+                    </div>
+                  </div>
+                ) : (activeConversation.messages || []).length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-foreground-muted">
+                    No hay mensajes aún. ¡Inicia la conversación!
+                  </div>
+                ) : (
                 <AnimatePresence initial={false}>
-                  {activeConversation.messages.map((message, i) => (
+                  {(activeConversation.messages || []).map((message, i) => (
                     <motion.div
                       key={message.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2 }}
                       className={`flex ${
-                        message.senderId === "user-1"
+                        message.isOwn
                           ? "justify-end"
                           : "justify-start"
                       }`}
@@ -259,8 +349,8 @@ export default function ChatPage() {
                       <div
                         className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
                           message.isSystemMessage
-                            ? "bg-surface-2 text-foreground-muted text-center text-sm"
-                            : message.senderId === "user-1"
+                            ? "bg-surface-2 text-foreground-muted text-center text-sm w-full"
+                            : message.isOwn
                             ? "bg-accent text-[#0C0C0E]"
                             : "bg-surface-2 text-foreground"
                         } ${
@@ -290,14 +380,21 @@ export default function ChatPage() {
                               }
                             )}
                           </span>
-                          {message.senderId === "user-1" && (
-                            <CheckCheck className="h-3 w-3 opacity-70" />
+                          {message.isOwn && !message.isSystemMessage && (
+                            message.readAt ? (
+                              // Doble check verde - mensaje leído
+                              <CheckCheck className="h-3 w-3 text-green-500" />
+                            ) : (
+                              // Doble check gris - mensaje entregado pero no leído
+                              <CheckCheck className="h-3 w-3 opacity-50" />
+                            )
                           )}
                         </div>
                       </div>
                     </motion.div>
                   ))}
                 </AnimatePresence>
+                )}
 
                 {/* Offer status */}
                 {activeConversation.offerStatus === "pending" && (
@@ -375,5 +472,13 @@ export default function ChatPage() {
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div className="animate-pulse">Cargando chat...</div>}>
+      <ChatPageContent />
+    </Suspense>
   );
 }

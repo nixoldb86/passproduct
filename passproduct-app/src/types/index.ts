@@ -39,6 +39,11 @@ export interface User {
   avatarUrl?: string;
   country: string;
   language: string;
+  // Activity & Presence
+  lastSeen?: Date;
+  // Privacy settings
+  showLastSeen?: boolean;
+  showReadReceipts?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -194,6 +199,7 @@ export interface Message {
   isSystemMessage: boolean;
   readAt?: Date;
   createdAt: Date;
+  isOwn?: boolean; // Calculado por la API - true si el mensaje es del usuario actual
 }
 
 export interface Order {

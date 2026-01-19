@@ -1,33 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Filter, SlidersHorizontal, TrendingUp, Package } from "lucide-react";
+import { Plus, SlidersHorizontal, TrendingUp, Package, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWalletStore, useUIStore } from "@/store";
 import { Button, Card, SkeletonCard } from "@/components/ui";
 import { ProductCard, EditProductModal } from "@/components/wallet";
 import { formatPrice } from "@/lib/utils";
-import { mockProducts, calculateWalletValue } from "@/lib/mock-data";
+import { calculateWalletValue } from "@/lib/mock-data";
 import { Product } from "@/types";
 
 export default function WalletPage() {
-  const { products, isLoading, fetchProducts, deleteProduct, updateProduct } = useWalletStore();
+  const { products, isLoading, error, fetchProducts, deleteProduct, clearError } = useWalletStore();
   const { setAddProductModalOpen } = useUIStore();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    deleteProduct(productId);
-  };
-
-  const handleSaveProduct = (productId: string, updates: Partial<Product>) => {
-    updateProduct(productId, updates);
+  const handleDeleteProduct = async (productId: string) => {
+    if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
+      setIsDeleting(productId);
+      await deleteProduct(productId);
+      setIsDeleting(null);
+    }
   };
 
   useEffect(() => {
@@ -198,6 +199,19 @@ export default function WalletPage() {
         </AnimatePresence>
       </div>
 
+      {/* Error Alert */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-20 right-4 bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl flex items-center gap-2 z-50"
+        >
+          <AlertCircle className="h-5 w-5" />
+          <span>{error}</span>
+          <button onClick={clearError} className="ml-2 hover:text-error/80">✕</button>
+        </motion.div>
+      )}
+
       {/* Edit Product Modal */}
       <EditProductModal
         isOpen={isEditModalOpen}
@@ -206,7 +220,6 @@ export default function WalletPage() {
           setEditingProduct(null);
         }}
         product={editingProduct}
-        onSave={handleSaveProduct}
       />
     </div>
   );

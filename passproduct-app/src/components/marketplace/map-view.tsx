@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Listing } from "@/types";
 import { formatPrice } from "@/lib/utils";
-import { Shield } from "lucide-react";
 import dynamic from "next/dynamic";
 
 // Importar Leaflet dinámicamente para evitar SSR issues
@@ -98,27 +97,12 @@ export function MapView({ listings }: MapViewProps) {
     const count = cluster.getChildCount();
     
     // Tamaño del círculo basado en cantidad de markers
-    let size = 50;
-    let fontSize = 11;
-    if (count > 10) {
-      size = 60;
-      fontSize = 12;
-    }
-    if (count > 20) {
-      size = 70;
-      fontSize = 13;
-    }
-    if (count > 50) {
-      size = 80;
-      fontSize = 14;
-    }
+    let size = 42;
+    if (count > 10) size = 48;
+    if (count > 20) size = 54;
     
     return L.divIcon({
-      html: `
-        <div class="cluster-circle" style="width: ${size}px; height: ${size}px;">
-          <span class="cluster-price" style="font-size: ${fontSize}px;">desde<br/>${formatPrice(minPrice)}</span>
-        </div>
-      `,
+      html: `<div class="cluster-dot">${formatPrice(minPrice)}</div>`,
       className: "custom-cluster-icon",
       iconSize: L.point(size, size),
       iconAnchor: L.point(size / 2, size / 2),
@@ -127,103 +111,113 @@ export function MapView({ listings }: MapViewProps) {
 
   if (!isMounted || !L) {
     return (
-      <div className="h-[500px] bg-surface-1 rounded-2xl border border-border flex items-center justify-center">
-        <div className="text-foreground-muted">Cargando mapa...</div>
+      <div className="h-[500px] bg-surface-1 rounded-2xl flex items-center justify-center">
+        <div className="text-foreground-muted text-sm">Cargando mapa...</div>
       </div>
     );
   }
 
   return (
-    <div className="relative h-[500px] rounded-2xl overflow-hidden border border-border">
-      {/* Estilos de Leaflet y clusters */}
+    <div className="relative h-[500px] rounded-2xl overflow-hidden">
+      {/* Estilos minimalistas */}
       <style jsx global>{`
         .leaflet-container {
           height: 100%;
           width: 100%;
-          background: #f5f5f5;
+          background: #fafafa;
+          font-family: inherit;
         }
+        
+        /* Ocultar controles de atribución */
+        .leaflet-control-attribution {
+          display: none;
+        }
+        
+        /* Popup minimalista */
         .leaflet-popup-content-wrapper {
-          background: var(--color-surface-1, #1a1a1a);
-          color: var(--color-foreground, #fff);
+          background: #fff;
+          color: #111;
           border-radius: 12px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-          border: 1px solid rgba(255,255,255,0.1);
+          box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+          padding: 0;
         }
         .leaflet-popup-tip {
-          background: var(--color-surface-1, #1a1a1a);
-          border-left: 1px solid rgba(255,255,255,0.1);
-          border-bottom: 1px solid rgba(255,255,255,0.1);
+          background: #fff;
         }
         .leaflet-popup-content {
-          margin: 12px 14px;
+          margin: 0;
+          min-width: 160px;
         }
         .leaflet-popup-close-button {
-          color: #888 !important;
+          display: none;
         }
         
-        /* Círculo de precio individual */
-        .price-circle {
-          display: flex;
+        /* Precio individual - pill minimalista */
+        .price-pill {
+          display: inline-flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #E4C767 0%, #D4AF37 100%);
-          color: #0C0C0E;
-          border-radius: 50%;
-          font-weight: 700;
-          box-shadow: 0 3px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+          background: #111;
+          color: #fff;
+          padding: 6px 10px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 600;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
           cursor: pointer;
-          transition: transform 0.2s, box-shadow 0.2s;
-          border: 2px solid rgba(255,255,255,0.3);
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+          white-space: nowrap;
         }
-        .price-circle:hover {
-          transform: scale(1.15);
-          box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+        .price-pill:hover {
+          transform: scale(1.08);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         }
         
-        /* Círculo de cluster */
+        /* Cluster - círculo con precio mínimo */
         .custom-cluster-icon {
           background: transparent !important;
         }
-        .cluster-circle {
+        .cluster-dot {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #E4C767 0%, #D4AF37 100%);
-          color: #0C0C0E;
-          border-radius: 50%;
-          font-weight: 700;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+          background: #111;
+          color: #fff;
+          padding: 8px 12px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 600;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.25);
           cursor: pointer;
-          transition: transform 0.2s, box-shadow 0.2s;
-          border: 3px solid rgba(255,255,255,0.4);
-          text-align: center;
+          transition: transform 0.15s ease;
+          white-space: nowrap;
         }
-        .cluster-circle:hover {
-          transform: scale(1.1);
-          box-shadow: 0 6px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3);
-        }
-        .cluster-price {
-          line-height: 1.1;
+        .cluster-dot:hover {
+          transform: scale(1.08);
         }
         
-        /* Controles de zoom */
+        /* Controles de zoom minimalistas */
         .leaflet-control-zoom {
           border: none !important;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.15) !important;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+          border-radius: 8px !important;
+          overflow: hidden;
         }
         .leaflet-control-zoom a {
-          background: white !important;
+          background: #fff !important;
           color: #333 !important;
-          border: 1px solid #ddd !important;
-          width: 32px !important;
-          height: 32px !important;
-          line-height: 30px !important;
+          border: none !important;
+          width: 28px !important;
+          height: 28px !important;
+          line-height: 26px !important;
+          font-size: 14px !important;
         }
         .leaflet-control-zoom a:hover {
           background: #f5f5f5 !important;
         }
         .leaflet-control-zoom-in {
           border-radius: 8px 8px 0 0 !important;
+          border-bottom: 1px solid #eee !important;
         }
         .leaflet-control-zoom-out {
           border-radius: 0 0 8px 8px !important;
@@ -234,21 +228,22 @@ export function MapView({ listings }: MapViewProps) {
         center={mapCenter}
         zoom={6}
         scrollWheelZoom={true}
+        zoomControl={true}
         style={{ height: "100%", width: "100%" }}
       >
+        {/* Mapa minimalista CartoDB Positron */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
 
         <MarkerClusterGroup
           chunkedLoading
           iconCreateFunction={createClusterCustomIcon}
-          maxClusterRadius={60}
+          maxClusterRadius={50}
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
           zoomToBoundsOnClick={true}
-          disableClusteringAtZoom={12}
+          disableClusteringAtZoom={13}
         >
           {listingsWithCoords.map((listing) => (
             <PriceMarker key={listing.id} listing={listing} L={L} />
@@ -256,20 +251,17 @@ export function MapView({ listings }: MapViewProps) {
         </MarkerClusterGroup>
       </MapContainer>
 
-      {/* Leyenda */}
-      <div className="absolute bottom-4 left-4 z-[1000] bg-surface-1/95 backdrop-blur-sm border border-border rounded-xl p-3">
-        <p className="text-sm font-medium text-foreground">
+      {/* Contador minimalista */}
+      <div className="absolute bottom-4 left-4 z-[1000] bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-sm">
+        <span className="text-sm font-medium text-gray-800">
           {listings.length} anuncios
-        </p>
-        <p className="text-xs text-foreground-muted mt-1">
-          Haz zoom para ver todos los precios
-        </p>
+        </span>
       </div>
     </div>
   );
 }
 
-// Componente separado para el marcador con precio circular
+// Componente separado para el marcador con precio
 function PriceMarker({ 
   listing, 
   L 
@@ -277,39 +269,15 @@ function PriceMarker({
   listing: Listing & { lat: number; lng: number };
   L: typeof import("leaflet");
 }) {
-  // Calcular tamaño del círculo basado en el precio
   const price = listing.price;
-  let size = 44;
-  let fontSize = 10;
-  
-  if (price >= 1000) {
-    size = 52;
-    fontSize = 9;
-  } else if (price >= 500) {
-    size = 48;
-    fontSize = 10;
-  } else if (price < 100) {
-    size = 40;
-    fontSize = 11;
-  }
 
-  // Crear icono circular con el precio
+  // Crear icono pill con el precio
   const priceIcon = L.divIcon({
     className: "price-marker-container",
-    html: `<div class="price-circle" style="width: ${size}px; height: ${size}px; font-size: ${fontSize}px;">${formatPrice(price)}</div>`,
-    iconSize: L.point(size, size),
-    iconAnchor: L.point(size / 2, size / 2),
+    html: `<div class="price-pill">${formatPrice(price)}</div>`,
+    iconSize: L.point(70, 28),
+    iconAnchor: L.point(35, 14),
   });
-
-  // Guardar el precio en las opciones del marker para el cluster
-  const markerOptions = {
-    icon: priceIcon,
-    price: price,
-  };
-
-  const hasWarranty = listing.product?.warrantyEndDate
-    ? new Date(listing.product.warrantyEndDate) > new Date()
-    : false;
 
   return (
     <Marker 
@@ -319,25 +287,11 @@ function PriceMarker({
       price={price}
     >
       <Popup>
-        <div className="min-w-[200px]">
-          <h4 className="font-semibold text-sm mb-1">{listing.title}</h4>
-          <p className="text-xs text-foreground-muted mb-2">{listing.location}</p>
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-accent text-lg">{formatPrice(listing.price)}</span>
-            {hasWarranty && (
-              <span className="flex items-center gap-1 text-xs text-jade">
-                <Shield className="h-3 w-3" />
-                Garantía
-              </span>
-            )}
-          </div>
-          <a
-            href={`/marketplace/${listing.id}`}
-            className="block mt-3 text-center text-xs bg-accent text-[#0C0C0E] py-2 px-3 rounded-lg font-medium hover:bg-accent/90 transition-colors"
-          >
-            Ver anuncio
-          </a>
-        </div>
+        <a href={`/marketplace/${listing.id}`} className="block p-3 hover:bg-gray-50 transition-colors rounded-xl">
+          <p className="font-semibold text-sm text-gray-900 mb-0.5">{listing.title}</p>
+          <p className="text-xs text-gray-500 mb-2">{listing.location}</p>
+          <p className="font-bold text-base text-gray-900">{formatPrice(listing.price)}</p>
+        </a>
       </Popup>
     </Marker>
   );

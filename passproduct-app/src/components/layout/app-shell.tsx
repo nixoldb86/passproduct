@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
 import { useWalletStore, useAlertStore } from "@/store";
+import { usePresence } from "@/hooks";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -12,6 +13,9 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const { fetchProducts } = useWalletStore();
   const { fetchAlerts } = useAlertStore();
+  
+  // Actualizar presencia del usuario periódicamente
+  usePresence();
 
   useEffect(() => {
     // Initialize data on mount

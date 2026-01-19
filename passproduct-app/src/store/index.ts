@@ -1,104 +1,272 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { Product, Listing, Conversation, Order, Alert, FilterOptions } from "@/types";
 import {
-  mockProducts,
-  mockListings,
   mockConversations,
   mockOrders,
   mockAlerts,
 } from "@/lib/mock-data";
 
 // ==========================================
-// WALLET STORE (con persistencia)
+// WALLET STORE (conectado a PostgreSQL)
 // ==========================================
 
 interface WalletState {
   products: Product[];
   isLoading: boolean;
   selectedProduct: Product | null;
+  error: string | null;
   
   // Actions
   setProducts: (products: Product[]) => void;
-  addProduct: (product: Product) => void;
-  updateProduct: (id: string, updates: Partial<Product>) => void;
-  deleteProduct: (id: string) => void;
+  addProduct: (productData: Partial<Product>) => Promise<Product | null>;
+  updateProduct: (id: string, updates: Partial<Product>) => Promise<boolean>;
+  deleteProduct: (id: string) => Promise<boolean>;
   selectProduct: (product: Product | null) => void;
   fetchProducts: () => Promise<void>;
+  clearError: () => void;
 }
 
-// Función para limpiar fotos base64 antes de guardar en localStorage
-const sanitizeProductForStorage = (product: Product): Product => {
+// Transformar producto de la API al formato del frontend
+const transformProductFromAPI = (apiProduct: Record<string, unknown>): Product => {
+  const attributes = apiProduct.attributes as Record<string, unknown> | null;
   return {
-    ...product,
-    // No guardar fotos base64 en localStorage (son muy grandes)
-    // Solo guardar URLs (empiezan con http)
-    photos: (product.photos || []).filter(p => p.startsWith("http")),
-    stockPhotos: (product.stockPhotos || []).filter(p => p.startsWith("http")),
-    // No guardar proofOfPurchaseUrl si es base64
-    proofOfPurchaseUrl: product.proofOfPurchaseUrl?.startsWith("http") 
-      ? product.proofOfPurchaseUrl 
-      : undefined,
+    id: apiProduct.id as string,
+    userId: apiProduct.userId as string,
+    categoryId: apiProduct.categoryId as string,
+    category: apiProduct.category as Product["category"],
+    brand: apiProduct.brand as string,
+    model: apiProduct.model as string,
+    variant: apiProduct.variant as string | undefined,
+    condition: (apiProduct.condition as string)?.toLowerCase() as Product["condition"],
+    purchaseDate: apiProduct.purchaseDate ? new Date(apiProduct.purchaseDate as string) : undefined,
+    purchasePrice: apiProduct.purchasePrice ? Number(apiProduct.purchasePrice) : undefined,
+    purchaseStore: apiProduct.purchaseStore as string | undefined,
+    proofOfPurchaseUrl: apiProduct.proofOfPurchaseUrl as string | undefined,
+    warrantyEndDate: apiProduct.warrantyEndDate ? new Date(apiProduct.warrantyEndDate as string) : undefined,
+    warrantyNotes: attributes?.warrantyNotes as string | undefined,
+    imeiLast4: apiProduct.imeiLast4 as string | undefined,
+    serialLast4: apiProduct.serialLast4 as string | undefined,
+    photos: apiProduct.photos as string[] || [],
+    stockPhotos: attributes?.stockPhotos as string[] || [],
+    accessories: apiProduct.accessories as Record<string, boolean> | undefined,
+    estimatedValue: apiProduct.estimatedValue ? Number(apiProduct.estimatedValue) : undefined,
+    manualUrl: attributes?.manualUrl as string | undefined,
+    specs: attributes?.specs as Array<{ label: string; value: string }> | undefined,
+    createdAt: new Date(apiProduct.createdAt as string),
+    updatedAt: new Date(apiProduct.updatedAt as string),
   };
 };
 
-export const useWalletStore = create<WalletState>()(
-  persist(
-    (set, get) => ({
-      products: mockProducts, // Inicializar con los productos mock
-      isLoading: false,
-      selectedProduct: null,
+export const useWalletStore = create<WalletState>((set, get) => ({
+  products: [],
+  isLoading: false,
+  selectedProduct: null,
+  error: null,
 
-      setProducts: (products) => set({ products }),
+  setProducts: (products) => set({ products }),
+  
+  clearError: () => set({ error: null }),
+  
+  // Cargar productos del usuario desde la BD
+  fetchProducts: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch("/api/db/products");
       
-      addProduct: (product) =>
-        set((state) => ({ products: [product, ...state.products] })), // Añadir al principio
+      // Si no está autenticado, devolver lista vacía sin error
+      if (response.status === 401 || response.redirected) {
+        set({ products: [], isLoading: false });
+        return;
+      }
       
-      updateProduct: (id, updates) =>
+      // Verificar que la respuesta sea JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        // Si no es JSON, probablemente es una página de login
+        set({ products: [], isLoading: false });
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.products) {
+        const products = data.products.map(transformProductFromAPI);
+        set({ products, isLoading: false });
+      } else {
+        set({ products: [], isLoading: false, error: data.error });
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      set({ products: [], isLoading: false, error: "Error de conexión" });
+    }
+  },
+  
+  // Crear nuevo producto en la BD
+  addProduct: async (productData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch("/api/db/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categoryId: productData.categoryId,
+          brand: productData.brand,
+          model: productData.model,
+          variant: productData.variant,
+          condition: productData.condition?.toUpperCase() || "GOOD",
+          purchaseDate: productData.purchaseDate,
+          purchasePrice: productData.purchasePrice,
+          purchaseStore: productData.purchaseStore,
+          warrantyEndDate: productData.warrantyEndDate,
+          photos: productData.photos?.filter(p => p.startsWith("http")) || [],
+          stockPhotos: productData.stockPhotos || [],
+          accessories: productData.accessories,
+          imeiLast4: productData.imeiLast4,
+          serialLast4: productData.serialLast4,
+          warrantyNotes: productData.warrantyNotes,
+          manualUrl: productData.manualUrl,
+          specs: productData.specs,
+          estimatedValue: productData.estimatedValue,
+        }),
+      });
+      
+      // Verificar autenticación
+      if (response.status === 401 || response.redirected) {
+        set({ isLoading: false, error: "Debes iniciar sesión para añadir productos" });
+        return null;
+      }
+      
+      // Verificar que sea JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        set({ isLoading: false, error: "Error de servidor. Intenta de nuevo." });
+        return null;
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.product) {
+        const newProduct = transformProductFromAPI(data.product);
+        set((state) => ({
+          products: [newProduct, ...state.products],
+          isLoading: false,
+        }));
+        return newProduct;
+      } else {
+        console.error("Error creating product:", data.error);
+        set({ isLoading: false, error: data.error || "Error al crear producto" });
+        return null;
+      }
+    } catch (error) {
+      console.error("Error creating product:", error);
+      set({ isLoading: false, error: "Error de conexión" });
+      return null;
+    }
+  },
+  
+  // Actualizar producto en la BD
+  updateProduct: async (id, updates) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`/api/db/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...updates,
+          condition: updates.condition?.toUpperCase(),
+        }),
+      });
+      
+      // Verificar autenticación
+      if (response.status === 401 || response.redirected) {
+        set({ isLoading: false, error: "Sesión expirada. Inicia sesión de nuevo." });
+        return false;
+      }
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        set({ isLoading: false, error: "Error de servidor" });
+        return false;
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.product) {
+        const updatedProduct = transformProductFromAPI(data.product);
         set((state) => ({
           products: state.products.map((p) =>
-            p.id === id ? { ...p, ...updates } : p
+            p.id === id ? updatedProduct : p
           ),
-        })),
+          isLoading: false,
+        }));
+        return true;
+      } else {
+        set({ isLoading: false, error: data.error || "Error al actualizar" });
+        return false;
+      }
+    } catch (error) {
+      console.error("Error updating product:", error);
+      set({ isLoading: false, error: "Error de conexión" });
+      return false;
+    }
+  },
+  
+  // Eliminar producto de la BD
+  deleteProduct: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`/api/db/products/${id}`, {
+        method: "DELETE",
+      });
       
-      deleteProduct: (id) =>
+      // Verificar autenticación
+      if (response.status === 401 || response.redirected) {
+        set({ isLoading: false, error: "Sesión expirada. Inicia sesión de nuevo." });
+        return false;
+      }
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        set({ isLoading: false, error: "Error de servidor" });
+        return false;
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
         set((state) => ({
           products: state.products.filter((p) => p.id !== id),
-        })),
-      
-      selectProduct: (product) => set({ selectedProduct: product }),
-      
-      fetchProducts: async () => {
-        // Solo cargar si no hay productos (primera vez)
-        if (get().products.length > 0) {
-          return;
-        }
-        set({ isLoading: true });
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        set({ products: mockProducts, isLoading: false });
-      },
-    }),
-    {
-      name: "passproduct-wallet", // Nombre en localStorage
-      // Sanitizar productos antes de guardar para evitar QuotaExceededError
-      partialize: (state) => ({ 
-        products: state.products.map(sanitizeProductForStorage)
-      }),
-      // Manejar errores de storage
-      onRehydrateStorage: () => (state) => {
-        // Si hay error al cargar, usar productos mock
-        if (!state) {
-          console.warn("Error al cargar datos del localStorage, usando datos por defecto");
-        }
-      },
+          isLoading: false,
+        }));
+        return true;
+      } else {
+        set({ isLoading: false, error: data.error || "Error al eliminar" });
+        return false;
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      set({ isLoading: false, error: "Error de conexión" });
+      return false;
     }
-  )
-);
+  },
+  
+  selectProduct: (product) => set({ selectedProduct: product }),
+}));
 
 // ==========================================
 // MARKETPLACE STORE
 // ==========================================
+
+interface CreateListingData {
+  productId: string;
+  title: string;
+  description: string;
+  price: number;
+  location: string;
+  shippingEnabled: boolean;
+  shippingCost?: number;
+  photos: string[];
+}
 
 interface MarketplaceState {
   listings: Listing[];
@@ -111,7 +279,7 @@ interface MarketplaceState {
   selectListing: (listing: Listing | null) => void;
   setFilters: (filters: FilterOptions) => void;
   fetchListings: (filters?: FilterOptions) => Promise<void>;
-  createListing: (listing: Listing) => Promise<void>;
+  createListing: (data: CreateListingData) => Promise<Listing>;
 }
 
 export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
@@ -128,55 +296,102 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
   
   fetchListings: async (filters) => {
     set({ isLoading: true });
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
     
-    let filtered = [...mockListings];
-    
-    if (filters?.categoryId) {
-      filtered = filtered.filter((l) => l.categoryId === filters.categoryId);
-    }
-    if (filters?.minPrice) {
-      filtered = filtered.filter((l) => l.price >= filters.minPrice!);
-    }
-    if (filters?.maxPrice) {
-      filtered = filtered.filter((l) => l.price <= filters.maxPrice!);
-    }
-    if (filters?.hasVerifiedPurchase) {
-      filtered = filtered.filter((l) => l.hasVerifiedPurchase);
-    }
-    if (filters?.shippingEnabled !== undefined) {
-      filtered = filtered.filter((l) => l.shippingEnabled === filters.shippingEnabled);
-    }
-    
-    // Sort
-    if (filters?.sortBy) {
-      switch (filters.sortBy) {
-        case "price_asc":
-          filtered.sort((a, b) => a.price - b.price);
-          break;
-        case "price_desc":
-          filtered.sort((a, b) => b.price - a.price);
-          break;
-        case "date_desc":
-          filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          break;
-        case "date_asc":
-          filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-          break;
+    try {
+      // Construir query params
+      const params = new URLSearchParams();
+      if (filters?.categoryId) params.set("category", filters.categoryId);
+      if (filters?.minPrice) params.set("minPrice", filters.minPrice.toString());
+      if (filters?.maxPrice) params.set("maxPrice", filters.maxPrice.toString());
+      if (filters?.hasWarranty) params.set("hasWarranty", "true");
+      if (filters?.search) params.set("search", filters.search);
+      if (filters?.sortBy) {
+        const sortMap: Record<string, string> = {
+          "date_desc": "recent",
+          "date_asc": "oldest",
+          "price_asc": "price_asc",
+          "price_desc": "price_desc",
+        };
+        params.set("sortBy", sortMap[filters.sortBy] || "recent");
       }
+      
+      const response = await fetch(`/api/db/listings?${params.toString()}`);
+      const data = await response.json();
+      
+      if (data.success && data.listings) {
+        // Aplicar filtros adicionales del lado del cliente si es necesario
+        let filtered = data.listings;
+        
+        if (filters?.hasVerifiedPurchase) {
+          filtered = filtered.filter((l: Listing) => l.hasVerifiedPurchase);
+        }
+        if (filters?.shippingEnabled !== undefined) {
+          filtered = filtered.filter((l: Listing) => l.shippingEnabled === filters.shippingEnabled);
+        }
+        
+        set({ listings: filtered, isLoading: false, filters: filters || {} });
+      } else {
+        // Fallback a datos mock si falla la API
+        console.warn("API error, usando datos mock:", data.error);
+        let filtered = [...mockListings];
+        
+        if (filters?.categoryId) {
+          filtered = filtered.filter((l) => l.categoryId === filters.categoryId);
+        }
+        if (filters?.minPrice) {
+          filtered = filtered.filter((l) => l.price >= filters.minPrice!);
+        }
+        if (filters?.maxPrice) {
+          filtered = filtered.filter((l) => l.price <= filters.maxPrice!);
+        }
+        
+        set({ listings: filtered, isLoading: false, filters: filters || {} });
+      }
+    } catch (error) {
+      console.error("Error fetching listings from API:", error);
+      // Fallback a datos mock
+      set({ listings: mockListings, isLoading: false, filters: filters || {} });
     }
-    
-    set({ listings: filtered, isLoading: false, filters: filters || {} });
   },
   
-  createListing: async (listing) => {
+  createListing: async (listingData) => {
     set({ isLoading: true });
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    set((state) => ({
-      listings: [listing, ...state.listings],
-      isLoading: false,
-    }));
+    
+    try {
+      const response = await fetch("/api/db/listings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: listingData.productId,
+          title: listingData.title,
+          description: listingData.description,
+          price: listingData.price,
+          location: listingData.location,
+          shippingEnabled: listingData.shippingEnabled,
+          shippingCost: listingData.shippingCost,
+          photos: listingData.photos,
+        }),
+      });
+      
+      if (response.status === 401) {
+        set({ isLoading: false });
+        throw new Error("Debes iniciar sesión para vender");
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.listing) {
+        // Refrescar listings para incluir el nuevo
+        await get().fetchListings();
+        return data.listing;
+      } else {
+        throw new Error(data.error || "Error al crear el anuncio");
+      }
+    } catch (error) {
+      console.error("Error creating listing:", error);
+      set({ isLoading: false });
+      throw error;
+    }
   },
 }));
 
@@ -193,6 +408,8 @@ interface ChatState {
   setConversations: (conversations: Conversation[]) => void;
   setActiveConversation: (conversation: Conversation | null) => void;
   fetchConversations: () => Promise<void>;
+  fetchConversation: (id: string) => Promise<void>;
+  startConversation: (listingId: string, initialMessage?: string) => Promise<Conversation | null>;
   sendMessage: (conversationId: string, text: string, isOffer?: boolean, offerAmount?: number) => Promise<void>;
   makeOffer: (conversationId: string, amount: number) => Promise<void>;
   respondToOffer: (conversationId: string, accept: boolean) => Promise<void>;
@@ -209,47 +426,117 @@ export const useChatStore = create<ChatState>((set, get) => ({
   
   fetchConversations: async () => {
     set({ isLoading: true });
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    set({ conversations: mockConversations, isLoading: false });
+    try {
+      const response = await fetch("/api/db/conversations");
+      
+      if (response.status === 401) {
+        set({ conversations: [], isLoading: false });
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        set({ conversations: data.conversations || [], isLoading: false });
+      } else {
+        console.warn("Error fetching conversations:", data.error);
+        set({ conversations: mockConversations, isLoading: false });
+      }
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      set({ conversations: mockConversations, isLoading: false });
+    }
+  },
+  
+  fetchConversation: async (id) => {
+    set({ isLoading: true });
+    try {
+      const response = await fetch(`/api/db/conversations/${id}`);
+      const data = await response.json();
+      
+      if (data.success && data.conversation) {
+        set({ activeConversation: data.conversation, isLoading: false });
+      } else {
+        set({ isLoading: false });
+      }
+    } catch (error) {
+      console.error("Error fetching conversation:", error);
+      set({ isLoading: false });
+    }
+  },
+  
+  startConversation: async (listingId, initialMessage) => {
+    try {
+      const response = await fetch("/api/db/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId, initialMessage }),
+      });
+      
+      if (response.status === 401) {
+        throw new Error("Debes iniciar sesión para contactar");
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.conversation) {
+        // Añadir a la lista si no existe
+        set((state) => ({
+          conversations: state.conversations.some(c => c.id === data.conversation.id)
+            ? state.conversations
+            : [data.conversation, ...state.conversations],
+          activeConversation: data.conversation,
+        }));
+        return data.conversation;
+      }
+      
+      throw new Error(data.error || "Error al iniciar conversación");
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+      throw error;
+    }
   },
   
   sendMessage: async (conversationId, text, isOffer = false, offerAmount) => {
-    const newMessage = {
-      id: `msg-${Date.now()}`,
-      conversationId,
-      senderId: "user-1", // Current user
-      text,
-      isOffer,
-      offerAmount,
-      isSystemMessage: false,
-      createdAt: new Date(),
-    };
-    
-    set((state) => ({
-      conversations: state.conversations.map((conv) =>
-        conv.id === conversationId
-          ? { ...conv, messages: [...conv.messages, newMessage], updatedAt: new Date() }
-          : conv
-      ),
-      activeConversation:
-        state.activeConversation?.id === conversationId
-          ? {
-              ...state.activeConversation,
-              messages: [...state.activeConversation.messages, newMessage],
-            }
-          : state.activeConversation,
-    }));
+    try {
+      const response = await fetch(`/api/db/conversations/${conversationId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, isOffer, offerAmount }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.message) {
+        // Actualizar estado local
+        set((state) => ({
+          conversations: state.conversations.map((conv) =>
+            conv.id === conversationId
+              ? { 
+                  ...conv, 
+                  lastMessage: data.message,
+                  updatedAt: new Date(),
+                  ...(isOffer && { currentOffer: offerAmount, offerStatus: "pending" }),
+                }
+              : conv
+          ),
+          activeConversation:
+            state.activeConversation?.id === conversationId
+              ? {
+                  ...state.activeConversation,
+                  messages: [...(state.activeConversation.messages || []), data.message],
+                }
+              : state.activeConversation,
+        }));
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      throw error;
+    }
   },
   
   makeOffer: async (conversationId, amount) => {
     await get().sendMessage(conversationId, `Te ofrezco ${amount}€`, true, amount);
-    set((state) => ({
-      conversations: state.conversations.map((conv) =>
-        conv.id === conversationId
-          ? { ...conv, currentOffer: amount, offerStatus: "pending" }
-          : conv
-      ),
-    }));
   },
   
   respondToOffer: async (conversationId, accept) => {
@@ -323,7 +610,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     
     const amount = listing.price;
     const shippingAmount = listing.shippingCost || 0;
-    const feeMarketplace = amount * 0.07; // 7%
+    const feeMarketplace = amount * 0.05; // 5%
     const feeProtection = Math.min(amount * 0.02, 25); // 2% with €25 cap
     const total = amount + shippingAmount + feeProtection;
     const sellerPayout = amount - feeMarketplace;

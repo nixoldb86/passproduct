@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -16,17 +17,20 @@ import {
   Shield,
   Tag,
   Package,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button, Card, Input, Select, Badge } from "@/components/ui";
 import { useWalletStore, useMarketplaceStore } from "@/store";
 import { getProductById, mockCategories, getPriceRecommendations } from "@/lib/mock-data";
 import { formatPrice } from "@/lib/utils";
-import { Product, Listing, ProductCondition, CONDITION_LABELS } from "@/types";
+import { Product, ProductCondition, CONDITION_LABELS } from "@/types";
 
 function SellPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user, isLoaded: isUserLoaded } = useUser();
   const { products } = useWalletStore();
   const { createListing } = useMarketplaceStore();
 
@@ -34,6 +38,10 @@ function SellPageContent() {
   const [step, setStep] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Verification state
+  const [isCheckingVerification, setIsCheckingVerification] = useState(true);
+  const [isIdentityVerified, setIsIdentityVerified] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -46,6 +54,29 @@ function SellPageContent() {
     shippingCost: "5.99",
     location: "Madrid",
   });
+
+  // Check verification status
+  useEffect(() => {
+    const checkVerification = async () => {
+      if (!isUserLoaded || !user) {
+        setIsCheckingVerification(false);
+        return;
+      }
+      
+      try {
+        const response = await fetch("/api/verify/status");
+        const data = await response.json();
+        setIsIdentityVerified(data.isVerified || false);
+      } catch (error) {
+        console.error("Error checking verification:", error);
+        setIsIdentityVerified(false);
+      } finally {
+        setIsCheckingVerification(false);
+      }
+    };
+    
+    checkVerification();
+  }, [isUserLoaded, user]);
 
   useEffect(() => {
     if (productId) {
@@ -93,58 +124,105 @@ function SellPageContent() {
     }
   };
 
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const handleSubmit = async () => {
     if (!selectedProduct) return;
 
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setSubmitError(null);
 
-    const newListing: Listing = {
-      id: `list-${Date.now()}`,
-      productId: selectedProduct.id,
-      product: selectedProduct,
-      sellerId: "user-1",
-      categoryId: selectedProduct.categoryId,
-      category: selectedProduct.category,
-      title: formData.title,
-      description: formData.description,
-      price: parseFloat(formData.price),
-      location: formData.location,
-      shippingEnabled: formData.shippingEnabled,
-      shippingCost: formData.shippingEnabled
-        ? parseFloat(formData.shippingCost)
-        : undefined,
-      verificationLevel: selectedProduct.proofOfPurchaseUrl
-        ? selectedProduct.serialLast4 || selectedProduct.imeiLast4
-          ? "LEVEL_2"
-          : "LEVEL_1"
-        : "LEVEL_0",
-      hasVerifiedPurchase: !!selectedProduct.proofOfPurchaseUrl,
-      hasValidWarranty: selectedProduct.warrantyEndDate
-        ? new Date(selectedProduct.warrantyEndDate) > new Date()
-        : false,
-      hasVerifiedAccessories: !!selectedProduct.accessories,
-      hasVerifiedIdentifier: !!(
-        selectedProduct.serialLast4 || selectedProduct.imeiLast4
-      ),
-      status: "PUBLISHED",
-      photos: formData.photos,
-      isBoosted: false,
-      viewCount: 0,
-      favoriteCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      publishedAt: new Date(),
-    };
-
-    await createListing(newListing);
-    setIsSubmitting(false);
-    router.push("/marketplace");
+    try {
+      await createListing({
+        productId: selectedProduct.id,
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        location: formData.location,
+        shippingEnabled: formData.shippingEnabled,
+        shippingCost: formData.shippingEnabled
+          ? parseFloat(formData.shippingCost)
+          : undefined,
+        photos: formData.photos,
+      });
+      
+      router.push("/marketplace");
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Error al publicar");
+      setIsSubmitting(false);
+    }
   };
 
   const priceRecommendations = selectedProduct?.estimatedValue
     ? getPriceRecommendations(selectedProduct.estimatedValue)
     : null;
+
+  // Show loading while checking verification
+  if (isCheckingVerification) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  // Show verification required if not verified
+  if (!isIdentityVerified) {
+    return (
+      <div className="max-w-md mx-auto text-center py-12">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="w-20 h-20 mx-auto bg-amber-500/20 rounded-full flex items-center justify-center mb-4"
+        >
+          <AlertTriangle className="h-10 w-10 text-amber-500" />
+        </motion.div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Verificación requerida
+        </h1>
+        <p className="text-foreground-muted mb-6">
+          Para vender en PassProduct necesitas verificar tu identidad primero.
+          Es un proceso rápido y seguro.
+        </p>
+        <div className="space-y-3">
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => router.push(`/verify?returnTo=/sell${productId ? `?productId=${productId}` : ""}`)}
+            leftIcon={<Shield className="h-4 w-4" />}
+          >
+            Verificar mi identidad
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full"
+            onClick={() => router.back()}
+          >
+            Volver
+          </Button>
+        </div>
+        <div className="mt-8 p-4 bg-surface-1 rounded-xl text-left">
+          <h3 className="font-medium text-foreground mb-2">
+            ¿Por qué necesito verificarme?
+          </h3>
+          <ul className="text-sm text-foreground-muted space-y-2">
+            <li className="flex items-start gap-2">
+              <Check className="h-4 w-4 text-jade mt-0.5 flex-shrink-0" />
+              <span>Protege a compradores y vendedores de fraudes</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="h-4 w-4 text-jade mt-0.5 flex-shrink-0" />
+              <span>Aumenta la confianza en tus anuncios</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="h-4 w-4 text-jade mt-0.5 flex-shrink-0" />
+              <span>Solo necesitas hacerlo una vez</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -585,7 +663,7 @@ function SellPageContent() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-foreground-muted">
-                    Comisión PassProduct (7%)
+                    Comisión PassProduct (5%)
                   </span>
                   <span className="text-error">
                     -{formatPrice((parseFloat(formData.price) || 0) * 0.07)}

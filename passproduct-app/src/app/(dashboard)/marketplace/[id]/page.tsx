@@ -27,29 +27,60 @@ import {
 import { motion } from "framer-motion";
 import { Button, Card, Badge, SkeletonProductDetail } from "@/components/ui";
 import { SellerProfileModal } from "@/components/marketplace";
-import { getListingById } from "@/lib/mock-data";
+import { useChatStore } from "@/store";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { Listing, SellerProfile } from "@/types";
 
 export default function ListingDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { startConversation } = useChatStore();
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isSellerModalOpen, setIsSellerModalOpen] = useState(false);
+  const [isContacting, setIsContacting] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchListing = async () => {
       setIsLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const found = getListingById(params.id as string);
-      setListing(found || null);
+      try {
+        const response = await fetch(`/api/db/listings/${params.id}`);
+        const data = await response.json();
+        
+        if (data.success && data.listing) {
+          setListing(data.listing);
+        } else {
+          setListing(null);
+        }
+      } catch (error) {
+        console.error("Error fetching listing:", error);
+        setListing(null);
+      }
       setIsLoading(false);
     };
     fetchListing();
   }, [params.id]);
+
+  const handleContact = async (initialMessage?: string) => {
+    if (!listing) return;
+    
+    setIsContacting(true);
+    setContactError(null);
+    
+    try {
+      const conversation = await startConversation(listing.id, initialMessage);
+      if (conversation) {
+        router.push(`/chat?id=${conversation.id}`);
+      }
+    } catch (error) {
+      setContactError(error instanceof Error ? error.message : "Error al contactar");
+    } finally {
+      setIsContacting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -384,7 +415,12 @@ export default function ListingDetailPage() {
 
           {/* Actions */}
           <div className="space-y-3">
-            <Button className="w-full" size="lg">
+            <Button 
+              className="w-full" 
+              size="lg"
+              onClick={() => handleContact("Hola, me interesa tu producto. ¿Está disponible?")}
+              isLoading={isContacting}
+            >
               Comprar ahora
             </Button>
             <Button
@@ -392,9 +428,14 @@ export default function ListingDetailPage() {
               className="w-full"
               size="lg"
               leftIcon={<MessageCircle className="h-4 w-4" />}
+              onClick={() => handleContact()}
+              isLoading={isContacting}
             >
-              Hacer oferta
+              Contactar vendedor
             </Button>
+            {contactError && (
+              <p className="text-sm text-error text-center">{contactError}</p>
+            )}
           </div>
 
           {/* Secondary Actions */}

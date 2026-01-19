@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
+import { I18nProvider } from "@/lib/i18n";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -82,7 +83,9 @@ export default function RootLayout({
     >
       <html lang="es" className={inter.variable}>
         <body className="font-sans antialiased">
-          {children}
+          <I18nProvider>
+            {children}
+          </I18nProvider>
         </body>
       </html>
     </ClerkProvider>

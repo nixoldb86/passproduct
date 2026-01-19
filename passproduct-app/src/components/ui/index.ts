@@ -5,3 +5,4 @@ export { Select } from "./select";
 export { Modal } from "./modal";
 export { Badge, VerifiedPurchaseBadge, WarrantyBadge, AccessoriesBadge, SerialBadge } from "./badge";
 export { Skeleton, SkeletonCard, SkeletonProductDetail, SkeletonList } from "./skeleton";
+export { LanguageSelector } from "./language-selector";
