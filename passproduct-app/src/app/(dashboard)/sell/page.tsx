@@ -49,6 +49,10 @@ function SellPageContent() {
   // Verification state
   const [isCheckingVerification, setIsCheckingVerification] = useState(true);
   const [isIdentityVerified, setIsIdentityVerified] = useState(false);
+  
+  // Existing listing state
+  const [existingListing, setExistingListing] = useState<{ id: string; status: string } | null>(null);
+  const [isCheckingListing, setIsCheckingListing] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -86,12 +90,41 @@ function SellPageContent() {
     checkVerification();
   }, [isUserLoaded, user]);
 
+  // Check if product already has an active listing
+  const checkExistingListing = async (prodId: string) => {
+    setIsCheckingListing(true);
+    try {
+      const response = await fetch(`/api/db/listings?productId=${prodId}`);
+      const data = await response.json();
+      if (data.success && data.listings && data.listings.length > 0) {
+        // Find active listing (DRAFT, PUBLISHED, or RESERVED)
+        const activeListing = data.listings.find((l: { status: string }) => 
+          ["DRAFT", "PUBLISHED", "RESERVED"].includes(l.status)
+        );
+        if (activeListing) {
+          setExistingListing({ id: activeListing.id, status: activeListing.status });
+          return true;
+        }
+      }
+      setExistingListing(null);
+      return false;
+    } catch (error) {
+      console.error("Error checking existing listing:", error);
+      setExistingListing(null);
+      return false;
+    } finally {
+      setIsCheckingListing(false);
+    }
+  };
+
   useEffect(() => {
     if (productId) {
       // Buscar primero en el store (productos del usuario), luego en mock-data
       const product = products.find(p => p.id === productId) || getProductById(productId);
       if (product) {
         setSelectedProduct(product);
+        // Check if product already has a listing
+        checkExistingListing(productId);
         // SOLO usar fotos reales (stockPhotos NO son válidas para venta)
         const realPhotos = product.photos?.length > 0 ? product.photos : [];
         setFormData((prev) => ({
@@ -184,8 +217,8 @@ function SellPageContent() {
     ? getPriceRecommendations(selectedProduct.estimatedValue)
     : null;
 
-  // Show loading while checking verification
-  if (isCheckingVerification) {
+  // Show loading while checking verification or existing listing
+  if (isCheckingVerification || isCheckingListing) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -247,6 +280,54 @@ function SellPageContent() {
             </li>
           </ul>
         </div>
+      </div>
+    );
+  }
+
+  // Show message if product already has an active listing
+  if (existingListing && selectedProduct) {
+    const statusLabels: Record<string, string> = {
+      DRAFT: "en borrador",
+      PUBLISHED: "publicado",
+      RESERVED: "reservado",
+    };
+    
+    return (
+      <div className="max-w-md mx-auto text-center py-12">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="w-20 h-20 mx-auto bg-blue-500/20 rounded-full flex items-center justify-center mb-4"
+        >
+          <Tag className="h-10 w-10 text-blue-500" />
+        </motion.div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Producto ya en venta
+        </h1>
+        <p className="text-foreground-muted mb-6">
+          Este producto ya tiene un anuncio {statusLabels[existingListing.status] || "activo"}.
+          No puedes crear otro anuncio para el mismo producto.
+        </p>
+        <div className="space-y-3">
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => router.push(`/marketplace/${existingListing.id}`)}
+            leftIcon={<Eye className="h-4 w-4" />}
+          >
+            Ver anuncio actual
+          </Button>
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={() => router.push(`/wallet/${selectedProduct.id}`)}
+          >
+            Volver a mi wallet
+          </Button>
+        </div>
+        <p className="text-xs text-foreground-subtle mt-6">
+          Si quieres modificar el precio o los detalles, puedes editar el anuncio existente.
+        </p>
       </div>
     );
   }

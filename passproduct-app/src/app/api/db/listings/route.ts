@@ -161,11 +161,19 @@ export async function GET(request: NextRequest) {
     const hasWarranty = searchParams.get("hasWarranty");
     const search = searchParams.get("search");
     const sortBy = searchParams.get("sortBy") || "recent";
+    const productId = searchParams.get("productId");
 
     // Construir filtros
-    const where: Record<string, unknown> = {
-      status: "PUBLISHED",
-    };
+    const where: Record<string, unknown> = {};
+    
+    // Si se busca por productId, incluir todos los estados activos
+    if (productId) {
+      where.productId = productId;
+      where.status = { in: ["DRAFT", "PUBLISHED", "RESERVED"] };
+    } else {
+      // Por defecto solo mostrar publicados
+      where.status = "PUBLISHED";
+    }
 
     // Filtro por categoría
     if (categorySlug && categorySlug !== "all") {
