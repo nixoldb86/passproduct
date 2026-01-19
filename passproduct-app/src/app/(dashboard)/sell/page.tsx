@@ -91,25 +91,32 @@ function SellPageContent() {
   }, [isUserLoaded, user]);
 
   // Check if product already has an active listing
-  const checkExistingListing = async (prodId: string) => {
+  const checkExistingListing = async (prodId: string): Promise<boolean> => {
+    console.log("🔍 Checking existing listing for product:", prodId);
     setIsCheckingListing(true);
+    setExistingListing(null);
     try {
       const response = await fetch(`/api/db/listings?productId=${prodId}`);
       const data = await response.json();
+      console.log("📦 Listings API response:", data);
+      
       if (data.success && data.listings && data.listings.length > 0) {
         // Find active listing (DRAFT, PUBLISHED, or RESERVED)
         const activeListing = data.listings.find((l: { status: string }) => 
           ["DRAFT", "PUBLISHED", "RESERVED"].includes(l.status)
         );
+        console.log("🏷️ Active listing found:", activeListing);
+        
         if (activeListing) {
           setExistingListing({ id: activeListing.id, status: activeListing.status });
           return true;
         }
       }
+      console.log("✅ No active listing found, can proceed");
       setExistingListing(null);
       return false;
     } catch (error) {
-      console.error("Error checking existing listing:", error);
+      console.error("❌ Error checking existing listing:", error);
       setExistingListing(null);
       return false;
     } finally {
@@ -193,6 +200,14 @@ function SellPageContent() {
     setSubmitError(null);
 
     try {
+      // Final check before submitting - verify product isn't already listed
+      const hasExisting = await checkExistingListing(selectedProduct.id);
+      if (hasExisting) {
+        setSubmitError("Este producto ya tiene un anuncio activo");
+        setIsSubmitting(false);
+        return;
+      }
+      
       await createListing({
         productId: selectedProduct.id,
         title: formData.title,
@@ -380,8 +395,10 @@ function SellPageContent() {
                 {products.map((product) => (
                   <button
                     key={product.id}
-                    onClick={() => {
+                    onClick={async () => {
                       setSelectedProduct(product);
+                      // Check if product already has a listing
+                      await checkExistingListing(product.id);
                       setFormData((prev) => ({
                         ...prev,
                         title: `${product.brand} ${product.model}${product.variant ? ` - ${product.variant}` : ""}`,

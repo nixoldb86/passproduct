@@ -168,6 +168,7 @@ export async function GET(request: NextRequest) {
     
     // Si se busca por productId, incluir todos los estados activos
     if (productId) {
+      console.log("🔍 Searching listings for productId:", productId);
       where.productId = productId;
       where.status = { in: ["DRAFT", "PUBLISHED", "RESERVED"] };
     } else {
@@ -290,6 +291,12 @@ export async function GET(request: NextRequest) {
       soldAt: listing.soldAt,
     }));
 
+    if (productId) {
+      console.log(`📦 Found ${transformedListings.length} listings for productId ${productId}:`, 
+        transformedListings.map(l => ({ id: l.id, status: l.status }))
+      );
+    }
+    
     return NextResponse.json({ success: true, listings: transformedListings });
   } catch (error) {
     console.error("Error fetching listings:", error);
