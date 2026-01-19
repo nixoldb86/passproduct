@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
@@ -19,6 +19,8 @@ import {
   Package,
   Loader2,
   AlertTriangle,
+  Upload,
+  ImageIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button, Card, Input, Select, Badge } from "@/components/ui";
@@ -38,6 +40,11 @@ function SellPageContent() {
   const [step, setStep] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPhotoOptions, setShowPhotoOptions] = useState(false);
+  
+  // Refs for file inputs
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   
   // Verification state
   const [isCheckingVerification, setIsCheckingVerification] = useState(true);
@@ -106,9 +113,27 @@ function SellPageContent() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handlePhotoUpload = () => {
-    const mockPhoto = "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800";
-    updateFormData("photos", [...formData.photos, mockPhoto]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageData = event.target?.result as string;
+        if (imageData) {
+          setFormData(prev => ({
+            ...prev,
+            photos: [...prev.photos, imageData].slice(0, 6) // Max 6 photos
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    // Reset input value to allow selecting same file again
+    e.target.value = "";
+    setShowPhotoOptions(false);
   };
 
   const removePhoto = (index: number) => {
@@ -359,18 +384,65 @@ function SellPageContent() {
                   </div>
                 ))}
                 {formData.photos.length < 6 && (
-                  <button
-                    onClick={handlePhotoUpload}
-                    className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-border-hover flex flex-col items-center justify-center gap-2 text-foreground-subtle hover:text-foreground-muted transition-colors"
-                  >
-                    <Camera className="h-6 w-6" />
-                    <span className="text-xs">Añadir</span>
-                  </button>
+                  <div className="relative aspect-square">
+                    <button
+                      onClick={() => setShowPhotoOptions(!showPhotoOptions)}
+                      className="w-full h-full rounded-xl border-2 border-dashed border-border hover:border-accent flex flex-col items-center justify-center gap-2 text-foreground-subtle hover:text-accent transition-colors"
+                    >
+                      <ImageIcon className="h-6 w-6" />
+                      <span className="text-xs">Añadir foto</span>
+                    </button>
+                    
+                    {/* Photo options dropdown */}
+                    <AnimatePresence>
+                      {showPhotoOptions && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute top-full left-0 right-0 mt-2 bg-surface-1 border border-border rounded-xl shadow-lg overflow-hidden z-10"
+                        >
+                          <button
+                            onClick={() => cameraInputRef.current?.click()}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors text-left"
+                          >
+                            <Camera className="h-5 w-5 text-accent" />
+                            <span className="text-sm text-foreground">Hacer foto</span>
+                          </button>
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors text-left border-t border-border"
+                          >
+                            <Upload className="h-5 w-5 text-accent" />
+                            <span className="text-sm text-foreground">Seleccionar de galería</span>
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
               <p className="text-xs text-foreground-subtle mt-3">
                 Mínimo 2 fotos. Añade fotos claras del producto y accesorios.
               </p>
+              
+              {/* Hidden file inputs */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileChange}
+              />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileChange}
+              />
             </Card>
 
             {/* Product Details - Editable */}

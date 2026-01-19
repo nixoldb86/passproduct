@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Camera, Upload, RotateCcw, Check, AlertCircle, Loader2, Edit3 } from "lucide-react";
+import { Camera, RotateCcw, Check, AlertCircle, Loader2, Edit3 } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import { motion } from "framer-motion";
 
@@ -26,7 +26,7 @@ export interface ExtractedIdData {
 }
 
 export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptureProps) {
-  const [captureMode, setCaptureMode] = useState<"camera" | "upload" | null>(null);
+  const [captureMode, setCaptureMode] = useState<"camera" | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isExtractingData, setIsExtractingData] = useState(false);
@@ -36,7 +36,6 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   // Cleanup camera on unmount
@@ -143,81 +142,6 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
       processOCR(imageData);
     }
   }, [onCapture, stopCamera]);
-
-  // Recortar imagen subida al centro (eliminar bordes excesivos)
-  const cropUploadedImage = (imageData: string): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d")!;
-        
-        // Si la imagen es mucho más grande que proporción de ID, recortar al centro
-        const aspectRatio = img.width / img.height;
-        const targetAspect = 1.586; // Proporción de tarjeta ID (85.6/53.98)
-        
-        let cropX = 0;
-        let cropY = 0;
-        let cropWidth = img.width;
-        let cropHeight = img.height;
-        
-        // Solo recortar si hay mucho espacio extra (más del 20%)
-        const marginThreshold = 0.1;
-        
-        if (aspectRatio > targetAspect * 1.2) {
-          // Imagen demasiado ancha - recortar lados
-          const newWidth = img.height * targetAspect;
-          cropX = (img.width - newWidth) / 2;
-          cropWidth = newWidth;
-        } else if (aspectRatio < targetAspect / 1.2) {
-          // Imagen demasiado alta - recortar arriba/abajo
-          const newHeight = img.width / targetAspect;
-          cropY = (img.height - newHeight) / 2;
-          cropHeight = newHeight;
-        }
-        
-        // Aplicar margen adicional del 5% para limpiar bordes
-        const extraMargin = 0.05;
-        cropX += cropWidth * extraMargin;
-        cropY += cropHeight * extraMargin;
-        cropWidth *= (1 - 2 * extraMargin);
-        cropHeight *= (1 - 2 * extraMargin);
-        
-        canvas.width = cropWidth;
-        canvas.height = cropHeight;
-        
-        ctx.drawImage(
-          img,
-          cropX, cropY, cropWidth, cropHeight,
-          0, 0, cropWidth, cropHeight
-        );
-        
-        resolve(canvas.toDataURL("image/jpeg", 0.95));
-      };
-      img.src = imageData;
-    });
-  };
-
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const originalImage = event.target?.result as string;
-      
-      // Recortar imagen al centro para eliminar bordes
-      const croppedImage = await cropUploadedImage(originalImage);
-      
-      setCapturedImage(croppedImage);
-      onCapture(croppedImage);
-      setCaptureMode("upload");
-      
-      // Procesar OCR con imagen recortada
-      processOCR(croppedImage);
-    };
-    reader.readAsDataURL(file);
-  }, [onCapture]);
 
   // Preprocesar imagen para mejorar OCR - versión mejorada
   const preprocessImage = (imageData: string): Promise<string> => {
@@ -750,30 +674,16 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
       <div className="relative aspect-[3/2] bg-surface-1 rounded-2xl overflow-hidden border-2 border-dashed border-border">
         {!capturedImage && !captureMode && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={startCamera}
-                size="lg"
-                leftIcon={<Camera className="h-5 w-5" />}
-              >
-                Usar cámara
-              </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                leftIcon={<Upload className="h-5 w-5" />}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Subir foto
-              </Button>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
+            <Button
+              onClick={startCamera}
+              size="lg"
+              leftIcon={<Camera className="h-5 w-5" />}
+            >
+              Hacer foto al documento
+            </Button>
+            <p className="text-xs text-foreground-subtle text-center max-w-xs">
+              Por seguridad, solo se permite capturar el documento con la cámara
+            </p>
           </div>
         )}
 
