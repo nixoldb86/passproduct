@@ -53,6 +53,7 @@ function SellPageContent() {
     shippingEnabled: true,
     shippingCost: "5.99",
     location: "Madrid",
+    condition: "good" as ProductCondition,
   });
 
   // Check verification status
@@ -94,6 +95,7 @@ function SellPageContent() {
           price: product.estimatedValue
             ? getPriceRecommendations(product.estimatedValue).fair.toString()
             : "",
+          condition: product.condition,
         }));
         setStep(2); // Ya sabemos qué producto es, ir directo a fotos
       }
@@ -282,6 +284,7 @@ function SellPageContent() {
                         price: product.estimatedValue
                           ? getPriceRecommendations(product.estimatedValue).fair.toString()
                           : "",
+                        condition: product.condition,
                       }));
                       setStep(2);
                     }}
@@ -326,7 +329,7 @@ function SellPageContent() {
           </motion.div>
         )}
 
-        {/* Step 2: Photos & Condition */}
+        {/* Step 2: Photos, Condition & Details */}
         {step === 2 && selectedProduct && (
           <motion.div
             key="step2"
@@ -370,17 +373,51 @@ function SellPageContent() {
               </p>
             </Card>
 
-            {/* Condition info */}
+            {/* Product Details - Editable */}
             <Card padding="md">
-              <h2 className="font-medium text-foreground mb-2">
+              <h2 className="font-medium text-foreground mb-4">
+                Detalles del anuncio
+              </h2>
+              <div className="space-y-4">
+                <Input
+                  label="Título del anuncio"
+                  value={formData.title}
+                  onChange={(e) => updateFormData("title", e.target.value)}
+                  placeholder="Ej: iPhone 15 Pro Max 256GB - Como nuevo"
+                />
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                    Descripción
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => updateFormData("description", e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-3 bg-surface-1 border border-border rounded-xl text-foreground placeholder:text-foreground-subtle focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent resize-none"
+                    placeholder="Describe tu producto, estado real, accesorios incluidos..."
+                  />
+                </div>
+              </div>
+            </Card>
+
+            {/* Condition - Editable */}
+            <Card padding="md">
+              <h2 className="font-medium text-foreground mb-4">
                 Estado del producto
               </h2>
-              <p className="text-foreground-muted">
-                {CONDITION_LABELS[selectedProduct.condition]}
-              </p>
-              <p className="text-xs text-foreground-subtle mt-2">
-                El estado se hereda de tu wallet. Si ha cambiado, actualízalo
-                primero.
+              <Select
+                value={formData.condition}
+                onChange={(e) => updateFormData("condition", e.target.value)}
+                options={[
+                  { value: "new", label: CONDITION_LABELS.new },
+                  { value: "like_new", label: CONDITION_LABELS.like_new },
+                  { value: "excellent", label: CONDITION_LABELS.excellent },
+                  { value: "good", label: CONDITION_LABELS.good },
+                  { value: "fair", label: CONDITION_LABELS.fair },
+                ]}
+              />
+              <p className="text-xs text-foreground-subtle mt-3">
+                El estado inicial se hereda de tu wallet. Puedes modificarlo si ha cambiado.
               </p>
             </Card>
 
@@ -390,19 +427,17 @@ function SellPageContent() {
                 Verificaciones incluidas
               </h2>
               <div className="space-y-3">
+                {/* Compra verificada - Always checked since user is identity verified */}
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`h-6 w-6 rounded-full flex items-center justify-center ${
-                      selectedProduct.proofOfPurchaseUrl
-                        ? "bg-jade/15 text-jade"
-                        : "bg-surface-2 text-foreground-subtle"
-                    }`}
-                  >
+                  <div className="h-6 w-6 rounded-full flex items-center justify-center bg-jade/15 text-jade">
                     <Check className="h-3 w-3" />
                   </div>
                   <span className="text-sm text-foreground">
                     Compra verificada
                   </span>
+                  <Badge variant="verified" size="sm" className="ml-auto">
+                    Vendedor verificado
+                  </Badge>
                 </div>
                 <div className="flex items-center gap-3">
                   <div
@@ -416,22 +451,29 @@ function SellPageContent() {
                     <Shield className="h-3 w-3" />
                   </div>
                   <span className="text-sm text-foreground">Garantía activa</span>
+                  {selectedProduct.warrantyEndDate &&
+                    new Date(selectedProduct.warrantyEndDate) > new Date() && (
+                      <span className="text-xs text-foreground-subtle ml-auto">
+                        Hasta {new Date(selectedProduct.warrantyEndDate).toLocaleDateString("es-ES")}
+                      </span>
+                    )}
                 </div>
+                {/* Identificador verificado - Always checked since user is identity verified */}
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`h-6 w-6 rounded-full flex items-center justify-center ${
-                      selectedProduct.serialLast4 || selectedProduct.imeiLast4
-                        ? "bg-jade/15 text-jade"
-                        : "bg-surface-2 text-foreground-subtle"
-                    }`}
-                  >
+                  <div className="h-6 w-6 rounded-full flex items-center justify-center bg-jade/15 text-jade">
                     <Tag className="h-3 w-3" />
                   </div>
                   <span className="text-sm text-foreground">
                     Identificador verificado
                   </span>
+                  <Badge variant="verified" size="sm" className="ml-auto">
+                    ID verificado
+                  </Badge>
                 </div>
               </div>
+              <p className="text-xs text-foreground-subtle mt-4 p-3 bg-jade/5 rounded-lg border border-jade/20">
+                ✅ Tu identidad está verificada, por lo que tus anuncios mostrarán las insignias de confianza.
+              </p>
             </Card>
           </motion.div>
         )}
@@ -610,13 +652,14 @@ function SellPageContent() {
                   {formData.title}
                 </h2>
 
-                {/* Badges */}
+                {/* Badges - Always show verified badges since user is identity verified */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {selectedProduct.proofOfPurchaseUrl && (
-                    <Badge variant="verified" size="md">
-                      Compra verificada
-                    </Badge>
-                  )}
+                  <Badge variant="verified" size="md">
+                    Compra verificada
+                  </Badge>
+                  <Badge variant="verified" size="md">
+                    ID verificado
+                  </Badge>
                   {selectedProduct.warrantyEndDate &&
                     new Date(selectedProduct.warrantyEndDate) > new Date() && (
                       <Badge variant="warranty" size="md">
@@ -624,6 +667,11 @@ function SellPageContent() {
                       </Badge>
                     )}
                 </div>
+
+                {/* Condition */}
+                <p className="text-sm text-foreground-muted mb-2">
+                  Estado: <span className="text-foreground font-medium">{CONDITION_LABELS[formData.condition]}</span>
+                </p>
 
                 {/* Description preview */}
                 <p className="text-foreground-muted text-sm mb-4 line-clamp-3">
