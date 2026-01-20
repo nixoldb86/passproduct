@@ -12,18 +12,58 @@ interface IdCaptureProps {
 }
 
 export interface ExtractedIdData {
-  documentType: "DNI" | "NIE" | "PASSPORT" | "UNKNOWN";
+  documentType: "DNI" | "NIE" | "PASSPORT" | "ID_CARD" | "RESIDENCE_PERMIT" | "DRIVING_LICENSE" | "UNKNOWN";
   documentNumber: string;
   firstName: string;
   lastName: string;
   dateOfBirth: string;
   expirationDate: string;
   nationality: string;
+  countryOfIssue?: string;
   sex: string;
+  placeOfBirth?: string;
   faceImage: string | null;
   confidence: number;
   rawText: string;
+  // MRZ metadata
+  mrz?: {
+    found: boolean;
+    checksumValid?: boolean;
+    checksumDetails?: string[];
+  };
+  documentLanguage?: string;
+  warnings?: string[];
 }
+
+// Helper: Document type labels
+const getDocumentTypeLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    "DNI": "DNI (España)",
+    "NIE": "NIE (España)",
+    "PASSPORT": "Pasaporte",
+    "ID_CARD": "Tarjeta ID",
+    "RESIDENCE_PERMIT": "Permiso residencia",
+    "DRIVING_LICENSE": "Carnet conducir",
+    "UNKNOWN": "Desconocido",
+  };
+  return labels[type] || type;
+};
+
+// Helper: Country code to flag emoji
+const getCountryFlag = (countryCode?: string): string => {
+  if (!countryCode) return "🌍";
+  
+  const flags: Record<string, string> = {
+    "ESP": "🇪🇸", "DEU": "🇩🇪", "FRA": "🇫🇷", "ITA": "🇮🇹", "PRT": "🇵🇹",
+    "NLD": "🇳🇱", "BEL": "🇧🇪", "AUT": "🇦🇹", "POL": "🇵🇱", "GRC": "🇬🇷",
+    "SWE": "🇸🇪", "IRL": "🇮🇪", "ROU": "🇷🇴", "HUN": "🇭🇺", "CZE": "🇨🇿",
+    "FIN": "🇫🇮", "DNK": "🇩🇰", "SVK": "🇸🇰", "BGR": "🇧🇬", "HRV": "🇭🇷",
+    "LTU": "🇱🇹", "SVN": "🇸🇮", "LVA": "🇱🇻", "EST": "🇪🇪", "CYP": "🇨🇾",
+    "LUX": "🇱🇺", "MLT": "🇲🇹", "GBR": "🇬🇧", "CHE": "🇨🇭", "NOR": "🇳🇴",
+  };
+  
+  return flags[countryCode.toUpperCase()] || "🌍";
+};
 
 export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptureProps) {
   const [captureMode, setCaptureMode] = useState<"camera" | null>(null);
@@ -208,15 +248,21 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
         const result = await response.json();
         
         if (result.success && result.data) {
-          console.log("Datos extraídos con IA:", result.data);
+          console.log("🇪🇺 Datos extraídos con IA:", result.data);
           
-          // Calcular confianza basada en campos leídos
+          // Calcular confianza basada en campos leídos y MRZ
           let confidence = 0.9; // Alta confianza base con IA
           if (result.data.confidence === "medium") confidence = 0.7;
           if (result.data.confidence === "low") confidence = 0.5;
           if (!result.data.documentNumber) confidence *= 0.5;
           if (!result.data.firstName) confidence *= 0.8;
           if (!result.data.lastName) confidence *= 0.8;
+          
+          // Bonus de confianza si MRZ es válido
+          if (result.data.mrz?.found && result.data.mrz?.checksumValid) {
+            confidence = Math.min(confidence * 1.1, 1.0);
+            console.log("✅ MRZ válido - confianza aumentada");
+          }
           
           const parsedData: ExtractedIdData = {
             documentType: result.data.documentType as ExtractedIdData["documentType"],
@@ -225,11 +271,21 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
             lastName: result.data.lastName || "",
             dateOfBirth: result.data.dateOfBirth || "",
             expirationDate: result.data.expirationDate || "",
-            nationality: result.data.nationality || "ESP",
+            nationality: result.data.nationality || "",
+            countryOfIssue: result.data.countryOfIssue || result.data.nationality || "",
             sex: result.data.sex || "",
+            placeOfBirth: result.data.placeOfBirth || "",
             faceImage: imageData, // Pass the ID image for face comparison
             confidence,
             rawText: `IA: ${result.data.readableFields?.join(", ") || "campos extraídos"}`,
+            // MRZ metadata
+            mrz: result.data.mrz ? {
+              found: result.data.mrz.found,
+              checksumValid: result.data.mrz.checksumValid,
+              checksumDetails: result.data.mrz.checksumDetails,
+            } : undefined,
+            documentLanguage: result.data.documentLanguage,
+            warnings: result.data.warnings,
           };
           
           setExtractedData(parsedData);
@@ -666,7 +722,10 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
           Foto de tu documento de identidad
         </h3>
         <p className="text-sm text-foreground-muted mt-1">
-          DNI, NIE o Pasaporte español/europeo
+          🇪🇺 Cualquier documento de identidad europeo
+        </p>
+        <p className="text-xs text-foreground-subtle mt-0.5">
+          DNI, Pasaporte, Personalausweis, Carte d&apos;Identité, Carta d&apos;Identità...
         </p>
       </div>
 
@@ -723,7 +782,7 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
               {/* Instrucciones */}
               <div className="absolute top-2 left-0 right-0 text-center">
                 <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-full">
-                  📄 Coloca el DNI dentro del recuadro
+                  🪪 Coloca tu documento dentro del recuadro
                 </span>
               </div>
             </div>
@@ -832,9 +891,26 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
             )}
           </div>
           
+          {/* MRZ Status Badge */}
+          {extractedData.mrz?.found && !isEditing && (
+            <div className={`text-xs px-2 py-1 rounded-full inline-flex items-center gap-1 mb-3 ${
+              extractedData.mrz.checksumValid 
+                ? "bg-green-500/10 text-green-600 dark:text-green-400" 
+                : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+            }`}>
+              {extractedData.mrz.checksumValid ? "✓" : "⚠️"} MRZ {extractedData.mrz.checksumValid ? "verificado" : "detectado"}
+            </div>
+          )}
+          
           {extractedData.confidence < 0.5 && !isEditing && (
             <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm p-2 rounded-lg mb-3">
               ⚠️ La lectura automática no fue muy precisa. Por favor, verifica y edita los datos si es necesario.
+            </div>
+          )}
+          
+          {extractedData.warnings && extractedData.warnings.length > 0 && !isEditing && (
+            <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs p-2 rounded-lg mb-3">
+              {extractedData.warnings.map((w, i) => <p key={i}>⚠️ {w}</p>)}
             </div>
           )}
           
@@ -844,13 +920,16 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
                 <div>
                   <label className="text-xs text-foreground-muted mb-1 block">Tipo documento</label>
                   <select
-                    value={editedData.documentType || "DNI"}
+                    value={editedData.documentType || "ID_CARD"}
                     onChange={(e) => updateEditField("documentType", e.target.value)}
                     className="w-full h-10 px-3 bg-surface-2 border border-border rounded-lg text-foreground text-sm"
                   >
-                    <option value="DNI">DNI</option>
-                    <option value="NIE">NIE</option>
+                    <option value="DNI">DNI (España)</option>
+                    <option value="NIE">NIE (España)</option>
                     <option value="PASSPORT">Pasaporte</option>
+                    <option value="ID_CARD">Tarjeta ID europea</option>
+                    <option value="RESIDENCE_PERMIT">Permiso residencia</option>
+                    <option value="DRIVING_LICENSE">Carnet conducir</option>
                   </select>
                 </div>
                 <div>
@@ -923,11 +1002,11 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-foreground-muted">Tipo:</span>
-                <p className="text-foreground font-medium">{extractedData.documentType || "-"}</p>
+                <p className="text-foreground font-medium">{getDocumentTypeLabel(extractedData.documentType)}</p>
               </div>
               <div>
                 <span className="text-foreground-muted">Número:</span>
-                <p className="text-foreground font-medium">{extractedData.documentNumber || "-"}</p>
+                <p className="text-foreground font-medium font-mono">{extractedData.documentNumber || "-"}</p>
               </div>
               <div>
                 <span className="text-foreground-muted">Nombre:</span>
@@ -942,11 +1021,23 @@ export function IdCapture({ onCapture, onExtractedData, isProcessing }: IdCaptur
                 <p className="text-foreground font-medium">{extractedData.dateOfBirth || "-"}</p>
               </div>
               <div>
-                <span className="text-foreground-muted">Sexo:</span>
+                <span className="text-foreground-muted">País emisor:</span>
                 <p className="text-foreground font-medium">
-                  {extractedData.sex === "M" ? "Masculino" : extractedData.sex === "F" ? "Femenino" : "-"}
+                  {getCountryFlag(extractedData.countryOfIssue || extractedData.nationality)} {extractedData.countryOfIssue || extractedData.nationality || "-"}
                 </p>
               </div>
+              <div>
+                <span className="text-foreground-muted">Sexo:</span>
+                <p className="text-foreground font-medium">
+                  {extractedData.sex === "M" ? "Masculino" : extractedData.sex === "F" ? "Femenino" : extractedData.sex === "X" ? "No especificado" : "-"}
+                </p>
+              </div>
+              {extractedData.expirationDate && (
+                <div>
+                  <span className="text-foreground-muted">Validez:</span>
+                  <p className="text-foreground font-medium">{extractedData.expirationDate}</p>
+                </div>
+              )}
             </div>
           )}
         </motion.div>

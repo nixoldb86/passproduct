@@ -26,6 +26,7 @@ import {
   Mail,
   Phone,
   User,
+  Tag,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button, Card, Badge, SkeletonProductDetail } from "@/components/ui";
@@ -46,6 +47,7 @@ export default function ListingDetailPage() {
   const [isSellerModalOpen, setIsSellerModalOpen] = useState(false);
   const [isContacting, setIsContacting] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
+  const [hasProtection, setHasProtection] = useState(true); // Protección al comprador activa por defecto
   
   // Check if current user is the owner of this listing
   const isOwner = user && listing?.seller?.clerkId === user.id;
@@ -129,7 +131,7 @@ export default function ListingDetailPage() {
   // Calculate fees for display
   const shippingCost = listing.shippingEnabled ? listing.shippingCost || 0 : 0;
   const protectionFee = Math.min(listing.price * 0.02, 25);
-  const total = listing.price + shippingCost + protectionFee;
+  const total = listing.price + shippingCost + (hasProtection ? protectionFee : 0);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -221,13 +223,10 @@ export default function ListingDetailPage() {
             <h3 className="font-medium text-foreground mb-3">Descripción</h3>
             <p className="text-foreground-muted whitespace-pre-line">
               {(() => {
-                // Fix "Estado: undefined" en descripciones guardadas incorrectamente
+                // Limpiar "Estado: X" de la descripción ya que se muestra como componente separado
                 let description = listing.description || "";
-                if (description.includes("Estado: undefined")) {
-                  const productCondition = listing.product?.condition?.toUpperCase() as ProductCondition;
-                  const conditionLabel = CONDITION_LABELS[productCondition] || "Bueno";
-                  description = description.replace("Estado: undefined", `Estado: ${conditionLabel}`);
-                }
+                // Eliminar línea de estado (con cualquier valor)
+                description = description.replace(/Estado:.*(\n|$)/g, "").trim();
                 return description;
               })()}
             </p>
@@ -388,6 +387,15 @@ export default function ListingDetailPage() {
             )}
           </div>
 
+          {/* Product Condition */}
+          <div className="flex items-center gap-2 p-3 bg-surface-1 rounded-xl border border-border">
+            <Tag className="h-4 w-4 text-accent" />
+            <span className="text-sm text-foreground-muted">Estado:</span>
+            <span className="text-sm font-medium text-foreground">
+              {CONDITION_LABELS[listing.product?.condition?.toUpperCase() as ProductCondition] || "Bueno"}
+            </span>
+          </div>
+
           {/* Location & Shipping */}
           <div className="flex flex-wrap gap-4 text-sm text-foreground-muted">
             {listing.location && (
@@ -440,8 +448,20 @@ export default function ListingDetailPage() {
                 </div>
               )}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-foreground-muted">Protección comprador</span>
-                <span className="text-foreground">
+                <button 
+                  onClick={() => setHasProtection(!hasProtection)}
+                  className="flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors"
+                >
+                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                    hasProtection 
+                      ? "bg-jade border-jade" 
+                      : "border-foreground-subtle"
+                  }`}>
+                    {hasProtection && <Check className="h-3 w-3 text-white" />}
+                  </div>
+                  <span>Protección comprador</span>
+                </button>
+                <span className={`${hasProtection ? "text-foreground" : "text-foreground-subtle line-through"}`}>
                   {formatPrice(protectionFee)}
                 </span>
               </div>
@@ -455,20 +475,37 @@ export default function ListingDetailPage() {
           </Card>
 
           {/* Protection Info */}
-          <Card padding="sm" className="bg-jade/5 border-jade/20">
-            <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 text-jade flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-jade">
-                  Protección comprador
-                </p>
-                <p className="text-xs text-jade/80 mt-1">
-                  Tu pago se retiene hasta que confirmes la recepción. Si algo no
-                  va bien, abrimos una disputa.
-                </p>
+          {hasProtection ? (
+            <Card padding="sm" className="bg-jade/5 border-jade/20">
+              <div className="flex items-start gap-3">
+                <Shield className="h-5 w-5 text-jade flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-jade">
+                    Protección comprador activa
+                  </p>
+                  <p className="text-xs text-jade/80 mt-1">
+                    Tu pago se retiene hasta que confirmes la recepción. Si algo no
+                    va bien, abrimos una disputa.
+                  </p>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          ) : (
+            <Card padding="sm" className="bg-amber-500/10 border-amber-500/20">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-amber-400">
+                    Sin protección al comprador
+                  </p>
+                  <p className="text-xs text-amber-400/80 mt-1">
+                    El pago se enviará directamente al vendedor. No tendrás cobertura
+                    si el producto no llega o no es como se describe.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* Actions */}
           <div className="space-y-3">
