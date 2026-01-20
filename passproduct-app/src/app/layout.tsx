@@ -80,12 +80,16 @@ export default function RootLayout({
           identityPreviewEditButton: "text-[#D4AF37]",
           // UserButton dropdown styles
           userButtonPopoverCard: "bg-[#18181C] border border-[rgba(255,255,255,0.08)]",
-          userButtonPopoverActionButton: "text-[#FAFAFA] hover:bg-[#26262C]",
-          userButtonPopoverActionButtonText: "text-[#FAFAFA]",
-          userButtonPopoverActionButtonIcon: "text-[#A1A1AA]",
+          userButtonPopoverActionButton: "hover:bg-[#26262C]",
+          userButtonPopoverActionButtonText: "!text-white",
+          userButtonPopoverActionButtonIcon: "!text-white",
           userButtonPopoverFooter: "hidden",
-          userPreviewMainIdentifier: "text-[#FAFAFA]",
-          userPreviewSecondaryIdentifier: "text-[#A1A1AA]",
+          userPreviewMainIdentifier: "!text-white",
+          userPreviewSecondaryIdentifier: "!text-[#A1A1AA]",
+          // Menu items specific
+          menuButton: "!text-white",
+          menuList: "bg-[#18181C]",
+          menuItem: "!text-white hover:bg-[#26262C]",
         },
       }}
     >
