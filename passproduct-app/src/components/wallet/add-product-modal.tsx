@@ -79,6 +79,11 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Photo upload modal state
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+  const photoCameraInputRef = useRef<HTMLInputElement>(null);
 
   // Extracted data from AI
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
@@ -327,17 +332,30 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
     }
   };
 
-  const handlePhotoUpload = () => {
-    // Mock adicional de fotos para el paso 3
-    const mockPhotos = [
-      "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800",
-    ];
-    updateFormData("photos", [...formData.photos, ...mockPhotos]);
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageData = event.target?.result as string;
+        if (imageData) {
+          setFormData(prev => ({
+            ...prev,
+            photos: [...prev.photos, imageData].slice(0, 6) // Max 6 photos
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    // Reset input value
+    e.target.value = "";
+    setShowPhotoModal(false);
   };
 
   const removePhoto = (index: number) => {
-    // No permitir eliminar la primera foto (la original)
-    if (index === 0) return;
     updateFormData(
       "photos",
       formData.photos.filter((_, i) => i !== index)
@@ -814,7 +832,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
             {/* Additional photos */}
             <div>
               <label className="block text-sm font-medium text-foreground-muted mb-2">
-                Fotos adicionales (opcional)
+                Fotos del producto (opcional)
               </label>
               <div className="grid grid-cols-4 gap-3">
                 {formData.photos.map((photo, i) => (
@@ -827,14 +845,12 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                       alt={`Foto ${i + 1}`}
                       className="w-full h-full object-cover"
                     />
-                    {i > 0 && (
-                      <button
-                        onClick={() => removePhoto(i)}
-                        className="absolute top-1 right-1 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => removePhoto(i)}
+                      className="absolute top-1 right-1 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
                     {i === 0 && (
                       <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/50 text-white text-[10px]">
                         Principal
@@ -843,15 +859,86 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                   </div>
                 ))}
                 {formData.photos.length < 6 && (
-                  <button
-                    onClick={handlePhotoUpload}
-                    className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-border-hover flex flex-col items-center justify-center gap-1 text-foreground-subtle hover:text-foreground-muted transition-colors"
-                  >
-                    <Camera className="h-5 w-5" />
-                    <span className="text-[10px]">Añadir</span>
-                  </button>
+                  <div className="relative aspect-square">
+                    <button
+                      onClick={() => setShowPhotoModal(true)}
+                      className="w-full h-full rounded-xl border-2 border-dashed border-border hover:border-accent flex flex-col items-center justify-center gap-1 text-foreground-subtle hover:text-accent transition-colors"
+                    >
+                      <ImageIcon className="h-5 w-5" />
+                      <span className="text-[10px]">Añadir foto</span>
+                    </button>
+                    
+                    {/* Photo upload modal */}
+                    <AnimatePresence>
+                      {showPhotoModal && (
+                        <>
+                          {/* Backdrop */}
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowPhotoModal(false)}
+                            className="fixed inset-0 z-40"
+                          />
+                          {/* Modal */}
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                            className="absolute bottom-full left-0 right-0 mb-2 bg-surface-1 border border-border rounded-xl shadow-lg overflow-hidden z-50"
+                          >
+                            <div className="p-3 border-b border-border">
+                              <p className="text-sm font-medium text-foreground text-center">
+                                Añadir foto
+                              </p>
+                            </div>
+                            <div className="p-2 space-y-1">
+                              <button
+                                onClick={() => photoCameraInputRef.current?.click()}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-2 transition-colors text-left"
+                              >
+                                <Camera className="h-5 w-5 text-accent" />
+                                <span className="text-sm text-foreground">Hacer foto</span>
+                              </button>
+                              <button
+                                onClick={() => photoFileInputRef.current?.click()}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-2 transition-colors text-left"
+                              >
+                                <Upload className="h-5 w-5 text-jade" />
+                                <span className="text-sm text-foreground">Seleccionar de galería</span>
+                              </button>
+                            </div>
+                            <button
+                              onClick={() => setShowPhotoModal(false)}
+                              className="w-full p-2 text-sm text-foreground-muted hover:text-foreground border-t border-border"
+                            >
+                              Cancelar
+                            </button>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
+              
+              {/* Hidden file inputs for photos */}
+              <input
+                ref={photoFileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
+              <input
+                ref={photoCameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
             </div>
 
             {/* Accessories - Dynamic based on product */}
