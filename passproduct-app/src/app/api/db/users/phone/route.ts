@@ -59,8 +59,9 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error saving phone:", error);
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
     return NextResponse.json(
-      { success: false, error: "Error al guardar el teléfono" },
+      { success: false, error: `Error al guardar el teléfono: ${errorMessage}` },
       { status: 500 }
     );
   }
