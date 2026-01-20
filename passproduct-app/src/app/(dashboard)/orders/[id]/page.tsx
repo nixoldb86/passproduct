@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -17,39 +17,122 @@ import {
   Copy,
   ExternalLink,
   AlertTriangle,
+  PartyPopper,
+  Eye,
+  EyeOff,
+  Video,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
-import { motion } from "framer-motion";
-import { Button, Card, Badge } from "@/components/ui";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button, Card, Badge, Input, Select } from "@/components/ui";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { mockOrders } from "@/lib/mock-data";
-import { Order, OrderStatus, ORDER_STATUS_LABELS, DISPUTE_REASON_LABELS } from "@/types";
+import { OrderStatus, ORDER_STATUS_LABELS } from "@/types";
+import { CARRIERS } from "@/lib/stripe";
 
+// Timeline steps
 const TIMELINE_STEPS = [
   { status: "CREATED", label: "Pedido creado", icon: Clock },
-  { status: "PAID", label: "Pago recibido", icon: CheckCircle },
-  { status: "ESCROW_HOLD", label: "Pago retenido", icon: Shield },
+  { status: "ESCROW_HOLD", label: "Pago recibido", icon: Shield },
   { status: "SHIPPED", label: "Enviado", icon: Truck },
   { status: "DELIVERED", label: "Entregado", icon: Package },
   { status: "ACCEPTED", label: "Aceptado", icon: CheckCircle },
 ];
 
+// Order type from API
+interface OrderData {
+  id: string;
+  listingId: string;
+  buyerId: string;
+  sellerId: string;
+  amount: number;
+  shippingAmount: number;
+  feeMarketplace: number;
+  feeProtection: number;
+  total: number;
+  sellerPayout: number;
+  status: OrderStatus;
+  trackingNumber: string | null;
+  carrier: string | null;
+  isLocalPickup: boolean;
+  shippingAddress: {
+    fullName: string;
+    street: string;
+    city: string;
+    postalCode: string;
+    country: string;
+    phone: string;
+  } | null;
+  protectionCode: string | null;
+  protectionCodeUsed: boolean;
+  paidAt: string | null;
+  escrowAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  acceptedAt: string | null;
+  releasedAt: string | null;
+  createdAt: string;
+  listing: {
+    id: string;
+    title: string;
+    description: string;
+    photos: string[];
+    price: number;
+  } | null;
+  buyer: { id: string; firstName: string; lastName: string; avatarUrl: string };
+  seller: { id: string; firstName: string; lastName: string; avatarUrl: string };
+  isBuyer: boolean;
+  isSeller: boolean;
+}
+
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [order, setOrder] = useState<Order | null>(null);
+  const searchParams = useSearchParams();
+  const [order, setOrder] = useState<OrderData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+
+  // Check if coming from successful payment
+  const isSuccess = searchParams.get("success") === "true";
 
   useEffect(() => {
     const fetchOrder = async () => {
       setIsLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const found = mockOrders.find((o) => o.id === params.id);
-      setOrder(found || null);
+      try {
+        const response = await fetch(`/api/db/orders/${params.id}`);
+        const data = await response.json();
+        if (data.success && data.order) {
+          setOrder(data.order);
+          if (isSuccess && data.order.status === "ESCROW_HOLD") {
+            setShowSuccessAnimation(true);
+            setTimeout(() => setShowSuccessAnimation(false), 5000);
+          }
+        } else {
+          setOrder(null);
+        }
+      } catch (error) {
+        console.error("Error fetching order:", error);
+        setOrder(null);
+      }
       setIsLoading(false);
     };
     fetchOrder();
-  }, [params.id]);
+  }, [params.id, isSuccess]);
+
+  // Refetch order after actions
+  const refetchOrder = async () => {
+    try {
+      const response = await fetch(`/api/db/orders/${params.id}`);
+      const data = await response.json();
+      if (data.success && data.order) {
+        setOrder(data.order);
+      }
+    } catch (error) {
+      console.error("Error refetching order:", error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -78,19 +161,48 @@ export default function OrderDetailPage() {
     );
   }
 
-  const isBuyer = order.buyerId === "user-1";
   const currentStepIndex = TIMELINE_STEPS.findIndex(
     (s) => s.status === order.status
   );
 
-  // Mock listing data
-  const mockListing = {
-    title: "iPhone 14 Pro Max 256GB",
-    photo: "https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=400",
-  };
-
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Success Animation */}
+      <AnimatePresence>
+        {showSuccessAnimation && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={() => setShowSuccessAnimation(false)}
+          >
+            <motion.div
+              className="bg-surface-1 rounded-2xl p-8 text-center max-w-md mx-4"
+              initial={{ y: 20 }}
+              animate={{ y: 0 }}
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
+              >
+                <PartyPopper className="h-16 w-16 text-accent mx-auto mb-4" />
+              </motion.div>
+              <h2 className="text-2xl font-semibold text-foreground mb-2">
+                ¡Compra realizada!
+              </h2>
+              <p className="text-foreground-muted mb-4">
+                El vendedor ha sido notificado y preparará tu pedido pronto.
+              </p>
+              <p className="text-sm text-foreground-subtle">
+                Tu pago está protegido hasta que confirmes la recepción.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Back button */}
       <Link
         href="/orders"
@@ -130,6 +242,15 @@ export default function OrderDetailPage() {
         </Badge>
       </div>
 
+      {/* Role-specific Actions */}
+      {order.isSeller && order.status === "ESCROW_HOLD" && (
+        <SellerShippingPanel order={order} onSuccess={refetchOrder} />
+      )}
+
+      {order.isBuyer && order.status === "DELIVERED" && (
+        <BuyerVerificationPanel order={order} onSuccess={refetchOrder} />
+      )}
+
       {/* Timeline */}
       <Card padding="md" className="mb-6">
         <h3 className="font-medium text-foreground mb-6">Estado del pedido</h3>
@@ -152,8 +273,6 @@ export default function OrderDetailPage() {
               const isCompleted = index <= currentStepIndex;
               const isCurrent = index === currentStepIndex;
               const StepIcon = step.icon;
-
-              // Get timestamp for completed steps
               const timestamp = getStepTimestamp(order, step.status as OrderStatus);
 
               return (
@@ -197,35 +316,6 @@ export default function OrderDetailPage() {
             })}
           </div>
         </div>
-
-        {/* Actions based on status */}
-        {isBuyer && order.status === "DELIVERED" && (
-          <div className="mt-6 pt-6 border-t border-border space-y-3">
-            <p className="text-sm text-foreground-muted">
-              ¿Has recibido el producto en buen estado?
-            </p>
-            <div className="flex gap-3">
-              <Button className="flex-1">Confirmar recepción</Button>
-              <Button
-                variant="danger"
-                className="flex-1"
-                onClick={() => setShowDisputeModal(true)}
-              >
-                Abrir disputa
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {!isBuyer && order.status === "ESCROW_HOLD" && (
-          <div className="mt-6 pt-6 border-t border-border space-y-3">
-            <p className="text-sm text-foreground-muted">
-              El pago está retenido. Envía el producto y añade el número de
-              seguimiento.
-            </p>
-            <Button>Marcar como enviado</Button>
-          </div>
-        )}
       </Card>
 
       {/* Shipping Info */}
@@ -251,15 +341,32 @@ export default function OrderDetailPage() {
                 >
                   <Copy className="h-4 w-4 text-foreground-muted" />
                 </button>
+                {order.carrier && (
                 <a
-                  href="#"
+                    href={getTrackingUrl(order.carrier, order.trackingNumber)}
                   target="_blank"
+                    rel="noopener noreferrer"
                   className="p-1 rounded hover:bg-surface-2 transition-colors"
                 >
                   <ExternalLink className="h-4 w-4 text-foreground-muted" />
                 </a>
+                )}
               </div>
             </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Shipping Address (buyer view) */}
+      {order.isBuyer && order.shippingAddress && (
+        <Card padding="md" className="mb-6">
+          <h3 className="font-medium text-foreground mb-4">Dirección de envío</h3>
+          <div className="text-sm text-foreground-muted">
+            <p className="text-foreground font-medium">{order.shippingAddress.fullName}</p>
+            <p>{order.shippingAddress.street}</p>
+            <p>{order.shippingAddress.postalCode} {order.shippingAddress.city}</p>
+            <p>{order.shippingAddress.country}</p>
+            {order.shippingAddress.phone && <p className="mt-2">{order.shippingAddress.phone}</p>}
           </div>
         </Card>
       )}
@@ -271,17 +378,28 @@ export default function OrderDetailPage() {
           <h3 className="font-medium text-foreground mb-4">Producto</h3>
           <div className="flex gap-4">
             <div className="relative h-20 w-20 rounded-xl bg-surface-2 overflow-hidden flex-shrink-0">
+              {order.listing?.photos[0] ? (
               <Image
-                src={mockListing.photo}
+                  src={order.listing.photos[0]}
                 alt=""
                 fill
                 className="object-cover"
               />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <Package className="h-8 w-8 text-foreground-subtle" />
+                </div>
+              )}
             </div>
             <div>
-              <p className="font-medium text-foreground">{mockListing.title}</p>
+              <p className="font-medium text-foreground">
+                {order.listing?.title || "Producto"}
+              </p>
               <p className="text-sm text-foreground-muted mt-1">
-                Vendido por Juan D.
+                {order.isBuyer ? "Vendido por" : "Comprado por"}{" "}
+                {order.isBuyer
+                  ? `${order.seller.firstName} ${order.seller.lastName.charAt(0)}.`
+                  : `${order.buyer.firstName} ${order.buyer.lastName.charAt(0)}.`}
               </p>
             </div>
           </div>
@@ -303,16 +421,20 @@ export default function OrderDetailPage() {
                 </span>
               </div>
             )}
+            {order.feeProtection > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-foreground-muted">Protección comprador</span>
               <span className="text-foreground">
                 {formatPrice(order.feeProtection)}
               </span>
             </div>
+            )}
             <div className="flex justify-between pt-2 border-t border-border">
-              <span className="font-medium text-foreground">Total</span>
+              <span className="font-medium text-foreground">
+                {order.isBuyer ? "Total pagado" : "Recibirás"}
+              </span>
               <span className="font-semibold text-foreground">
-                {formatPrice(order.total)}
+                {formatPrice(order.isBuyer ? order.total : order.sellerPayout)}
               </span>
             </div>
           </div>
@@ -320,19 +442,21 @@ export default function OrderDetailPage() {
       </div>
 
       {/* Protection Info */}
+      {order.feeProtection > 0 && order.status !== "RELEASED" && (
       <Card padding="md" className="bg-jade/5 border-jade/20 mb-6">
         <div className="flex items-start gap-3">
           <Shield className="h-5 w-5 text-jade flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-jade">Protección comprador activa</p>
             <p className="text-sm text-jade/80 mt-1">
-              El pago se retiene hasta que confirmes la recepción del producto. Si
-              algo no va bien, puedes abrir una disputa en los 3 días siguientes
-              a la entrega.
+                {order.isBuyer
+                  ? "El pago se retiene hasta que confirmes la recepción del producto."
+                  : "El pago se liberará cuando el comprador confirme la recepción."}
             </p>
           </div>
         </div>
       </Card>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3">
@@ -340,8 +464,9 @@ export default function OrderDetailPage() {
           variant="secondary"
           className="flex-1"
           leftIcon={<MessageCircle className="h-4 w-4" />}
+          onClick={() => router.push(`/chat?conversation=${order.id}`)}
         >
-          Contactar {isBuyer ? "vendedor" : "comprador"}
+          Contactar {order.isBuyer ? "vendedor" : "comprador"}
         </Button>
         {order.status !== "DISPUTED" &&
           order.status !== "REFUNDED" &&
@@ -356,48 +481,450 @@ export default function OrderDetailPage() {
           )}
       </div>
 
-      {/* Dispute Modal would go here */}
+      {/* Dispute Modal */}
       {showDisputeModal && (
         <DisputeModal
           orderId={order.id}
           onClose={() => setShowDisputeModal(false)}
+          onSuccess={refetchOrder}
         />
       )}
     </div>
   );
 }
 
-function getStepTimestamp(order: Order, status: OrderStatus): Date | undefined {
-  switch (status) {
-    case "CREATED":
-      return order.createdAt;
-    case "PAID":
-      return order.paidAt;
-    case "SHIPPED":
-      return order.shippedAt;
-    case "DELIVERED":
-      return order.deliveredAt;
-    case "ACCEPTED":
-      return order.acceptedAt;
-    default:
-      return undefined;
-  }
+// Seller Panel: Show protection code and shipping form
+function SellerShippingPanel({
+  order,
+  onSuccess,
+}: {
+  order: OrderData;
+  onSuccess: () => void;
+}) {
+  const [showCode, setShowCode] = useState(false);
+  const [carrier, setCarrier] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showInstructions, setShowInstructions] = useState(true);
+
+  const handleShip = async () => {
+    if (!carrier) {
+      setError("Selecciona un transportista");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/db/orders/${order.id}/ship`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ carrier, trackingNumber }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        onSuccess();
+      } else {
+        setError(data.error || "Error al marcar como enviado");
+      }
+    } catch {
+      setError("Error de conexión");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card padding="md" className="mb-6 bg-accent/5 border-accent/20">
+      <div className="flex items-center gap-2 mb-4">
+        <Package className="h-5 w-5 text-accent" />
+        <h3 className="font-semibold text-accent">Nueva venta - Preparar envío</h3>
+      </div>
+
+      {/* Instructions */}
+      <button
+        onClick={() => setShowInstructions(!showInstructions)}
+        className="flex items-center gap-2 text-sm text-foreground-muted hover:text-foreground mb-4 w-full"
+      >
+        <span>📋 Instrucciones de envío</span>
+        {showInstructions ? (
+          <ChevronUp className="h-4 w-4" />
+        ) : (
+          <ChevronDown className="h-4 w-4" />
+        )}
+      </button>
+
+      <AnimatePresence>
+        {showInstructions && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-surface-2 rounded-xl p-4 mb-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-bold text-accent">1</span>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Escribe el código en un papel</p>
+                  <p className="text-sm text-foreground-muted">
+                    Copia el código de protección de abajo y escríbelo a mano en un papel.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-bold text-accent">2</span>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Mete el papel dentro del paquete</p>
+                  <p className="text-sm text-foreground-muted">
+                    El comprador usará este código para verificar que el paquete no ha sido manipulado.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-bold text-accent">3</span>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Envía y añade el tracking</p>
+                  <p className="text-sm text-foreground-muted">
+                    Cuando lo envíes, añade el número de seguimiento abajo.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Protection Code Display */}
+      <div className="mb-4">
+        <label className="text-sm text-foreground-muted mb-2 block">
+          Código de protección
+        </label>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 bg-surface-2 rounded-xl px-4 py-3 font-mono text-lg text-center tracking-widest">
+            {showCode ? order.protectionCode : "••••••••••"}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCode(!showCode)}
+          >
+            {showCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigator.clipboard.writeText(order.protectionCode || "")}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Shipping Address */}
+      {order.shippingAddress && (
+        <div className="mb-4 p-3 bg-surface-2 rounded-xl">
+          <p className="text-xs text-foreground-muted mb-1">Enviar a:</p>
+          <p className="text-sm font-medium text-foreground">{order.shippingAddress.fullName}</p>
+          <p className="text-sm text-foreground-muted">{order.shippingAddress.street}</p>
+          <p className="text-sm text-foreground-muted">
+            {order.shippingAddress.postalCode} {order.shippingAddress.city}
+          </p>
+          {order.shippingAddress.phone && (
+            <p className="text-sm text-foreground-muted mt-1">Tel: {order.shippingAddress.phone}</p>
+          )}
+        </div>
+      )}
+
+      {/* Shipping Form */}
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm text-foreground-muted mb-2 block">
+            Transportista *
+          </label>
+          <select
+            value={carrier}
+            onChange={(e) => setCarrier(e.target.value)}
+            className="w-full h-10 px-4 bg-surface-2 border border-border rounded-xl text-sm text-foreground"
+          >
+            <option value="">Selecciona transportista</option>
+            {CARRIERS.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <Input
+          label="Número de seguimiento (opcional)"
+          value={trackingNumber}
+          onChange={(e) => setTrackingNumber(e.target.value)}
+          placeholder="1Z999AA10123456784"
+        />
+
+        {error && (
+          <p className="text-sm text-error">{error}</p>
+        )}
+
+        <Button
+          className="w-full"
+          onClick={handleShip}
+          isLoading={isSubmitting}
+          disabled={!carrier}
+        >
+          He enviado el paquete
+        </Button>
+      </div>
+    </Card>
+  );
 }
 
+// Buyer Panel: Verify code and accept
+function BuyerVerificationPanel({
+  order,
+  onSuccess,
+}: {
+  order: OrderData;
+  onSuccess: () => void;
+}) {
+  const [step, setStep] = useState<"intro" | "code" | "confirm">("intro");
+  const [code, setCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [codeValid, setCodeValid] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleVerifyCode = async () => {
+    if (!code.trim()) return;
+
+    setIsVerifying(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/db/orders/${order.id}/verify-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCodeValid(data.valid);
+        if (data.valid) {
+          setStep("confirm");
+        }
+      } else {
+        setError(data.error || "Error al verificar");
+      }
+    } catch {
+      setError("Error de conexión");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleAccept = async () => {
+    setIsAccepting(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/db/orders/${order.id}/accept`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        onSuccess();
+      } else {
+        setError(data.error || "Error al aceptar");
+      }
+    } catch {
+      setError("Error de conexión");
+    } finally {
+      setIsAccepting(false);
+    }
+  };
+
+  return (
+    <Card padding="md" className="mb-6 bg-jade/5 border-jade/20">
+      <div className="flex items-center gap-2 mb-4">
+        <CheckCircle className="h-5 w-5 text-jade" />
+        <h3 className="font-semibold text-jade">¡Tu pedido ha llegado!</h3>
+      </div>
+
+      {step === "intro" && (
+        <div className="space-y-4">
+          <div className="bg-surface-2 rounded-xl p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <Video className="h-5 w-5 text-jade flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-foreground">Graba mientras abres</p>
+                <p className="text-sm text-foreground-muted">
+                  Recomendamos que grabes un video mientras abres el paquete. Esto te
+                  protege si hay algún problema.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-jade flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-foreground">Busca el código dentro</p>
+                <p className="text-sm text-foreground-muted">
+                  El vendedor ha incluido un papel con un código. Introdúcelo para
+                  verificar que el paquete no ha sido manipulado.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="recording"
+              className="rounded border-border"
+            />
+            <label htmlFor="recording" className="text-sm text-foreground-muted">
+              Estoy grabando / He abierto el paquete
+            </label>
+          </div>
+
+          <Button className="w-full" onClick={() => setStep("code")}>
+            Introducir código
+          </Button>
+        </div>
+      )}
+
+      {step === "code" && (
+        <div className="space-y-4">
+          <p className="text-sm text-foreground-muted">
+            Introduce el código que encontrarás en un papel dentro del paquete:
+          </p>
+
+          <Input
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value.toUpperCase());
+              setCodeValid(null);
+            }}
+            placeholder="PP-XXXXXX"
+            className="text-center font-mono text-lg tracking-widest"
+          />
+
+          {codeValid === false && (
+            <div className="p-3 bg-error/10 rounded-xl">
+              <p className="text-sm text-error flex items-center gap-2">
+                <XCircle className="h-4 w-4" />
+                Código incorrecto. Comprueba que lo has escrito bien.
+              </p>
+            </div>
+          )}
+
+          {error && <p className="text-sm text-error">{error}</p>}
+
+          <div className="flex gap-3">
+            <Button
+              variant="ghost"
+              className="flex-1"
+              onClick={() => setStep("intro")}
+            >
+              Atrás
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handleVerifyCode}
+              isLoading={isVerifying}
+              disabled={!code.trim()}
+            >
+              Verificar código
+            </Button>
+          </div>
+
+          <button
+            onClick={() => setStep("confirm")}
+            className="text-sm text-foreground-muted hover:text-foreground text-center w-full"
+          >
+            No encuentro el código →
+          </button>
+        </div>
+      )}
+
+      {step === "confirm" && (
+        <div className="space-y-4">
+          {codeValid && (
+            <div className="p-3 bg-jade/10 rounded-xl">
+              <p className="text-sm text-jade flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                ¡Código verificado! El paquete es auténtico.
+              </p>
+            </div>
+          )}
+
+          <p className="text-foreground-muted">
+            ¿El producto está en buen estado y coincide con el anuncio?
+          </p>
+
+          {error && <p className="text-sm text-error">{error}</p>}
+
+          <div className="flex gap-3">
+            <Button
+              variant="danger"
+              className="flex-1"
+              onClick={() => {/* Open dispute */}}
+            >
+              Hay un problema
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handleAccept}
+              isLoading={isAccepting}
+            >
+              Todo correcto
+            </Button>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// Dispute Modal
 function DisputeModal({
   orderId,
   onClose,
+  onSuccess,
 }: {
   orderId: string;
   onClose: () => void;
+  onSuccess: () => void;
 }) {
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    // Handle dispute submission
+  const handleSubmit = async () => {
+    if (!reason || !description) return;
+
+    setIsSubmitting(true);
+    // TODO: Implement dispute API
     console.log("Opening dispute:", { orderId, reason, description });
+    setTimeout(() => {
+      setIsSubmitting(false);
     onClose();
+      onSuccess();
+    }, 1000);
   };
 
   return (
@@ -426,6 +953,7 @@ function DisputeModal({
               <option value="NOT_RECEIVED">No ha llegado</option>
               <option value="NOT_AS_DESCRIBED">No coincide con el anuncio</option>
               <option value="NOT_WORKING">No funciona</option>
+              <option value="WRONG_CODE">Código no coincide</option>
             </select>
           </div>
 
@@ -461,6 +989,7 @@ function DisputeModal({
             className="flex-1"
             onClick={handleSubmit}
             disabled={!reason || !description}
+            isLoading={isSubmitting}
           >
             Abrir disputa
           </Button>
@@ -468,4 +997,30 @@ function DisputeModal({
       </motion.div>
     </div>
   );
+}
+
+// Helper functions
+function getStepTimestamp(order: OrderData, status: OrderStatus): string | null {
+  switch (status) {
+    case "CREATED":
+      return order.createdAt;
+    case "ESCROW_HOLD":
+      return order.escrowAt || order.paidAt;
+    case "SHIPPED":
+      return order.shippedAt;
+    case "DELIVERED":
+      return order.deliveredAt;
+    case "ACCEPTED":
+      return order.acceptedAt;
+    default:
+      return null;
+  }
+}
+
+function getTrackingUrl(carrierId: string, trackingNumber: string): string {
+  const carrier = CARRIERS.find((c) => c.id === carrierId);
+  if (carrier && carrier.trackingUrl) {
+    return carrier.trackingUrl + trackingNumber;
+  }
+  return "#";
 }

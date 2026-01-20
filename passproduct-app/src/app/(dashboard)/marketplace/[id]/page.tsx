@@ -19,6 +19,8 @@ import {
   Flag,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Clock,
   Package,
   Star,
@@ -27,6 +29,9 @@ import {
   Phone,
   User,
   Tag,
+  Info,
+  Video,
+  FileText,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button, Card, Badge, SkeletonProductDetail } from "@/components/ui";
@@ -48,6 +53,7 @@ export default function ListingDetailPage() {
   const [isContacting, setIsContacting] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
   const [hasProtection, setHasProtection] = useState(true); // Protección al comprador activa por defecto
+  const [showProtectionInfo, setShowProtectionInfo] = useState(false);
   
   // Check if current user is the owner of this listing
   const isOwner = user && listing?.seller?.clerkId === user.id;
@@ -479,14 +485,91 @@ export default function ListingDetailPage() {
             <Card padding="sm" className="bg-jade/5 border-jade/20">
               <div className="flex items-start gap-3">
                 <Shield className="h-5 w-5 text-jade flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-jade">
-                    Protección comprador activa
-                  </p>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-jade">
+                      Protección comprador activa
+                    </p>
+                    <button
+                      onClick={() => setShowProtectionInfo(!showProtectionInfo)}
+                      className="flex items-center gap-1 text-xs text-jade/70 hover:text-jade transition-colors"
+                    >
+                      <Info className="h-3.5 w-3.5" />
+                      <span>Cómo funciona</span>
+                      {showProtectionInfo ? (
+                        <ChevronUp className="h-3.5 w-3.5" />
+                      ) : (
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
                   <p className="text-xs text-jade/80 mt-1">
                     Tu pago se retiene hasta que confirmes la recepción. Si algo no
                     va bien, abrimos una disputa.
                   </p>
+                  
+                  {/* Expandable info section - Isra Bravo style */}
+                  {showProtectionInfo && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-4 pt-4 border-t border-jade/20"
+                    >
+                      <p className="text-sm font-semibold text-jade mb-3">
+                        El truco anti-estafa más simple del mundo
+                      </p>
+                      
+                      <div className="space-y-4 text-xs text-jade/90">
+                        <p>
+                          No hay magia. Hay sentido común.
+                        </p>
+                        
+                        <div className="flex items-start gap-3 bg-jade/10 rounded-lg p-3">
+                          <div className="h-6 w-6 rounded-full bg-jade/20 flex items-center justify-center flex-shrink-0">
+                            <FileText className="h-3 w-3 text-jade" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-jade">El vendedor recibe un código</p>
+                            <p className="text-jade/70 mt-0.5">
+                              Cuando prepara el envío, la app le da un número único. 
+                              Lo escribe en un papel y lo mete en la caja.
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-3 bg-jade/10 rounded-lg p-3">
+                          <div className="h-6 w-6 rounded-full bg-jade/20 flex items-center justify-center flex-shrink-0">
+                            <Video className="h-3 w-3 text-jade" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-jade">Tú grabas mientras abres</p>
+                            <p className="text-jade/70 mt-0.5">
+                              Recibes el paquete. Pulsas grabar. Abres la caja en cámara.
+                              El código en el papel confirma que es el envío correcto.
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-jade/5 rounded-lg p-3 border border-jade/20">
+                          <p className="font-medium text-jade mb-1">¿Por qué funciona?</p>
+                          <p className="text-jade/70">
+                            Porque nadie puede manipular el contenido después del envío. 
+                            Si el producto está mal, tienes la prueba. 
+                            Si está bien, el vendedor cobra tranquilo.
+                          </p>
+                          <p className="text-jade/70 mt-2">
+                            Sin videos de unboxing inventados. Sin excusas.
+                            <span className="font-medium text-jade"> O hay código, o no hay protección.</span>
+                          </p>
+                        </div>
+                        
+                        <p className="text-jade/60 italic">
+                          Simple. Transparente. Sin letra pequeña.
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
               </div>
             </Card>
@@ -547,8 +630,7 @@ export default function ListingDetailPage() {
                 <Button 
                   className="w-full" 
                   size="lg"
-                  onClick={() => handleContact("Hola, me interesa tu producto. ¿Está disponible?")}
-                  isLoading={isContacting}
+                  onClick={() => router.push(`/checkout/${listing.id}`)}
                 >
                   Comprar ahora
                 </Button>

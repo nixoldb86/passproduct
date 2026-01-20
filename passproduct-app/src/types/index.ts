@@ -186,6 +186,17 @@ export interface Conversation {
   currentOffer?: number;
   offerStatus?: "pending" | "accepted" | "rejected";
   messages: Message[];
+  // Participante con el que se está chateando (calculado por la API)
+  otherParticipant?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
+    lastSeen?: Date;
+    isOnline?: boolean;
+    showReadReceipts?: boolean;
+  };
+  isBuyer?: boolean; // Si el usuario actual es el comprador
   createdAt: Date;
   updatedAt: Date;
 }

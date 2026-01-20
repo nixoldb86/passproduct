@@ -137,9 +137,12 @@ interface NotificationBellProps {
   className?: string;
 }
 
+const INITIAL_DISPLAY_COUNT = 5;
+
 export function NotificationBell({ className }: NotificationBellProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   const {
@@ -151,10 +154,25 @@ export function NotificationBell({ className }: NotificationBellProps) {
     markAllAsRead,
     deleteNotification,
   } = useNotificationStore();
+  
+  // Notificaciones a mostrar según el estado
+  const displayedNotifications = showAll 
+    ? notifications 
+    : notifications.slice(0, INITIAL_DISPLAY_COUNT);
+  
+  const hasMoreNotifications = notifications.length > INITIAL_DISPLAY_COUNT;
 
-  // Cargar notificaciones al montar
+  // Cargar notificaciones al montar y hacer polling cada 5 segundos
   useEffect(() => {
+    // Carga inicial
     fetchNotifications();
+    
+    // Polling cada 5 segundos para nuevas notificaciones
+    const pollInterval = setInterval(() => {
+      fetchNotifications();
+    }, 5000);
+    
+    return () => clearInterval(pollInterval);
   }, [fetchNotifications]);
 
   // Cerrar dropdown al hacer clic fuera
@@ -162,6 +180,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setShowAll(false); // Resetear al cerrar
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -178,6 +197,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
       router.push(notification.actionUrl);
     }
     setIsOpen(false);
+    setShowAll(false);
   };
 
   return (
@@ -234,7 +254,10 @@ export function NotificationBell({ className }: NotificationBellProps) {
                   </button>
                 )}
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    setIsOpen(false);
+                    setShowAll(false);
+                  }}
                   className="p-1 rounded hover:bg-surface-2 text-foreground-muted"
                 >
                   <X className="w-4 h-4" />
@@ -256,7 +279,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
                 </div>
               ) : (
                 <div className="divide-y divide-border">
-                  {notifications.map((notification) => (
+                  {displayedNotifications.map((notification) => (
                     <div key={notification.id} className="group">
                       <NotificationItem
                         notification={notification}
@@ -273,15 +296,21 @@ export function NotificationBell({ className }: NotificationBellProps) {
             {/* Footer */}
             {notifications.length > 0 && (
               <div className="border-t border-border p-2">
-                <button
-                  onClick={() => {
-                    // TODO: Navegar a página de todas las notificaciones
-                    setIsOpen(false);
-                  }}
-                  className="w-full text-center text-sm text-accent hover:text-accent/80 py-2 rounded-lg hover:bg-surface-2 transition-colors"
-                >
-                  Ver todas las notificaciones
-                </button>
+                {hasMoreNotifications && !showAll ? (
+                  <button
+                    onClick={() => setShowAll(true)}
+                    className="w-full text-center text-sm text-accent hover:text-accent/80 py-2 rounded-lg hover:bg-surface-2 transition-colors"
+                  >
+                    Ver todas ({notifications.length - INITIAL_DISPLAY_COUNT} más)
+                  </button>
+                ) : showAll && hasMoreNotifications ? (
+                  <button
+                    onClick={() => setShowAll(false)}
+                    className="w-full text-center text-sm text-foreground-muted hover:text-foreground py-2 rounded-lg hover:bg-surface-2 transition-colors"
+                  >
+                    Mostrar menos
+                  </button>
+                ) : null}
               </div>
             )}
           </motion.div>

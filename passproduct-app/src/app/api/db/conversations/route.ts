@@ -23,11 +23,12 @@ export async function GET() {
     }
 
     // Buscar conversaciones donde el usuario es comprador o vendedor
+    // y que no hayan sido borradas por este usuario
     const conversations = await prisma.conversation.findMany({
       where: {
         OR: [
-          { buyerId: user.id },
-          { sellerId: user.id },
+          { buyerId: user.id, deletedByBuyer: false },
+          { sellerId: user.id, deletedBySeller: false },
         ],
       },
       include: {
@@ -202,6 +203,15 @@ export async function POST(request: NextRequest) {
       });
 
       console.log(`💬 Nueva conversación creada: ${conversation.id}`);
+    } else {
+      // Si existe pero el usuario la había borrado, restaurarla
+      if ((conversation as any).deletedByBuyer) {
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { deletedByBuyer: false },
+        });
+        console.log(`♻️ Conversación restaurada para el comprador: ${conversation.id}`);
+      }
     }
 
     // Si hay mensaje inicial, crearlo

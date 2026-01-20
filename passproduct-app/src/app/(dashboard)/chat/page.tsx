@@ -13,6 +13,7 @@ import {
   DollarSign,
   ArrowLeft,
   Circle,
+  Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatStore } from "@/store";
@@ -44,7 +45,8 @@ function formatLastSeen(lastSeen: Date | string | null | undefined): string {
 
 function ChatPageContent() {
   const searchParams = useSearchParams();
-  const conversationId = searchParams.get("id");
+  // Soportar tanto ?id= como ?conversation= para las notificaciones
+  const conversationId = searchParams.get("id") || searchParams.get("conversation");
   
   const {
     conversations,
@@ -55,12 +57,19 @@ function ChatPageContent() {
     setActiveConversation,
     sendMessage,
     makeOffer,
+    markMessagesAsRead,
+    pollConversationStatus,
+    deleteConversation,
   } = useChatStore();
 
   const [messageText, setMessageText] = useState("");
   const [showOfferInput, setShowOfferInput] = useState(false);
   const [offerAmount, setOfferAmount] = useState("");
   const [showConversationList, setShowConversationList] = useState(true);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmConvId, setDeleteConfirmConvId] = useState<string | null>(null);
+  const [listMenuOpenId, setListMenuOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConversations();
@@ -72,6 +81,24 @@ function ChatPageContent() {
       fetchConversation(conversationId);
     }
   }, [conversationId, fetchConversation]);
+
+  // Marcar mensajes como leídos cuando se abre una conversación
+  useEffect(() => {
+    if (activeConversation?.id) {
+      markMessagesAsRead(activeConversation.id);
+    }
+  }, [activeConversation?.id, markMessagesAsRead]);
+
+  // Polling para actualizar estado de lectura y presencia cada 3 segundos
+  useEffect(() => {
+    if (!activeConversation?.id) return;
+    
+    const pollInterval = setInterval(() => {
+      pollConversationStatus(activeConversation.id);
+    }, 3000);
+    
+    return () => clearInterval(pollInterval);
+  }, [activeConversation?.id, pollConversationStatus]);
 
   // En móvil, ocultar lista cuando hay conversación activa
   useEffect(() => {
@@ -102,17 +129,28 @@ function ChatPageContent() {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!activeConversation || !messageText.trim()) return;
-    sendMessage(activeConversation.id, messageText.trim());
-    setMessageText("");
+    const text = messageText.trim();
+    setMessageText(""); // Limpiar input inmediatamente para mejor UX
+    try {
+      await sendMessage(activeConversation.id, text);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setMessageText(text); // Restaurar mensaje si hay error
+    }
   };
 
-  const handleMakeOffer = () => {
+  const handleMakeOffer = async () => {
     if (!activeConversation || !offerAmount) return;
-    makeOffer(activeConversation.id, parseFloat(offerAmount));
+    const amount = parseFloat(offerAmount);
     setOfferAmount("");
     setShowOfferInput(false);
+    try {
+      await makeOffer(activeConversation.id, amount);
+    } catch (error) {
+      console.error("Error making offer:", error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -167,20 +205,23 @@ function ChatPageContent() {
               </div>
             ) : (
               conversations.map((conv) => (
-                <button
+                <div
                   key={conv.id}
-                  onClick={() => {
-                    // Cargar conversación completa con todos los mensajes
-                    fetchConversation(conv.id);
-                    // En móvil, ocultar lista al seleccionar conversación
-                    if (window.innerWidth < 768) {
-                      setShowConversationList(false);
-                    }
-                  }}
-                  className={`w-full p-4 flex gap-3 border-b border-border hover:bg-surface-2 transition-colors text-left ${
+                  className={`relative group w-full p-4 flex gap-3 border-b border-border hover:bg-surface-2 transition-colors ${
                     activeConversation?.id === conv.id ? "bg-surface-2" : ""
                   }`}
                 >
+                  {/* Área clicable para abrir conversación */}
+                  <button
+                    onClick={() => {
+                      fetchConversation(conv.id);
+                      if (window.innerWidth < 768) {
+                        setShowConversationList(false);
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full"
+                  />
+                  
                   {/* Product image */}
                   <div className="relative h-12 w-12 rounded-lg bg-surface-2 overflow-hidden flex-shrink-0">
                     {conv.listing?.photos[0] ? (
@@ -198,7 +239,7 @@ function ChatPageContent() {
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-medium text-foreground truncate">
                         {conv.listing?.title || "Producto"}
@@ -224,7 +265,19 @@ function ChatPageContent() {
                       </span>
                     )}
                   </div>
-                </button>
+                  
+                  {/* Botón eliminar (aparece al hover) */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteConfirmConvId(conv.id);
+                    }}
+                    className="relative z-10 opacity-0 group-hover:opacity-100 p-2 rounded-lg hover:bg-red-500/10 text-foreground-muted hover:text-red-500 transition-all self-center"
+                    title="Eliminar conversación"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               ))
             )}
           </div>
@@ -273,7 +326,8 @@ function ChatPageContent() {
                       )}
                     </div>
                     {/* Indicador de online */}
-                    {formatLastSeen((activeConversation as any).otherParticipant?.lastSeen) === "En línea" && (
+                    {((activeConversation as any).otherParticipant?.isOnline || 
+                      formatLastSeen((activeConversation as any).otherParticipant?.lastSeen) === "En línea") && (
                       <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 bg-green-500 rounded-full border-2 border-surface-1" />
                     )}
                   </div>
@@ -283,9 +337,11 @@ function ChatPageContent() {
                       {(activeConversation as any).otherParticipant?.lastName?.[0] ? `${(activeConversation as any).otherParticipant.lastName[0]}.` : ""}
                     </p>
                     <p className="text-xs text-foreground-muted">
-                      {(activeConversation as any).otherParticipant?.lastSeen 
-                        ? formatLastSeen((activeConversation as any).otherParticipant.lastSeen)
-                        : activeConversation.listing?.title
+                      {(activeConversation as any).otherParticipant?.isOnline 
+                        ? "En línea"
+                        : (activeConversation as any).otherParticipant?.lastSeen 
+                          ? formatLastSeen((activeConversation as any).otherParticipant.lastSeen)
+                          : activeConversation.listing?.title
                       }
                     </p>
                   </div>
@@ -314,9 +370,46 @@ function ChatPageContent() {
                       </div>
                     )}
                   </div>
-                  <button className="p-2 rounded-lg hover:bg-surface-2 transition-colors">
-                    <MoreVertical className="h-5 w-5 text-foreground-muted" />
-                  </button>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+                      className="p-2 rounded-lg hover:bg-surface-2 transition-colors"
+                    >
+                      <MoreVertical className="h-5 w-5 text-foreground-muted" />
+                    </button>
+                    
+                    {/* Menú de opciones */}
+                    <AnimatePresence>
+                      {showOptionsMenu && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.1 }}
+                          className="absolute right-0 top-full mt-1 w-48 bg-surface-1 border border-border rounded-lg shadow-lg z-50 overflow-hidden"
+                        >
+                          <button
+                            onClick={() => {
+                              setShowOptionsMenu(false);
+                              setShowDeleteConfirm(true);
+                            }}
+                            className="w-full px-4 py-3 text-left text-sm text-red-500 hover:bg-red-500/10 flex items-center gap-2 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar conversación
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    
+                    {/* Overlay para cerrar menú */}
+                    {showOptionsMenu && (
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setShowOptionsMenu(false)}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -471,6 +564,73 @@ function ChatPageContent() {
           )}
         </AnimatePresence>
       </div>
+      
+      {/* Modal de confirmación de eliminación */}
+      <AnimatePresence>
+        {(showDeleteConfirm || deleteConfirmConvId) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => {
+              setShowDeleteConfirm(false);
+              setDeleteConfirmConvId(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-surface-1 rounded-xl p-6 max-w-sm w-full shadow-xl border border-border"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-red-500/10 rounded-full">
+                  <Trash2 className="h-5 w-5 text-red-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  ¿Eliminar conversación?
+                </h3>
+              </div>
+              
+              <p className="text-foreground-muted text-sm mb-6">
+                Esta conversación desaparecerá de tu lista. El otro usuario seguirá pudiendo verla en su cuenta.
+              </p>
+              
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteConfirmConvId(null);
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                  onClick={async () => {
+                    const convIdToDelete = deleteConfirmConvId || activeConversation?.id;
+                    if (convIdToDelete) {
+                      const success = await deleteConversation(convIdToDelete);
+                      if (success && convIdToDelete === activeConversation?.id) {
+                        setShowConversationList(true);
+                      }
+                    }
+                    setShowDeleteConfirm(false);
+                    setDeleteConfirmConvId(null);
+                  }}
+                >
+                  Eliminar
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

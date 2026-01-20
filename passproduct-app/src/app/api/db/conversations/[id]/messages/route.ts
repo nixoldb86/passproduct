@@ -41,6 +41,15 @@ export async function POST(
     // Verificar que la conversación existe y el usuario es participante
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
+      include: {
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            photos: true,
+          },
+        },
+      },
     });
 
     if (!conversation) {
@@ -56,6 +65,11 @@ export async function POST(
         { status: 403 }
       );
     }
+
+    // Determinar el receptor del mensaje
+    const recipientId = conversation.buyerId === user.id 
+      ? conversation.sellerId 
+      : conversation.buyerId;
 
     // Crear mensaje
     const message = await prisma.message.create({
@@ -94,6 +108,34 @@ export async function POST(
         where: { id: conversationId },
         data: { updatedAt: new Date() },
       });
+    }
+
+    // Crear notificación para el receptor
+    const senderName = user.firstName || "Alguien";
+    const productTitle = conversation.listing?.title || "un producto";
+    const truncatedMessage = text && text.length > 50 ? text.substring(0, 50) + "..." : text;
+    
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: recipientId,
+          type: "MESSAGE",
+          title: isOffer 
+            ? `${senderName} te ha hecho una oferta`
+            : `${senderName} te ha escrito`,
+          message: isOffer 
+            ? `Oferta de ${offerAmount}€ por ${productTitle}`
+            : truncatedMessage || "Nuevo mensaje",
+          fromUserId: user.id,
+          conversationId: conversationId,
+          listingId: conversation.listing?.id,
+          imageUrl: user.avatarUrl || conversation.listing?.photos?.[0],
+          actionUrl: `/chat?conversation=${conversationId}`,
+        },
+      });
+    } catch (notifError) {
+      console.error("Error creating notification:", notifError);
+      // No fallar la petición por error en notificación
     }
 
     return NextResponse.json({

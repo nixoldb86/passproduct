@@ -13,12 +13,12 @@ import {
   Clock,
   AlertCircle,
   XCircle,
+  Shield,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useOrderStore } from "@/store";
 import { Button, Card, Badge } from "@/components/ui";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { Order, OrderStatus, ORDER_STATUS_LABELS } from "@/types";
+import { OrderStatus, ORDER_STATUS_LABELS } from "@/types";
 
 const ORDER_STATUS_CONFIG: Record<
   OrderStatus,
@@ -26,7 +26,7 @@ const ORDER_STATUS_CONFIG: Record<
 > = {
   CREATED: { icon: Clock, color: "text-foreground-muted" },
   PAID: { icon: CheckCircle, color: "text-info" },
-  ESCROW_HOLD: { icon: Clock, color: "text-accent" },
+  ESCROW_HOLD: { icon: Shield, color: "text-accent" },
   SHIPPED: { icon: Truck, color: "text-info" },
   HANDED_OVER: { icon: Package, color: "text-info" },
   DELIVERED: { icon: CheckCircle, color: "text-jade" },
@@ -36,17 +36,47 @@ const ORDER_STATUS_CONFIG: Record<
   REFUNDED: { icon: XCircle, color: "text-error" },
 };
 
+interface OrderListItem {
+  id: string;
+  status: OrderStatus;
+  total: number;
+  sellerPayout: number;
+  createdAt: string;
+  listing: {
+    title: string;
+    photos: string[];
+  } | null;
+  buyer: { firstName: string; lastName: string };
+  seller: { firstName: string; lastName: string };
+  isBuyer: boolean;
+  isSeller: boolean;
+}
+
 export default function OrdersPage() {
-  const { orders, isLoading, fetchOrders } = useOrderStore();
+  const [orders, setOrders] = useState<OrderListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"buying" | "selling">("buying");
 
   useEffect(() => {
+    const fetchOrders = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/db/orders");
+        const data = await response.json();
+        if (data.success) {
+          setOrders(data.orders);
+        }
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+      setIsLoading(false);
+    };
     fetchOrders();
-  }, [fetchOrders]);
+  }, []);
 
-  // Filter orders by type (in real app, check buyerId vs sellerId)
-  const buyingOrders = orders.filter((o) => o.buyerId === "user-1");
-  const sellingOrders = orders.filter((o) => o.sellerId === "user-1");
+  // Filter orders by type
+  const buyingOrders = orders.filter((o) => o.isBuyer);
+  const sellingOrders = orders.filter((o) => o.isSeller);
   const displayedOrders = activeTab === "buying" ? buyingOrders : sellingOrders;
 
   return (
@@ -97,7 +127,14 @@ export default function OrdersPage() {
 
       {/* Orders List */}
       <div className="space-y-4">
-        {displayedOrders.length === 0 ? (
+        {isLoading ? (
+          // Loading skeleton
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 bg-surface-2 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        ) : displayedOrders.length === 0 ? (
           <Card padding="lg" className="text-center py-16">
             <div className="h-16 w-16 rounded-2xl bg-surface-2 flex items-center justify-center mx-auto mb-4">
               {activeTab === "buying" ? (
@@ -144,18 +181,12 @@ function OrderCard({
   type,
   index,
 }: {
-  order: Order;
+  order: OrderListItem;
   type: "buying" | "selling";
   index: number;
 }) {
-  const StatusIcon = ORDER_STATUS_CONFIG[order.status].icon;
-  const statusColor = ORDER_STATUS_CONFIG[order.status].color;
-
-  // Mock listing data
-  const mockListing = {
-    title: "iPhone 14 Pro Max 256GB",
-    photo: "https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=400",
-  };
+  const StatusIcon = ORDER_STATUS_CONFIG[order.status]?.icon || Clock;
+  const statusColor = ORDER_STATUS_CONFIG[order.status]?.color || "text-foreground-muted";
 
   return (
     <motion.div
@@ -172,12 +203,18 @@ function OrderCard({
           <div className="flex">
             {/* Image */}
             <div className="relative h-32 w-32 bg-surface-2 flex-shrink-0">
-              <Image
-                src={mockListing.photo}
-                alt=""
-                fill
-                className="object-cover"
-              />
+              {order.listing?.photos[0] ? (
+                <Image
+                  src={order.listing.photos[0]}
+                  alt=""
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <Package className="h-8 w-8 text-foreground-subtle" />
+                </div>
+              )}
             </div>
 
             {/* Content */}
@@ -186,7 +223,7 @@ function OrderCard({
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="font-semibold text-foreground line-clamp-1">
-                      {mockListing.title}
+                      {order.listing?.title || "Producto"}
                     </h3>
                     <p className="text-sm text-foreground-muted mt-0.5">
                       Pedido #{order.id.slice(-8).toUpperCase()}
@@ -222,10 +259,10 @@ function OrderCard({
           <div className="px-4 py-3 bg-surface-2/50 border-t border-border">
             <div className="flex items-center gap-2">
               <div className="flex -space-x-1">
-                {["CREATED", "PAID", "ESCROW_HOLD", "SHIPPED", "DELIVERED", "ACCEPTED"].map(
+                {["CREATED", "ESCROW_HOLD", "SHIPPED", "DELIVERED", "ACCEPTED"].map(
                   (step, i) => {
                     const isCompleted =
-                      getStatusIndex(order.status as OrderStatus) >= i;
+                      getStatusIndex(order.status) >= i;
                     return (
                       <div
                         key={step}
@@ -251,7 +288,6 @@ function OrderCard({
 function getStatusIndex(status: OrderStatus): number {
   const order = [
     "CREATED",
-    "PAID",
     "ESCROW_HOLD",
     "SHIPPED",
     "DELIVERED",

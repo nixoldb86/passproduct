@@ -62,12 +62,12 @@ const transformProductFromAPI = (apiProduct: Record<string, unknown>): Product =
 
 export const useWalletStore = create<WalletState>((set, get) => ({
   products: [],
-  isLoading: false,
-  selectedProduct: null,
+      isLoading: false,
+      selectedProduct: null,
   error: null,
 
-  setProducts: (products) => set({ products }),
-  
+      setProducts: (products) => set({ products }),
+      
   clearError: () => set({ error: null }),
   
   // Cargar productos del usuario desde la BD
@@ -336,17 +336,17 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
       } else {
         // Fallback a datos mock si falla la API
         console.warn("API error, usando datos mock:", data.error);
-        let filtered = [...mockListings];
-        
-        if (filters?.categoryId) {
-          filtered = filtered.filter((l) => l.categoryId === filters.categoryId);
-        }
-        if (filters?.minPrice) {
-          filtered = filtered.filter((l) => l.price >= filters.minPrice!);
-        }
-        if (filters?.maxPrice) {
-          filtered = filtered.filter((l) => l.price <= filters.maxPrice!);
-        }
+    let filtered = [...mockListings];
+    
+    if (filters?.categoryId) {
+      filtered = filtered.filter((l) => l.categoryId === filters.categoryId);
+    }
+    if (filters?.minPrice) {
+      filtered = filtered.filter((l) => l.price >= filters.minPrice!);
+    }
+    if (filters?.maxPrice) {
+      filtered = filtered.filter((l) => l.price <= filters.maxPrice!);
+    }
         
         set({ listings: filtered, isLoading: false, filters: filters || {} });
       }
@@ -427,6 +427,9 @@ interface ChatState {
   sendMessage: (conversationId: string, text: string, isOffer?: boolean, offerAmount?: number) => Promise<void>;
   makeOffer: (conversationId: string, amount: number) => Promise<void>;
   respondToOffer: (conversationId: string, accept: boolean) => Promise<void>;
+  markMessagesAsRead: (conversationId: string) => Promise<void>;
+  pollConversationStatus: (conversationId: string) => Promise<void>;
+  deleteConversation: (conversationId: string) => Promise<boolean>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -458,7 +461,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     } catch (error) {
       console.error("Error fetching conversations:", error);
-      set({ conversations: mockConversations, isLoading: false });
+    set({ conversations: mockConversations, isLoading: false });
     }
   },
   
@@ -522,7 +525,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const data = await response.json();
       
       if (data.success && data.message) {
-        // Actualizar estado local
+        // Actualizar estado local - añadir mensaje al chat activo
         set((state) => ({
           conversations: state.conversations.map((conv) =>
             conv.id === conversationId
@@ -542,6 +545,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 }
               : state.activeConversation,
         }));
+        
+        // Las notificaciones de mensajes se crean en el servidor (ver API de mensajes)
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -583,6 +588,85 @@ export const useChatStore = create<ChatState>((set, get) => ({
           : conv
       ),
     }));
+  },
+  
+  // Marcar mensajes como leídos cuando se abre una conversación
+  markMessagesAsRead: async (conversationId) => {
+    try {
+      await fetch(`/api/db/conversations/${conversationId}/read`, {
+        method: "POST",
+      });
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  },
+  
+  // Polling para actualizar estado de mensajes y presencia
+  pollConversationStatus: async (conversationId) => {
+    try {
+      const response = await fetch(`/api/db/conversations/${conversationId}/status`);
+      const data = await response.json();
+      
+      if (data.success && data.status) {
+        const { messageStatuses, otherParticipant, newMessagesCount } = data.status;
+        
+        // Actualizar estado de lectura de los mensajes propios
+        set((state) => {
+          if (state.activeConversation?.id !== conversationId) return state;
+          
+          const updatedMessages = state.activeConversation.messages.map((msg) => {
+            const status = messageStatuses.find((s: { id: string }) => s.id === msg.id);
+            if (status && status.readAt && !msg.readAt) {
+              return { ...msg, readAt: status.readAt };
+            }
+            return msg;
+          });
+          
+          return {
+            activeConversation: {
+              ...state.activeConversation,
+              messages: updatedMessages,
+              otherParticipant: {
+                ...state.activeConversation.otherParticipant,
+                lastSeen: otherParticipant.lastSeen,
+                isOnline: otherParticipant.isOnline,
+              },
+            },
+          };
+        });
+        
+        // Si hay nuevos mensajes, recargar la conversación completa
+        if (newMessagesCount > 0) {
+          get().fetchConversation(conversationId);
+        }
+      }
+    } catch (error) {
+      console.error("Error polling conversation status:", error);
+    }
+  },
+  
+  deleteConversation: async (conversationId) => {
+    try {
+      const response = await fetch(`/api/db/conversations/${conversationId}/delete`, {
+        method: "POST",
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        // Eliminar de la lista local
+        set((state) => ({
+          conversations: state.conversations.filter((c) => c.id !== conversationId),
+          activeConversation: state.activeConversation?.id === conversationId 
+            ? null 
+            : state.activeConversation,
+        }));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      return false;
+    }
   },
 }));
 
@@ -782,86 +866,45 @@ interface NotificationState {
   // Actions
   fetchNotifications: () => Promise<void>;
   addNotification: (notification: Omit<Notification, "id" | "createdAt" | "isRead">) => void;
-  markAsRead: (notificationId: string) => void;
-  markAllAsRead: () => void;
-  deleteNotification: (notificationId: string) => void;
+  markAsRead: (notificationId: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
   clearAll: () => void;
 }
 
-// Datos mock de notificaciones
-const mockNotifications: Notification[] = [
-  {
-    id: "notif-1",
-    userId: "user-1",
-    type: "new_listing",
-    title: "Carlos G. ha publicado un nuevo producto",
-    message: "iPhone 15 Pro 256GB Titanio - 899€",
-    fromUserId: "seller-1",
-    fromUser: mockSellers[0],
-    listingId: "listing-1",
-    imageUrl: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=100&q=80",
-    actionUrl: "/marketplace/listing-1",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 min ago
-  },
-  {
-    id: "notif-2",
-    userId: "user-1",
-    type: "new_follower",
-    title: "María L. ha empezado a seguirte",
-    message: "Ahora recibirás notificaciones cuando publiques",
-    fromUserId: "seller-2",
-    fromUser: mockSellers[1],
-    imageUrl: mockSellers[1]?.avatarUrl,
-    actionUrl: "/marketplace?seller=seller-2",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-  },
-  {
-    id: "notif-3",
-    userId: "user-1",
-    type: "price_drop",
-    title: "Bajada de precio",
-    message: "MacBook Air M2 que sigues ha bajado a 899€",
-    listingId: "listing-2",
-    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=100&q=80",
-    actionUrl: "/marketplace/listing-2",
-    isRead: true,
-    readAt: new Date(Date.now() - 1000 * 60 * 60),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-  },
-  {
-    id: "notif-4",
-    userId: "user-1",
-    type: "order_update",
-    title: "Tu pedido ha sido enviado",
-    message: "El vendedor ha enviado tu iPhone. Tracking: ES123456789",
-    orderId: "order-1",
-    actionUrl: "/orders/order-1",
-    isRead: true,
-    readAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
-  },
-];
-
-export const useNotificationStore = create<NotificationState>((set, get) => ({
+export const useNotificationStore = create<NotificationState>((set) => ({
   notifications: [],
   unreadCount: 0,
   isLoading: false,
 
   fetchNotifications: async () => {
-    set({ isLoading: true });
-    // Simular carga desde API
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const notifications = mockNotifications;
-    set({
-      notifications,
-      unreadCount: notifications.filter((n) => !n.isRead).length,
-      isLoading: false,
-    });
+    try {
+      const response = await fetch("/api/db/notifications");
+      
+      if (response.status === 401) {
+        set({ notifications: [], unreadCount: 0, isLoading: false });
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        set({
+          notifications: data.notifications || [],
+          unreadCount: data.unreadCount || 0,
+          isLoading: false,
+        });
+      } else {
+        set({ isLoading: false });
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      set({ isLoading: false });
+    }
   },
 
   addNotification: (notificationData) => {
+    // Para notificaciones locales (cuando no vienen del servidor)
     const newNotification: Notification = {
       ...notificationData,
       id: `notif-${Date.now()}`,
@@ -875,7 +918,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }));
   },
 
-  markAsRead: (notificationId) =>
+  markAsRead: async (notificationId) => {
+    // Actualizar localmente primero (optimistic update)
     set((state) => {
       const notifications = state.notifications.map((n) =>
         n.id === notificationId ? { ...n, isRead: true, readAt: new Date() } : n
@@ -884,9 +928,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         notifications,
         unreadCount: notifications.filter((n) => !n.isRead).length,
       };
-    }),
+    });
+    
+    // Sincronizar con el servidor
+    try {
+      await fetch(`/api/db/notifications/${notificationId}`, {
+        method: "PATCH",
+      });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  },
 
-  markAllAsRead: () =>
+  markAllAsRead: async () => {
+    // Actualizar localmente primero
     set((state) => ({
       notifications: state.notifications.map((n) => ({
         ...n,
@@ -894,9 +949,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         readAt: n.readAt || new Date(),
       })),
       unreadCount: 0,
-    })),
+    }));
+    
+    // Sincronizar con el servidor
+    try {
+      await fetch("/api/db/notifications/read-all", {
+        method: "POST",
+      });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+    }
+  },
 
-  deleteNotification: (notificationId) =>
+  deleteNotification: async (notificationId) => {
+    // Actualizar localmente primero
     set((state) => {
       const notification = state.notifications.find((n) => n.id === notificationId);
       const wasUnread = notification && !notification.isRead;
@@ -904,7 +970,17 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         notifications: state.notifications.filter((n) => n.id !== notificationId),
         unreadCount: wasUnread ? state.unreadCount - 1 : state.unreadCount,
       };
-    }),
+    });
+    
+    // Sincronizar con el servidor
+    try {
+      await fetch(`/api/db/notifications/${notificationId}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+    }
+  },
 
   clearAll: () => set({ notifications: [], unreadCount: 0 }),
 }));
@@ -1031,6 +1107,7 @@ export const useFollowStore = create(
 
 // ==========================================
 // HELPER: Notificar nueva publicación a seguidores
+// (Las notificaciones de mensajes se crean en el servidor)
 // ==========================================
 
 export const notifyFollowersOfNewListing = (

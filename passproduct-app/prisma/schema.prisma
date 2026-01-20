@@ -323,6 +323,10 @@ model Conversation {
   currentOffer    Decimal?  @db.Decimal(10, 2)
   offerStatus     String?   // "pending", "accepted", "rejected"
   
+  // Soft delete per user (each user can delete their view of the conversation)
+  deletedByBuyer  Boolean   @default(false)
+  deletedBySeller Boolean   @default(false)
+  
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -384,13 +388,29 @@ model Order {
   // Status
   status          OrderStatus @default(CREATED)
   
+  // Stripe Payment
+  stripePaymentIntentId   String?   @unique
+  stripePaymentStatus     String?   // "requires_payment_method", "succeeded", etc.
+  
+  // Protection Code System (anti-fraud)
+  protectionCode          String?   // Generated unique code, e.g. "PP-A7X9K2"
+  protectionCodeUsed      Boolean   @default(false)
+  codeVerifiedAt          DateTime?
+  
+  // Shipping address (JSON: street, city, postalCode, country, phone, name)
+  shippingAddress         Json?
+  
   // Shipping/handover info
   trackingNumber  String?
-  carrier         String?
+  carrier         String?     // SEUR, MRW, Correos, GLS, UPS, DHL, etc.
   isLocalPickup   Boolean     @default(false)
+  
+  // Video unboxing (proof for disputes)
+  unboxingVideoUrl        String?
   
   // Timestamps for timeline
   paidAt          DateTime?
+  escrowAt        DateTime?   // When payment was put in escrow
   shippedAt       DateTime?
   deliveredAt     DateTime?
   acceptedAt      DateTime?
@@ -406,6 +426,7 @@ model Order {
   @@index([sellerId])
   @@index([listingId])
   @@index([status])
+  @@index([stripePaymentIntentId])
 }
 
 model Dispute {
@@ -480,4 +501,64 @@ model Alert {
 
   @@index([userId])
   @@index([isRead])
+}
+
+// ==========================================
+// NOTIFICATIONS (Real-time)
+// ==========================================
+
+enum NotificationType {
+  NEW_LISTING
+  PRICE_DROP
+  NEW_FOLLOWER
+  ORDER_UPDATE
+  MESSAGE
+  SYSTEM
+}
+
+model Notification {
+  id              String            @id @default(cuid())
+  
+  userId          String            // Usuario que recibe la notificación
+  
+  type            NotificationType
+  title           String
+  message         String
+  
+  // Referencias opcionales
+  fromUserId      String?           // Usuario que originó la acción
+  listingId       String?
+  conversationId  String?
+  orderId         String?
+  
+  // Metadatos
+  imageUrl        String?           // Imagen a mostrar (avatar, producto, etc)
+  actionUrl       String?           // URL al hacer clic
+  
+  // Estado
+  isRead          Boolean           @default(false)
+  readAt          DateTime?
+  
+  createdAt       DateTime          @default(now())
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+// ==========================================
+// FOLLOWS
+// ==========================================
+
+model Follow {
+  id              String    @id @default(cuid())
+  
+  followerId      String    // Usuario que sigue
+  followingId     String    // Usuario seguido
+  
+  createdAt       DateTime  @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
