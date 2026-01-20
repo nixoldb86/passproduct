@@ -78,6 +78,14 @@ export default function RootLayout({
           footerActionLink: "text-[#D4AF37] hover:text-[#E5C453]",
           identityPreviewText: "text-[#FAFAFA]",
           identityPreviewEditButton: "text-[#D4AF37]",
+          // UserButton dropdown styles
+          userButtonPopoverCard: "bg-[#18181C] border border-[rgba(255,255,255,0.08)]",
+          userButtonPopoverActionButton: "text-[#FAFAFA] hover:bg-[#26262C]",
+          userButtonPopoverActionButtonText: "text-[#FAFAFA]",
+          userButtonPopoverActionButtonIcon: "text-[#A1A1AA]",
+          userButtonPopoverFooter: "hidden",
+          userPreviewMainIdentifier: "text-[#FAFAFA]",
+          userPreviewSecondaryIdentifier: "text-[#A1A1AA]",
         },
       }}
     >
