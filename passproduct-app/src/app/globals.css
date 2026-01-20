@@ -390,6 +390,51 @@ body {
   border-radius: var(--radius-lg) !important;
 }
 
+/* UserButton dropdown - force white text */
+.cl-userButtonPopoverCard {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.cl-userButtonPopoverActionButton,
+.cl-userButtonPopoverActionButton__manageAccount,
+.cl-userButtonPopoverActionButton__signOut {
+  color: #FFFFFF !important;
+}
+
+.cl-userButtonPopoverActionButton:hover {
+  background: var(--surface-2) !important;
+}
+
+.cl-userButtonPopoverActionButtonText {
+  color: #FFFFFF !important;
+}
+
+.cl-userButtonPopoverActionButtonIcon {
+  color: #FFFFFF !important;
+}
+
+.cl-userButtonPopoverActionButtonIcon svg,
+.cl-userButtonPopoverActionButtonIcon path {
+  color: #FFFFFF !important;
+  fill: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* User preview text */
+.cl-userPreviewMainIdentifier {
+  color: #FFFFFF !important;
+}
+
+.cl-userPreviewSecondaryIdentifier {
+  color: #A1A1AA !important;
+}
+
+/* Hide footer */
+.cl-userButtonPopoverFooter {
+  display: none !important;
+}
+
 /* ==========================================
    UTILITIES
    ========================================== */
