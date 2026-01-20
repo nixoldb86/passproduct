@@ -885,7 +885,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                             initial={{ opacity: 0, scale: 0.95, y: -10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                            className="absolute bottom-full left-0 right-0 mb-2 bg-[#1F1F24] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-xl overflow-hidden z-50"
+                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-[#1F1F24] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-xl overflow-hidden z-50"
                           >
                             <div className="p-3 border-b border-[rgba(255,255,255,0.1)]">
                               <p className="text-sm font-medium text-white text-center">
