@@ -300,7 +300,7 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
           <div className="flex items-center gap-4 text-xs text-foreground-subtle mb-4">
             <span className="flex items-center gap-1">
               <Tag className="h-3 w-3" />
-              {CONDITION_LABELS[product.condition]}
+              {CONDITION_LABELS[product.condition?.toUpperCase() as keyof typeof CONDITION_LABELS] || "Bueno"}
             </span>
             {product.purchaseDate && (
               <span className="flex items-center gap-1">

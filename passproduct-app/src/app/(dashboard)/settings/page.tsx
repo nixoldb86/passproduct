@@ -20,8 +20,12 @@ import {
   X,
   Users,
   UserMinus,
+  BadgeCheck,
+  ChevronRight,
+  AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button, Card, Input } from "@/components/ui";
 import { useFollowStore } from "@/store";
@@ -59,8 +63,11 @@ export default function SettingsPage() {
   
   // Unfollow state
   const [unfollowingId, setUnfollowingId] = useState<string | null>(null);
+  
+  // Identity verification state
+  const [isIdentityVerified, setIsIdentityVerified] = useState(false);
 
-  // Cargar configuración de privacidad y teléfono
+  // Cargar configuración de privacidad, teléfono y verificación de identidad
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -76,6 +83,13 @@ export default function SettingsPage() {
             setPhoneNumber(data.phone);
             setIsPhoneVerified(data.isPhoneVerified || false);
           }
+        }
+        
+        // Fetch identity verification status
+        const verifyResponse = await fetch("/api/verify/status");
+        if (verifyResponse.ok) {
+          const verifyData = await verifyResponse.json();
+          setIsIdentityVerified(verifyData.isVerified || false);
         }
       } catch (error) {
         console.error("Error fetching settings:", error);
@@ -403,6 +417,64 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
+          </Card>
+        </motion.div>
+
+        {/* Sección de verificación de identidad */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`p-2 rounded-lg ${isIdentityVerified ? "bg-jade/10" : "bg-amber-500/10"}`}>
+                <BadgeCheck className={`h-5 w-5 ${isIdentityVerified ? "text-jade" : "text-amber-500"}`} />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Verificación de identidad</h2>
+                <p className="text-sm text-foreground-muted">
+                  {isIdentityVerified 
+                    ? "Tu identidad ha sido verificada"
+                    : "Verifica tu identidad para vender productos"}
+                </p>
+              </div>
+            </div>
+
+            {isIdentityVerified ? (
+              <div className="flex items-center gap-3 p-4 bg-jade/10 rounded-xl">
+                <Check className="h-5 w-5 text-jade" />
+                <div>
+                  <p className="font-medium text-jade">Identidad verificada</p>
+                  <p className="text-sm text-jade/80">
+                    Puedes vender productos en el marketplace
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3 p-4 bg-amber-500/10 rounded-xl">
+                  <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-amber-400">Verificación pendiente</p>
+                    <p className="text-sm text-amber-400/80 mt-1">
+                      Necesitas verificar tu identidad para poder vender productos en PassProduct. 
+                      El proceso es rápido y seguro.
+                    </p>
+                  </div>
+                </div>
+                <Link href="/verify">
+                  <Button className="w-full" size="lg">
+                    <BadgeCheck className="h-4 w-4 mr-2" />
+                    Verificar mi identidad
+                    <ChevronRight className="h-4 w-4 ml-auto" />
+                  </Button>
+                </Link>
+                <p className="text-xs text-foreground-subtle text-center">
+                  Solo necesitas tu DNI/Pasaporte y una foto selfie
+                </p>
+              </div>
+            )}
           </Card>
         </motion.div>
 

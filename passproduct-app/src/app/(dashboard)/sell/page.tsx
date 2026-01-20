@@ -21,6 +21,9 @@ import {
   AlertTriangle,
   Upload,
   ImageIcon,
+  Fingerprint,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button, Card, Input, Select, Badge } from "@/components/ui";
@@ -596,54 +599,121 @@ function SellPageContent() {
               <h2 className="font-medium text-foreground mb-4">
                 Verificaciones incluidas
               </h2>
-              <div className="space-y-3">
-                {/* Compra verificada - Always checked since user is identity verified */}
-                <div className="flex items-center gap-3">
-                  <div className="h-6 w-6 rounded-full flex items-center justify-center bg-jade/15 text-jade">
-                    <Check className="h-3 w-3" />
-                  </div>
-                  <span className="text-sm text-foreground">
-                    Compra verificada
-                  </span>
-                  <Badge variant="verified" size="sm" className="ml-auto">
-                    Vendedor verificado
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-6 w-6 rounded-full flex items-center justify-center ${
-                      selectedProduct.warrantyEndDate &&
-                      new Date(selectedProduct.warrantyEndDate) > new Date()
-                        ? "bg-jade/15 text-jade"
-                        : "bg-surface-2 text-foreground-subtle"
-                    }`}
-                  >
-                    <Shield className="h-3 w-3" />
-                  </div>
-                  <span className="text-sm text-foreground">Garantía activa</span>
-                  {selectedProduct.warrantyEndDate &&
-                    new Date(selectedProduct.warrantyEndDate) > new Date() && (
-                      <span className="text-xs text-foreground-subtle ml-auto">
-                        Hasta {new Date(selectedProduct.warrantyEndDate).toLocaleDateString("es-ES")}
+              {(() => {
+                // Calcular estados de verificación
+                const hasTicket = !!selectedProduct.proofOfPurchaseUrl;
+                const hasWarranty = selectedProduct.warrantyEndDate && new Date(selectedProduct.warrantyEndDate) > new Date();
+                const hasIdentity = isIdentityVerified;
+                const hasEmail = user?.primaryEmailAddress?.verification?.status === "verified";
+                const hasPhone = user?.primaryPhoneNumber?.verification?.status === "verified";
+                
+                return (
+                  <div className="space-y-3">
+                    {/* Ticket verificado */}
+                    <div className="flex items-center gap-3">
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center ${
+                        hasTicket ? "bg-jade/15 text-jade" : "bg-surface-2 text-foreground-subtle"
+                      }`}>
+                        {hasTicket ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                      </div>
+                      <span className={`text-sm ${hasTicket ? "text-foreground" : "text-foreground-muted"}`}>
+                        Ticket verificado
                       </span>
-                    )}
-                </div>
-                {/* Identificador verificado - Always checked since user is identity verified */}
-                <div className="flex items-center gap-3">
-                  <div className="h-6 w-6 rounded-full flex items-center justify-center bg-jade/15 text-jade">
-                    <Tag className="h-3 w-3" />
+                      <span className={`text-xs ml-auto ${hasTicket ? "text-jade" : "text-foreground-subtle"}`}>
+                        {hasTicket ? "Prueba de compra subida" : "No verificado"}
+                      </span>
+                    </div>
+                    
+                    {/* Garantía activa */}
+                    <div className="flex items-center gap-3">
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center ${
+                        hasWarranty ? "bg-jade/15 text-jade" : "bg-surface-2 text-foreground-subtle"
+                      }`}>
+                        <Shield className="h-3 w-3" />
+                      </div>
+                      <span className={`text-sm ${hasWarranty ? "text-foreground" : "text-foreground-muted"}`}>
+                        Garantía activa
+                      </span>
+                      <span className={`text-xs ml-auto ${hasWarranty ? "text-foreground-subtle" : "text-foreground-subtle"}`}>
+                        {hasWarranty 
+                          ? `Hasta ${new Date(selectedProduct.warrantyEndDate!).toLocaleDateString("es-ES")}`
+                          : "Sin garantía o expirada"
+                        }
+                      </span>
+                    </div>
+                    
+                    {/* Identidad verificada */}
+                    <div className="flex items-center gap-3">
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center ${
+                        hasIdentity ? "bg-jade/15 text-jade" : "bg-surface-2 text-foreground-subtle"
+                      }`}>
+                        <Fingerprint className="h-3 w-3" />
+                      </div>
+                      <span className={`text-sm ${hasIdentity ? "text-foreground" : "text-foreground-muted"}`}>
+                        Identidad verificada
+                      </span>
+                      {hasIdentity ? (
+                        <Badge variant="verified" size="sm" className="ml-auto">
+                          DNI/Pasaporte verificado
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-foreground-subtle ml-auto">No verificado</span>
+                      )}
+                    </div>
+                    
+                    {/* Email verificado */}
+                    <div className="flex items-center gap-3">
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center ${
+                        hasEmail ? "bg-jade/15 text-jade" : "bg-surface-2 text-foreground-subtle"
+                      }`}>
+                        <Mail className="h-3 w-3" />
+                      </div>
+                      <span className={`text-sm ${hasEmail ? "text-foreground" : "text-foreground-muted"}`}>
+                        Email verificado
+                      </span>
+                      {hasEmail ? (
+                        <Badge variant="verified" size="sm" className="ml-auto">
+                          Dirección de email confirmada
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-foreground-subtle ml-auto">No verificado</span>
+                      )}
+                    </div>
+                    
+                    {/* Teléfono verificado */}
+                    <div className="flex items-center gap-3">
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center ${
+                        hasPhone ? "bg-jade/15 text-jade" : "bg-surface-2 text-foreground-subtle"
+                      }`}>
+                        <Phone className="h-3 w-3" />
+                      </div>
+                      <span className={`text-sm ${hasPhone ? "text-foreground" : "text-foreground-muted"}`}>
+                        Teléfono verificado
+                      </span>
+                      {hasPhone ? (
+                        <Badge variant="verified" size="sm" className="ml-auto">
+                          Número verificado
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-foreground-subtle ml-auto">No verificado</span>
+                      )}
+                    </div>
                   </div>
-                  <span className="text-sm text-foreground">
-                    Identificador verificado
-                  </span>
-                  <Badge variant="verified" size="sm" className="ml-auto">
-                    ID verificado
-                  </Badge>
-                </div>
-              </div>
-              <p className="text-xs text-foreground-subtle mt-4 p-3 bg-jade/5 rounded-lg border border-jade/20">
-                ✅ Tu identidad está verificada, por lo que tus anuncios mostrarán las insignias de confianza.
-              </p>
+                );
+              })()}
+              
+              {/* Mensaje contextual según verificaciones */}
+              {isIdentityVerified ? (
+                <p className="text-xs text-foreground-subtle mt-4 p-3 bg-jade/5 rounded-lg border border-jade/20">
+                  ✅ Tu identidad está verificada, por lo que tus anuncios mostrarán las insignias de confianza.
+                </p>
+              ) : (
+                <Link href="/verify" className="block mt-4">
+                  <p className="text-xs text-amber-400 p-3 bg-amber-500/10 rounded-lg border border-amber-500/20 hover:bg-amber-500/15 transition-colors">
+                    ⚠️ Verifica tu identidad para mostrar insignias de confianza y vender más rápido.
+                  </p>
+                </Link>
+              )}
             </Card>
           </motion.div>
         )}
@@ -937,10 +1007,14 @@ export default function SellPage() {
 }
 
 function generateDescription(product: Product): string {
+  // Obtener la etiqueta del estado, con fallback
+  const conditionKey = product.condition?.toUpperCase() as ProductCondition;
+  const conditionLabel = CONDITION_LABELS[conditionKey] || "Bueno";
+  
   const parts = [
     `${product.brand} ${product.model}`,
     product.variant,
-    `Estado: ${CONDITION_LABELS[product.condition]}`,
+    `Estado: ${conditionLabel}`,
   ];
 
   if (product.accessories) {

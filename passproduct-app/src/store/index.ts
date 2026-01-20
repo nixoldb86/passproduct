@@ -40,7 +40,7 @@ const transformProductFromAPI = (apiProduct: Record<string, unknown>): Product =
     brand: apiProduct.brand as string,
     model: apiProduct.model as string,
     variant: apiProduct.variant as string | undefined,
-    condition: (apiProduct.condition as string)?.toLowerCase() as Product["condition"],
+    condition: (apiProduct.condition as string)?.toUpperCase() as Product["condition"],
     purchaseDate: apiProduct.purchaseDate ? new Date(apiProduct.purchaseDate as string) : undefined,
     purchasePrice: apiProduct.purchasePrice ? Number(apiProduct.purchasePrice) : undefined,
     purchaseStore: apiProduct.purchaseStore as string | undefined,

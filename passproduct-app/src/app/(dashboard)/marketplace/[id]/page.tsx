@@ -32,7 +32,7 @@ import { Button, Card, Badge, SkeletonProductDetail } from "@/components/ui";
 import { SellerProfileModal } from "@/components/marketplace";
 import { useChatStore } from "@/store";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { Listing, SellerProfile } from "@/types";
+import { Listing, SellerProfile, CONDITION_LABELS, ProductCondition } from "@/types";
 
 export default function ListingDetailPage() {
   const params = useParams();
@@ -220,7 +220,16 @@ export default function ListingDetailPage() {
           <Card padding="md" className="mt-6">
             <h3 className="font-medium text-foreground mb-3">Descripción</h3>
             <p className="text-foreground-muted whitespace-pre-line">
-              {listing.description}
+              {(() => {
+                // Fix "Estado: undefined" en descripciones guardadas incorrectamente
+                let description = listing.description || "";
+                if (description.includes("Estado: undefined")) {
+                  const productCondition = listing.product?.condition?.toUpperCase() as ProductCondition;
+                  const conditionLabel = CONDITION_LABELS[productCondition] || "Bueno";
+                  description = description.replace("Estado: undefined", `Estado: ${conditionLabel}`);
+                }
+                return description;
+              })()}
             </p>
           </Card>
 

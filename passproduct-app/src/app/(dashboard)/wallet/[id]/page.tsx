@@ -384,7 +384,7 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-xs text-foreground-subtle">Estado</p>
                   <p className="text-sm text-foreground">
-                    {CONDITION_LABELS[product.condition]}
+                    {CONDITION_LABELS[product.condition?.toUpperCase() as keyof typeof CONDITION_LABELS] || "Bueno"}
                   </p>
                 </div>
               </div>
