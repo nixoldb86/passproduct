@@ -14,13 +14,23 @@ import {
   User,
   Lock,
   Loader2,
+  Phone,
+  Check,
+  Send,
+  X,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, Input } from "@/components/ui";
 
 interface PrivacySettings {
   showLastSeen: boolean;
   showReadReceipts: boolean;
+}
+
+interface PhoneVerification {
+  phone: string;
+  isVerified: boolean;
+  verificationCode?: string;
 }
 
 export default function SettingsPage() {
@@ -31,31 +41,142 @@ export default function SettingsPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Phone verification state
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [verificationStep, setVerificationStep] = useState<"idle" | "code-sent" | "verifying">("idle");
+  const [verificationCode, setVerificationCode] = useState("");
 
-  // Cargar configuración de privacidad
+  // Cargar configuración de privacidad y teléfono
   useEffect(() => {
-    const fetchPrivacySettings = async () => {
+    const fetchSettings = async () => {
       try {
-        const response = await fetch("/api/db/users/privacy");
-        if (response.ok) {
-          const data = await response.json();
+        // Fetch privacy settings
+        const privacyResponse = await fetch("/api/db/users/privacy");
+        if (privacyResponse.ok) {
+          const data = await privacyResponse.json();
           if (data.success && data.privacy) {
             setPrivacySettings(data.privacy);
           }
+          // Also load phone from the same response if available
+          if (data.phone) {
+            setPhoneNumber(data.phone);
+            setIsPhoneVerified(data.isPhoneVerified || false);
+          }
         }
       } catch (error) {
-        console.error("Error fetching privacy settings:", error);
+        console.error("Error fetching settings:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (isLoaded && user) {
-      fetchPrivacySettings();
+      fetchSettings();
     } else if (isLoaded) {
       setIsLoading(false);
     }
   }, [isLoaded, user]);
+
+  // Format phone number for display
+  const formatPhoneDisplay = (phone: string) => {
+    if (!phone) return "";
+    // Format as +34 XXX XXX XXX
+    const cleaned = phone.replace(/\D/g, "");
+    if (cleaned.length >= 9) {
+      const countryCode = cleaned.slice(0, -9) || "34";
+      const number = cleaned.slice(-9);
+      return `+${countryCode} ${number.slice(0, 3)} ${number.slice(3, 6)} ${number.slice(6)}`;
+    }
+    return phone;
+  };
+
+  // Handle phone save
+  const handleSavePhone = async () => {
+    if (!phoneNumber.trim()) {
+      setPhoneError("Introduce un número de teléfono");
+      return;
+    }
+    
+    // Basic validation for Spanish phone numbers
+    const cleanedPhone = phoneNumber.replace(/\D/g, "");
+    if (cleanedPhone.length < 9) {
+      setPhoneError("El número debe tener al menos 9 dígitos");
+      return;
+    }
+    
+    setIsSavingPhone(true);
+    setPhoneError(null);
+    
+    try {
+      const response = await fetch("/api/db/users/phone", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleanedPhone }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setIsEditingPhone(false);
+        setVerificationStep("code-sent");
+        // Phone saved, now waiting for verification code
+      } else {
+        setPhoneError(data.error || "Error al guardar el teléfono");
+      }
+    } catch (error) {
+      console.error("Error saving phone:", error);
+      setPhoneError("Error al guardar el teléfono");
+    } finally {
+      setIsSavingPhone(false);
+    }
+  };
+
+  // Handle verification code submission
+  const handleVerifyCode = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      setPhoneError("Introduce el código de 6 dígitos");
+      return;
+    }
+    
+    setVerificationStep("verifying");
+    setPhoneError(null);
+    
+    try {
+      const response = await fetch("/api/db/users/phone/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: verificationCode }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setIsPhoneVerified(true);
+        setVerificationStep("idle");
+        setVerificationCode("");
+      } else {
+        setPhoneError(data.error || "Código incorrecto");
+        setVerificationStep("code-sent");
+      }
+    } catch (error) {
+      console.error("Error verifying code:", error);
+      setPhoneError("Error al verificar el código");
+      setVerificationStep("code-sent");
+    }
+  };
+
+  // Cancel phone editing
+  const handleCancelPhoneEdit = () => {
+    setIsEditingPhone(false);
+    setVerificationStep("idle");
+    setVerificationCode("");
+    setPhoneError(null);
+  };
 
   const updatePrivacySetting = async (
     key: keyof PrivacySettings,
@@ -155,6 +276,109 @@ export default function SettingsPage() {
                     {user.emailAddresses[0]?.emailAddress}
                   </p>
                 </div>
+                <div className="flex items-center gap-1 text-jade text-xs">
+                  <Check className="h-3 w-3" />
+                  Verificado
+                </div>
+              </div>
+              
+              {/* Teléfono */}
+              <div className="py-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-foreground-muted" />
+                    <p className="font-medium text-foreground">Teléfono</p>
+                  </div>
+                  {isPhoneVerified && (
+                    <div className="flex items-center gap-1 text-jade text-xs">
+                      <Check className="h-3 w-3" />
+                      Verificado
+                    </div>
+                  )}
+                </div>
+                
+                {!isEditingPhone && verificationStep === "idle" ? (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-foreground-muted">
+                      {phoneNumber ? formatPhoneDisplay(phoneNumber) : "No configurado"}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingPhone(true)}
+                    >
+                      {phoneNumber ? "Cambiar" : "Añadir"}
+                    </Button>
+                  </div>
+                ) : verificationStep === "code-sent" || verificationStep === "verifying" ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-foreground-muted">
+                      Hemos enviado un código de verificación a {formatPhoneDisplay(phoneNumber)}
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Código de 6 dígitos"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        className="flex-1"
+                        maxLength={6}
+                      />
+                      <Button
+                        onClick={handleVerifyCode}
+                        isLoading={verificationStep === "verifying"}
+                        disabled={verificationCode.length !== 6}
+                      >
+                        Verificar
+                      </Button>
+                    </div>
+                    <button
+                      onClick={handleCancelPhoneEdit}
+                      className="text-sm text-foreground-muted hover:text-foreground"
+                    >
+                      Cancelar
+                    </button>
+                    {phoneError && (
+                      <p className="text-sm text-error">{phoneError}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted">
+                          +34
+                        </span>
+                        <Input
+                          placeholder="612 345 678"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          className="pl-12"
+                        />
+                      </div>
+                      <Button
+                        onClick={handleSavePhone}
+                        isLoading={isSavingPhone}
+                        leftIcon={<Send className="h-4 w-4" />}
+                      >
+                        Enviar código
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-foreground-subtle">
+                        Te enviaremos un SMS con el código de verificación
+                      </p>
+                      <button
+                        onClick={handleCancelPhoneEdit}
+                        className="text-sm text-foreground-muted hover:text-foreground"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                    {phoneError && (
+                      <p className="text-sm text-error">{phoneError}</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </Card>

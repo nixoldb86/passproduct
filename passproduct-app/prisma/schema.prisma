@@ -93,6 +93,12 @@ model User {
   showLastSeen    Boolean   @default(true)  // Mostrar última conexión a otros
   showReadReceipts Boolean  @default(true)  // Mostrar checks de lectura a otros
   
+  // Phone verification
+  phone                   String?
+  phoneVerified           Boolean   @default(false)
+  phoneVerificationCode   String?
+  phoneVerificationExpiry DateTime?
+  
   // Identity verification
   isIdentityVerified    Boolean   @default(false)
   identityVerifiedAt    DateTime?

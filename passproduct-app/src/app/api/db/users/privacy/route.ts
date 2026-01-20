@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
       select: {
         showLastSeen: true,
         showReadReceipts: true,
+        phone: true,
+        phoneVerified: true,
       },
     });
 
@@ -29,7 +31,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, privacy: user });
+    return NextResponse.json({ 
+      success: true, 
+      privacy: {
+        showLastSeen: user.showLastSeen,
+        showReadReceipts: user.showReadReceipts,
+      },
+      phone: user.phone,
+      isPhoneVerified: user.phoneVerified,
+    });
   } catch (error) {
     console.error("Error fetching privacy settings:", error);
     return NextResponse.json(
