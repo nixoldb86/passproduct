@@ -18,9 +18,14 @@ import {
   Check,
   Send,
   X,
+  Users,
+  UserMinus,
 } from "lucide-react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button, Card, Input } from "@/components/ui";
+import { useFollowStore } from "@/store";
+import { mockSellers } from "@/lib/mock-data";
 
 interface PrivacySettings {
   showLastSeen: boolean;
@@ -35,6 +40,7 @@ interface PhoneVerification {
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
+  const { following, fetchFollowing, unfollowUser, isLoading: isLoadingFollows } = useFollowStore();
   const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
     showLastSeen: true,
     showReadReceipts: true,
@@ -50,6 +56,9 @@ export default function SettingsPage() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [verificationStep, setVerificationStep] = useState<"idle" | "code-sent" | "verifying">("idle");
   const [verificationCode, setVerificationCode] = useState("");
+  
+  // Unfollow state
+  const [unfollowingId, setUnfollowingId] = useState<string | null>(null);
 
   // Cargar configuración de privacidad y teléfono
   useEffect(() => {
@@ -77,10 +86,23 @@ export default function SettingsPage() {
 
     if (isLoaded && user) {
       fetchSettings();
+      fetchFollowing(); // Also fetch following
     } else if (isLoaded) {
       setIsLoading(false);
     }
-  }, [isLoaded, user]);
+  }, [isLoaded, user, fetchFollowing]);
+
+  // Handle unfollow
+  const handleUnfollow = async (userId: string) => {
+    setUnfollowingId(userId);
+    await unfollowUser(userId);
+    setUnfollowingId(null);
+  };
+
+  // Get seller info from mock data
+  const getSellerInfo = (userId: string) => {
+    return mockSellers.find(s => s.id === userId);
+  };
 
   // Format phone number for display
   const formatPhoneDisplay = (phone: string) => {
@@ -509,6 +531,84 @@ export default function SettingsPage() {
               equivalente de otros usuarios. Tu privacidad es bidireccional.
             </p>
           </div>
+        </motion.div>
+
+        {/* Sección de usuarios seguidos */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-accent/10 rounded-lg">
+                <Users className="h-5 w-5 text-accent" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Siguiendo</h2>
+                <p className="text-sm text-foreground-muted">
+                  Usuarios que sigues ({following.length})
+                </p>
+              </div>
+            </div>
+
+            {isLoadingFollows ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-accent" />
+              </div>
+            ) : following.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-foreground-subtle mx-auto mb-3" />
+                <p className="text-foreground-muted">No sigues a nadie todavía</p>
+                <p className="text-sm text-foreground-subtle mt-1">
+                  Cuando sigas a un vendedor, recibirás notificaciones de sus nuevos productos
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {following.map((follow) => {
+                  const seller = getSellerInfo(follow.followingId);
+                  if (!seller) return null;
+                  
+                  return (
+                    <div
+                      key={follow.id}
+                      className="flex items-center justify-between p-3 bg-surface-2 rounded-xl"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden">
+                          <Image
+                            src={seller.avatarUrl}
+                            alt={seller.firstName}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {seller.firstName} {seller.lastName.charAt(0)}.
+                          </p>
+                          <p className="text-xs text-foreground-subtle">
+                            {seller.totalProducts} productos • {seller.totalSales} ventas
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleUnfollow(follow.followingId)}
+                        isLoading={unfollowingId === follow.followingId}
+                        className="text-error hover:bg-error/10"
+                      >
+                        <UserMinus className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-1">Dejar de seguir</span>
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
         </motion.div>
       </div>
     </div>
