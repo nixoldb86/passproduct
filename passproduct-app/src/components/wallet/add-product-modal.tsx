@@ -885,32 +885,32 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                             initial={{ opacity: 0, scale: 0.95, y: -10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                            className="absolute bottom-full left-0 right-0 mb-2 bg-surface-1 border border-border rounded-xl shadow-lg overflow-hidden z-50"
+                            className="absolute bottom-full left-0 right-0 mb-2 bg-[#1F1F24] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-xl overflow-hidden z-50"
                           >
-                            <div className="p-3 border-b border-border">
-                              <p className="text-sm font-medium text-foreground text-center">
+                            <div className="p-3 border-b border-[rgba(255,255,255,0.1)]">
+                              <p className="text-sm font-medium text-white text-center">
                                 Añadir foto
                               </p>
                             </div>
                             <div className="p-2 space-y-1">
                               <button
                                 onClick={() => photoCameraInputRef.current?.click()}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-2 transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors text-left"
                               >
                                 <Camera className="h-5 w-5 text-accent" />
-                                <span className="text-sm text-foreground">Hacer foto</span>
+                                <span className="text-sm text-white">Hacer foto</span>
                               </button>
                               <button
                                 onClick={() => photoFileInputRef.current?.click()}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-2 transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors text-left"
                               >
                                 <Upload className="h-5 w-5 text-jade" />
-                                <span className="text-sm text-foreground">Seleccionar de galería</span>
+                                <span className="text-sm text-white">Seleccionar de galería</span>
                               </button>
                             </div>
                             <button
                               onClick={() => setShowPhotoModal(false)}
-                              className="w-full p-2 text-sm text-foreground-muted hover:text-foreground border-t border-border"
+                              className="w-full p-2.5 text-sm text-[#A1A1AA] hover:text-white border-t border-[rgba(255,255,255,0.1)] transition-colors"
                             >
                               Cancelar
                             </button>
