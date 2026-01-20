@@ -885,32 +885,32 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                             initial={{ opacity: 0, scale: 0.95, y: -10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-[#1F1F24] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-xl overflow-hidden z-50"
+                            className="fixed bottom-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 bg-[#1F1F24] border border-[rgba(255,255,255,0.1)] rounded-xl shadow-xl z-50"
                           >
                             <div className="p-3 border-b border-[rgba(255,255,255,0.1)]">
                               <p className="text-sm font-medium text-white text-center">
                                 Añadir foto
                               </p>
                             </div>
-                            <div className="p-2 space-y-1">
+                            <div className="p-3 space-y-1">
                               <button
                                 onClick={() => photoCameraInputRef.current?.click()}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors text-left"
                               >
-                                <Camera className="h-5 w-5 text-[#D4AF37]" />
+                                <Camera className="h-5 w-5 text-[#D4AF37] flex-shrink-0" />
                                 <span className="text-sm text-white">Hacer foto</span>
                               </button>
                               <button
                                 onClick={() => photoFileInputRef.current?.click()}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors text-left"
                               >
-                                <Upload className="h-5 w-5 text-[#10B981]" />
+                                <Upload className="h-5 w-5 text-[#10B981] flex-shrink-0" />
                                 <span className="text-sm text-white">Seleccionar de galería</span>
                               </button>
                             </div>
                             <button
                               onClick={() => setShowPhotoModal(false)}
-                              className="w-full p-2.5 text-sm text-[#A1A1AA] hover:text-white border-t border-[rgba(255,255,255,0.1)] transition-colors"
+                              className="w-full p-3 text-sm text-[#A1A1AA] hover:text-white border-t border-[rgba(255,255,255,0.1)] transition-colors"
                             >
                               Cancelar
                             </button>
