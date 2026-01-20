@@ -260,7 +260,8 @@ export async function GET(request: NextRequest) {
         responseRate: 95 + Math.floor(Math.random() * 5),
         isVerified: listing.hasVerifiedPurchase,
         isIdentityVerified: listing.hasVerifiedIdentifier,
-        hasPhoneVerified: true,
+        isEmailVerified: true, // Siempre true ya que registran con email
+        isPhoneVerified: false, // Por defecto, se actualiza desde BD
         memberSince: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
         lastActive: new Date(),
       } : null,

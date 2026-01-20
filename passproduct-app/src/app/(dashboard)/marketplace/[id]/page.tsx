@@ -25,6 +25,9 @@ import {
   Package,
   Star,
   AlertCircle,
+  Mail,
+  Phone,
+  User,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button, Card, Badge, SkeletonProductDetail } from "@/components/ui";
@@ -288,6 +291,71 @@ export default function ListingDetailPage() {
                   </p>
                 </div>
               </div>
+
+              {/* Separador */}
+              <div className="border-t border-border my-3 pt-3">
+                <p className="text-xs text-foreground-subtle mb-3">Verificaciones del vendedor</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div
+                  className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                    listing.seller?.isIdentityVerified
+                      ? "bg-jade/15 text-jade"
+                      : "bg-surface-2 text-foreground-subtle"
+                  }`}
+                >
+                  <User className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm text-foreground">Identidad verificada</p>
+                  <p className="text-xs text-foreground-subtle">
+                    {listing.seller?.isIdentityVerified
+                      ? "DNI/Pasaporte verificado"
+                      : "No verificado"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div
+                  className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                    listing.seller?.isEmailVerified
+                      ? "bg-jade/15 text-jade"
+                      : "bg-surface-2 text-foreground-subtle"
+                  }`}
+                >
+                  <Mail className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm text-foreground">Email verificado</p>
+                  <p className="text-xs text-foreground-subtle">
+                    {listing.seller?.isEmailVerified
+                      ? "Dirección de email confirmada"
+                      : "No verificado"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div
+                  className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                    listing.seller?.isPhoneVerified
+                      ? "bg-jade/15 text-jade"
+                      : "bg-surface-2 text-foreground-subtle"
+                  }`}
+                >
+                  <Phone className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm text-foreground">Teléfono verificado</p>
+                  <p className="text-xs text-foreground-subtle">
+                    {listing.seller?.isPhoneVerified
+                      ? "Número de teléfono confirmado"
+                      : "No verificado"}
+                  </p>
+                </div>
+              </div>
             </div>
           </Card>
         </motion.div>
@@ -333,6 +401,24 @@ export default function ListingDetailPage() {
             {listing.hasVerifiedIdentifier && (
               <Badge variant="serial" size="md">
                 ID verificado
+              </Badge>
+            )}
+            {listing.seller?.isIdentityVerified && (
+              <Badge variant="verified" size="md">
+                <User className="h-3 w-3" />
+                Vendedor verificado
+              </Badge>
+            )}
+            {listing.seller?.isEmailVerified && (
+              <Badge variant="info" size="md">
+                <Mail className="h-3 w-3" />
+                Email verificado
+              </Badge>
+            )}
+            {listing.seller?.isPhoneVerified && (
+              <Badge variant="info" size="md">
+                <Phone className="h-3 w-3" />
+                Teléfono verificado
               </Badge>
             )}
           </div>

@@ -1,9 +1,12 @@
 import { create } from "zustand";
-import { Product, Listing, Conversation, Order, Alert, FilterOptions } from "@/types";
+import { persist } from "zustand/middleware";
+import { Product, Listing, Conversation, Order, Alert, FilterOptions, Notification, Follow, SellerProfile } from "@/types";
 import {
   mockConversations,
   mockOrders,
   mockAlerts,
+  mockSellers,
+  mockListings,
 } from "@/lib/mock-data";
 
 // ==========================================
@@ -383,6 +386,17 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
       if (data.success && data.listing) {
         // Refrescar listings para incluir el nuevo
         await get().fetchListings();
+        
+        // Notificar a seguidores del nuevo listing
+        // En una implementación real, esto se haría en el backend
+        if (data.listing.seller) {
+          notifyFollowersOfNewListing(
+            data.listing.sellerId,
+            data.listing,
+            data.listing.seller
+          );
+        }
+        
         return data.listing;
       } else {
         throw new Error(data.error || "Error al crear el anuncio");
@@ -755,3 +769,290 @@ export const useUIStore = create<UIState>((set) => ({
   setCreateListingModalOpen: (open) => set({ isCreateListingModalOpen: open }),
   setActiveTab: (tab) => set({ activeTab: tab }),
 }));
+
+// ==========================================
+// NOTIFICATION STORE
+// ==========================================
+
+interface NotificationState {
+  notifications: Notification[];
+  unreadCount: number;
+  isLoading: boolean;
+  
+  // Actions
+  fetchNotifications: () => Promise<void>;
+  addNotification: (notification: Omit<Notification, "id" | "createdAt" | "isRead">) => void;
+  markAsRead: (notificationId: string) => void;
+  markAllAsRead: () => void;
+  deleteNotification: (notificationId: string) => void;
+  clearAll: () => void;
+}
+
+// Datos mock de notificaciones
+const mockNotifications: Notification[] = [
+  {
+    id: "notif-1",
+    userId: "user-1",
+    type: "new_listing",
+    title: "Carlos G. ha publicado un nuevo producto",
+    message: "iPhone 15 Pro 256GB Titanio - 899€",
+    fromUserId: "seller-1",
+    fromUser: mockSellers[0],
+    listingId: "listing-1",
+    imageUrl: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=100&q=80",
+    actionUrl: "/marketplace/listing-1",
+    isRead: false,
+    createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 min ago
+  },
+  {
+    id: "notif-2",
+    userId: "user-1",
+    type: "new_follower",
+    title: "María L. ha empezado a seguirte",
+    message: "Ahora recibirás notificaciones cuando publiques",
+    fromUserId: "seller-2",
+    fromUser: mockSellers[1],
+    imageUrl: mockSellers[1]?.avatarUrl,
+    actionUrl: "/marketplace?seller=seller-2",
+    isRead: false,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+  },
+  {
+    id: "notif-3",
+    userId: "user-1",
+    type: "price_drop",
+    title: "Bajada de precio",
+    message: "MacBook Air M2 que sigues ha bajado a 899€",
+    listingId: "listing-2",
+    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=100&q=80",
+    actionUrl: "/marketplace/listing-2",
+    isRead: true,
+    readAt: new Date(Date.now() - 1000 * 60 * 60),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+  },
+  {
+    id: "notif-4",
+    userId: "user-1",
+    type: "order_update",
+    title: "Tu pedido ha sido enviado",
+    message: "El vendedor ha enviado tu iPhone. Tracking: ES123456789",
+    orderId: "order-1",
+    actionUrl: "/orders/order-1",
+    isRead: true,
+    readAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
+  },
+];
+
+export const useNotificationStore = create<NotificationState>((set, get) => ({
+  notifications: [],
+  unreadCount: 0,
+  isLoading: false,
+
+  fetchNotifications: async () => {
+    set({ isLoading: true });
+    // Simular carga desde API
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const notifications = mockNotifications;
+    set({
+      notifications,
+      unreadCount: notifications.filter((n) => !n.isRead).length,
+      isLoading: false,
+    });
+  },
+
+  addNotification: (notificationData) => {
+    const newNotification: Notification = {
+      ...notificationData,
+      id: `notif-${Date.now()}`,
+      isRead: false,
+      createdAt: new Date(),
+    };
+    
+    set((state) => ({
+      notifications: [newNotification, ...state.notifications],
+      unreadCount: state.unreadCount + 1,
+    }));
+  },
+
+  markAsRead: (notificationId) =>
+    set((state) => {
+      const notifications = state.notifications.map((n) =>
+        n.id === notificationId ? { ...n, isRead: true, readAt: new Date() } : n
+      );
+      return {
+        notifications,
+        unreadCount: notifications.filter((n) => !n.isRead).length,
+      };
+    }),
+
+  markAllAsRead: () =>
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({
+        ...n,
+        isRead: true,
+        readAt: n.readAt || new Date(),
+      })),
+      unreadCount: 0,
+    })),
+
+  deleteNotification: (notificationId) =>
+    set((state) => {
+      const notification = state.notifications.find((n) => n.id === notificationId);
+      const wasUnread = notification && !notification.isRead;
+      return {
+        notifications: state.notifications.filter((n) => n.id !== notificationId),
+        unreadCount: wasUnread ? state.unreadCount - 1 : state.unreadCount,
+      };
+    }),
+
+  clearAll: () => set({ notifications: [], unreadCount: 0 }),
+}));
+
+// ==========================================
+// FOLLOW STORE
+// ==========================================
+
+interface FollowState {
+  following: Follow[];      // Usuarios que yo sigo
+  followers: Follow[];      // Usuarios que me siguen
+  isLoading: boolean;
+  
+  // Actions
+  fetchFollowing: () => Promise<void>;
+  fetchFollowers: () => Promise<void>;
+  followUser: (userId: string) => Promise<void>;
+  unfollowUser: (userId: string) => Promise<void>;
+  isFollowing: (userId: string) => boolean;
+  getFollowersCount: (userId: string) => number;
+  getFollowingCount: (userId: string) => number;
+}
+
+// Datos mock de follows
+const mockFollows: Follow[] = [
+  {
+    id: "follow-1",
+    followerId: "user-1",      // Yo sigo a...
+    followingId: "seller-1",   // Carlos G.
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+  },
+  {
+    id: "follow-2",
+    followerId: "user-1",
+    followingId: "seller-3",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+  },
+  {
+    id: "follow-3",
+    followerId: "seller-2",    // María me sigue
+    followingId: "user-1",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
+  },
+];
+
+export const useFollowStore = create(
+  persist<FollowState>(
+    (set, get) => ({
+      following: [],
+      followers: [],
+      isLoading: false,
+
+      fetchFollowing: async () => {
+        set({ isLoading: true });
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        // Filtrar los que yo sigo (followerId = mi usuario)
+        const following = mockFollows.filter((f) => f.followerId === "user-1");
+        set({ following, isLoading: false });
+      },
+
+      fetchFollowers: async () => {
+        set({ isLoading: true });
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        // Filtrar los que me siguen (followingId = mi usuario)
+        const followers = mockFollows.filter((f) => f.followingId === "user-1");
+        set({ followers, isLoading: false });
+      },
+
+      followUser: async (userId) => {
+        const { following, isFollowing } = get();
+        
+        // No seguir si ya lo sigo
+        if (isFollowing(userId)) return;
+        
+        const newFollow: Follow = {
+          id: `follow-${Date.now()}`,
+          followerId: "user-1",
+          followingId: userId,
+          createdAt: new Date(),
+        };
+        
+        set({ following: [...following, newFollow] });
+        
+        // Notificar al usuario seguido
+        const seller = mockSellers.find((s) => s.id === userId);
+        if (seller) {
+          useNotificationStore.getState().addNotification({
+            userId: userId, // El usuario seguido recibe la notificación
+            type: "new_follower",
+            title: "Nuevo seguidor",
+            message: "Un usuario ha empezado a seguirte",
+            fromUserId: "user-1",
+            imageUrl: "https://randomuser.me/api/portraits/men/1.jpg",
+            actionUrl: `/marketplace?seller=user-1`,
+          });
+        }
+      },
+
+      unfollowUser: async (userId) => {
+        set((state) => ({
+          following: state.following.filter((f) => f.followingId !== userId),
+        }));
+      },
+
+      isFollowing: (userId) => {
+        return get().following.some((f) => f.followingId === userId);
+      },
+
+      getFollowersCount: (userId) => {
+        // En una implementación real, esto vendría de la API
+        return mockFollows.filter((f) => f.followingId === userId).length;
+      },
+
+      getFollowingCount: (userId) => {
+        return mockFollows.filter((f) => f.followerId === userId).length;
+      },
+    }),
+    {
+      name: "follow-storage",
+      partialize: (state) => ({ following: state.following }),
+    }
+  )
+);
+
+// ==========================================
+// HELPER: Notificar nueva publicación a seguidores
+// ==========================================
+
+export const notifyFollowersOfNewListing = (
+  sellerId: string,
+  listing: Partial<Listing>,
+  sellerProfile: SellerProfile
+) => {
+  // Obtener seguidores del vendedor
+  const followers = mockFollows.filter((f) => f.followingId === sellerId);
+  
+  // Crear notificación para cada seguidor
+  followers.forEach((follow) => {
+    useNotificationStore.getState().addNotification({
+      userId: follow.followerId,
+      type: "new_listing",
+      title: `${sellerProfile.firstName} ${sellerProfile.lastName} ha publicado`,
+      message: `${listing.title} - ${listing.price}€`,
+      fromUserId: sellerId,
+      fromUser: sellerProfile,
+      listingId: listing.id,
+      imageUrl: listing.photos?.[0],
+      actionUrl: `/marketplace/${listing.id}`,
+    });
+  });
+};

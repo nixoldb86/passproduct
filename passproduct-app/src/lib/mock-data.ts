@@ -19,7 +19,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 98,
     isVerified: true,
     isIdentityVerified: true,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2022-03-15"),
     lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000), // Hace 2 horas
     bio: "Entusiasta de la tecnología. Todos mis productos están en perfecto estado y con factura original.",
@@ -38,7 +39,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 100,
     isVerified: true,
     isIdentityVerified: true,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2021-08-20"),
     lastActive: new Date(Date.now() - 30 * 60 * 1000), // Hace 30 min
     bio: "Mamá tech. Vendo productos que ya no uso. Envío rápido y seguro 📦",
@@ -57,7 +59,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 95,
     isVerified: true,
     isIdentityVerified: false,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2023-01-10"),
     lastActive: new Date(Date.now() - 5 * 60 * 60 * 1000), // Hace 5 horas
     bio: "Gamer y coleccionista. Solo vendo lo que ya no necesito.",
@@ -76,7 +79,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 100,
     isVerified: true,
     isIdentityVerified: true,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2020-05-12"),
     lastActive: new Date(Date.now() - 10 * 60 * 1000), // Hace 10 min
     bio: "Vendedora profesional. Garantizo satisfacción total o devolución. ⭐️⭐️⭐️⭐️⭐️",
@@ -95,7 +99,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 88,
     isVerified: true,
     isIdentityVerified: true,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2022-11-03"),
     lastActive: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // Hace 1 día
     bio: "Deportista y aventurero. Equipo de calidad a buenos precios.",
@@ -114,7 +119,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 97,
     isVerified: true,
     isIdentityVerified: true,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2021-12-08"),
     lastActive: new Date(Date.now() - 45 * 60 * 1000), // Hace 45 min
     bio: "Fashionista y amante de los relojes. Autenticidad garantizada.",
@@ -133,7 +139,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 82,
     isVerified: false,
     isIdentityVerified: false,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2024-02-20"),
     lastActive: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // Hace 3 días
     bio: "Vendedor ocasional. Buenos productos a buen precio.",
@@ -152,7 +159,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 94,
     isVerified: true,
     isIdentityVerified: true,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2021-06-15"),
     lastActive: new Date(Date.now() - 3 * 60 * 60 * 1000), // Hace 3 horas
     bio: "Mamá de dos. Vendo artículos de bebé en excelente estado.",
@@ -171,7 +179,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 99,
     isVerified: true,
     isIdentityVerified: true,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2019-09-01"),
     lastActive: new Date(Date.now() - 15 * 60 * 1000), // Hace 15 min
     bio: "Ingeniero informático. Especializado en Apple y fotografía profesional.",
@@ -190,7 +199,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 91,
     isVerified: true,
     isIdentityVerified: false,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2022-07-22"),
     lastActive: new Date(Date.now() - 8 * 60 * 60 * 1000), // Hace 8 horas
     bio: "Diseñadora gráfica. Vendo equipos creativos y electrónica.",
@@ -209,7 +219,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 96,
     isVerified: true,
     isIdentityVerified: true,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2020-11-18"),
     lastActive: new Date(Date.now() - 1 * 60 * 60 * 1000), // Hace 1 hora
     bio: "Músico profesional. Instrumentos de calidad profesional.",
@@ -228,7 +239,8 @@ export const mockSellers: SellerProfile[] = [
     responseRate: 100,
     isVerified: true,
     isIdentityVerified: true,
-    hasPhoneVerified: true,
+    isEmailVerified: true,
+    isPhoneVerified: true,
     memberSince: new Date("2020-02-14"),
     lastActive: new Date(Date.now() - 5 * 60 * 1000), // Hace 5 min
     bio: "Coleccionista de relojes y bolsos de lujo. Solo originales certificados.",

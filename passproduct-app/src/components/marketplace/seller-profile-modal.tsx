@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, Star, Clock, Shield, CheckCircle, MessageCircle, MapPin, Calendar, Package, TrendingUp, ShoppingBag, Tag, ChevronRight } from "lucide-react";
+import { X, Star, Clock, Shield, CheckCircle, MessageCircle, MapPin, Calendar, Package, TrendingUp, ShoppingBag, Tag, ChevronRight, UserPlus, UserMinus, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { SellerProfile, Listing } from "@/types";
 import { Button, Card, Badge } from "@/components/ui";
 import { formatDate, formatPrice } from "@/lib/utils";
 import { getActiveListingsBySellerId, getSoldListingsBySellerId } from "@/lib/mock-data";
+import { useFollowStore } from "@/store";
 
 type TabType = "profile" | "active" | "sold";
 
@@ -22,6 +23,25 @@ interface SellerProfileModalProps {
 
 export function SellerProfileModal({ isOpen, onClose, seller, onContact, currentListingId }: SellerProfileModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>("profile");
+  const { following, followUser, unfollowUser, isFollowing, fetchFollowing, getFollowersCount } = useFollowStore();
+  
+  // Cargar follows al montar
+  useEffect(() => {
+    fetchFollowing();
+  }, [fetchFollowing]);
+
+  // Estado de si sigo a este vendedor
+  const amFollowing = seller ? isFollowing(seller.id) : false;
+  const followersCount = seller ? getFollowersCount(seller.id) : 0;
+
+  const handleToggleFollow = async () => {
+    if (!seller) return;
+    if (amFollowing) {
+      await unfollowUser(seller.id);
+    } else {
+      await followUser(seller.id);
+    }
+  };
 
   // Obtener listings del vendedor
   const activeListings = useMemo(() => {
@@ -218,13 +238,19 @@ export function SellerProfileModal({ isOpen, onClose, seller, onContact, current
                             <span className="text-sm text-jade">DNI verificado</span>
                           </div>
                         )}
-                        {seller.hasPhoneVerified && (
+                        {seller.isEmailVerified && (
+                          <div className="flex items-center gap-2 p-2.5 bg-jade/10 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-jade" />
+                            <span className="text-sm text-jade">Email verificado</span>
+                          </div>
+                        )}
+                        {seller.isPhoneVerified && (
                           <div className="flex items-center gap-2 p-2.5 bg-jade/10 rounded-lg">
                             <CheckCircle className="h-4 w-4 text-jade" />
                             <span className="text-sm text-jade">Teléfono verificado</span>
                           </div>
                         )}
-                        {!seller.isVerified && !seller.isIdentityVerified && (
+                        {!seller.isVerified && !seller.isIdentityVerified && !seller.isEmailVerified && !seller.isPhoneVerified && (
                           <div className="flex items-center gap-2 p-2.5 bg-surface-1 rounded-lg col-span-2">
                             <Shield className="h-4 w-4 text-foreground-subtle" />
                             <span className="text-sm text-foreground-muted">Sin verificaciones adicionales</span>
@@ -391,10 +417,39 @@ export function SellerProfileModal({ isOpen, onClose, seller, onContact, current
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-border bg-surface-1">
-              <Button onClick={onContact} className="w-full" leftIcon={<MessageCircle className="h-4 w-4" />}>
-                Contactar con {seller.firstName}
-              </Button>
+            <div className="p-4 border-t border-border bg-surface-1 space-y-3">
+              {/* Seguidores */}
+              <div className="flex items-center justify-center gap-4 text-sm text-foreground-muted">
+                <div className="flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  <span><strong className="text-foreground">{followersCount}</strong> seguidores</span>
+                </div>
+              </div>
+              
+              {/* Botones */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleToggleFollow}
+                  variant={amFollowing ? "secondary" : "outline"}
+                  className={`flex-1 ${amFollowing ? "border-accent text-accent" : ""}`}
+                  leftIcon={amFollowing ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                >
+                  {amFollowing ? "Siguiendo" : "Seguir"}
+                </Button>
+                <Button 
+                  onClick={onContact} 
+                  className="flex-1" 
+                  leftIcon={<MessageCircle className="h-4 w-4" />}
+                >
+                  Contactar
+                </Button>
+              </div>
+              
+              {amFollowing && (
+                <p className="text-xs text-center text-foreground-subtle">
+                  Recibirás notificaciones cuando {seller.firstName} publique
+                </p>
+              )}
             </div>
           </motion.div>
         </>

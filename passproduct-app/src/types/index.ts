@@ -65,7 +65,8 @@ export interface SellerProfile {
   // Verificaciones
   isVerified: boolean;
   isIdentityVerified: boolean;
-  hasPhoneVerified: boolean;
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
   // Fechas
   memberSince: Date;
   lastActive: Date;
@@ -255,6 +256,49 @@ export interface Alert {
   title: string;
   message: string;
   isRead: boolean;
+  createdAt: Date;
+}
+
+// ==========================================
+// SOCIAL / FOLLOW SYSTEM
+// ==========================================
+
+export type NotificationType = 
+  | "new_listing"      // Un usuario seguido publicó un producto
+  | "price_drop"       // Bajada de precio en un producto favorito
+  | "new_follower"     // Alguien te empezó a seguir
+  | "order_update"     // Actualización de pedido
+  | "message"          // Nuevo mensaje
+  | "system";          // Notificación del sistema
+
+export interface Notification {
+  id: string;
+  userId: string;           // Usuario que recibe la notificación
+  type: NotificationType;
+  title: string;
+  message: string;
+  // Referencias opcionales
+  fromUserId?: string;      // Usuario que originó la acción
+  fromUser?: SellerProfile;
+  listingId?: string;
+  listing?: Listing;
+  orderId?: string;
+  conversationId?: string;
+  // Estado
+  isRead: boolean;
+  readAt?: Date;
+  // Metadatos
+  imageUrl?: string;        // Imagen a mostrar (producto, avatar, etc)
+  actionUrl?: string;       // URL a la que navegar al hacer clic
+  createdAt: Date;
+}
+
+export interface Follow {
+  id: string;
+  followerId: string;       // Usuario que sigue
+  follower?: SellerProfile;
+  followingId: string;      // Usuario seguido
+  following?: SellerProfile;
   createdAt: Date;
 }
 

@@ -3,17 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser, UserButton } from "@clerk/nextjs";
-import { Bell, Menu, Search, Plus } from "lucide-react";
+import { Menu, Search, Plus } from "lucide-react";
 import Link from "next/link";
-import { useAlertStore, useUIStore } from "@/store";
-import { Button, LanguageSelector } from "@/components/ui";
+import { useUIStore } from "@/store";
+import { Button, LanguageSelector, NotificationBell } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/lib/i18n";
 
 export function Header() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
-  const { unreadCount } = useAlertStore();
   const { toggleSidebar, setAddProductModalOpen } = useUIStore();
   const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,17 +76,7 @@ export function Header() {
               <LanguageSelector variant="compact" />
 
               {/* Notifications */}
-              <button 
-                className="relative p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-1 transition-colors"
-                title={t.header.notifications}
-              >
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 h-4 w-4 flex items-center justify-center text-[10px] font-medium bg-accent text-[#0C0C0E] rounded-full">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
+              <NotificationBell />
 
               {/* User Menu */}
               <UserButton
