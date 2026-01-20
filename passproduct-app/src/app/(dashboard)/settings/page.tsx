@@ -181,8 +181,8 @@ export default function SettingsPage() {
 
             <div className="space-y-4">
               {/* Última conexión */}
-              <div className="flex items-center justify-between py-4 border-b border-border">
-                <div className="flex items-start gap-3">
+              <div className="flex items-center justify-between py-4 border-b border-border gap-4">
+                <div className="flex items-start gap-3 flex-1">
                   <div className="p-2 bg-surface-2 rounded-lg mt-0.5">
                     <Clock className="h-4 w-4 text-foreground-muted" />
                   </div>
@@ -205,23 +205,25 @@ export default function SettingsPage() {
                     )
                   }
                   disabled={isSaving}
-                  className={`relative w-12 h-7 rounded-full transition-colors ${
+                  className={`relative flex-shrink-0 w-14 h-8 rounded-full transition-all duration-200 ${
                     privacySettings.showLastSeen
-                      ? "bg-accent"
-                      : "bg-surface-3"
-                  } ${isSaving ? "opacity-50" : ""}`}
+                      ? "bg-jade"
+                      : "bg-gray-600"
+                  } ${isSaving ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 >
                   <span
-                    className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                      privacySettings.showLastSeen ? "translate-x-5" : ""
+                    className={`absolute top-1 w-6 h-6 rounded-full shadow-md transition-all duration-200 ${
+                      privacySettings.showLastSeen 
+                        ? "left-7 bg-white" 
+                        : "left-1 bg-gray-300"
                     }`}
                   />
                 </button>
               </div>
 
               {/* Confirmación de lectura */}
-              <div className="flex items-center justify-between py-4">
-                <div className="flex items-start gap-3">
+              <div className="flex items-center justify-between py-4 gap-4">
+                <div className="flex items-start gap-3 flex-1">
                   <div className="p-2 bg-surface-2 rounded-lg mt-0.5">
                     <CheckCheck className="h-4 w-4 text-foreground-muted" />
                   </div>
@@ -250,15 +252,17 @@ export default function SettingsPage() {
                     )
                   }
                   disabled={isSaving}
-                  className={`relative w-12 h-7 rounded-full transition-colors ${
+                  className={`relative flex-shrink-0 w-14 h-8 rounded-full transition-all duration-200 ${
                     privacySettings.showReadReceipts
-                      ? "bg-accent"
-                      : "bg-surface-3"
-                  } ${isSaving ? "opacity-50" : ""}`}
+                      ? "bg-jade"
+                      : "bg-gray-600"
+                  } ${isSaving ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 >
                   <span
-                    className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                      privacySettings.showReadReceipts ? "translate-x-5" : ""
+                    className={`absolute top-1 w-6 h-6 rounded-full shadow-md transition-all duration-200 ${
+                      privacySettings.showReadReceipts 
+                        ? "left-7 bg-white" 
+                        : "left-1 bg-gray-300"
                     }`}
                   />
                 </button>
