@@ -897,14 +897,14 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                                 onClick={() => photoCameraInputRef.current?.click()}
                                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors text-left"
                               >
-                                <Camera className="h-5 w-5 text-accent" />
+                                <Camera className="h-5 w-5 text-[#D4AF37]" />
                                 <span className="text-sm text-white">Hacer foto</span>
                               </button>
                               <button
                                 onClick={() => photoFileInputRef.current?.click()}
                                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors text-left"
                               >
-                                <Upload className="h-5 w-5 text-jade" />
+                                <Upload className="h-5 w-5 text-[#10B981]" />
                                 <span className="text-sm text-white">Seleccionar de galería</span>
                               </button>
                             </div>
