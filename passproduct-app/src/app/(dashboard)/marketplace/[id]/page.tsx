@@ -11,7 +11,6 @@ import {
   Truck,
   Check,
   Shield,
-  Tag,
   Calendar,
   Eye,
   Heart,
@@ -20,7 +19,6 @@ import {
   Flag,
   ChevronLeft,
   ChevronRight,
-  Lock,
   Clock,
   Package,
   Star,
@@ -229,7 +227,7 @@ export default function ListingDetailPage() {
           {/* Verification Section */}
           <Card padding="md" className="mt-4">
             <h3 className="font-medium text-foreground mb-4">
-              Verificación del vendedor
+              Verificaciones
             </h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -240,7 +238,7 @@ export default function ListingDetailPage() {
                       : "bg-surface-2 text-foreground-subtle"
                   }`}
                 >
-                  <Check className="h-4 w-4" />
+                  <Check className={`h-4 w-4 ${listing.hasVerifiedPurchase ? "text-jade" : ""}`} />
                 </div>
                 <div>
                   <p className="text-sm text-foreground">Ticket verificado</p>
@@ -260,7 +258,7 @@ export default function ListingDetailPage() {
                       : "bg-surface-2 text-foreground-subtle"
                   }`}
                 >
-                  <Shield className="h-4 w-4" />
+                  <Shield className={`h-4 w-4 ${listing.hasValidWarranty ? "text-jade" : ""}`} />
                 </div>
                 <div>
                   <p className="text-sm text-foreground">Garantía activa</p>
@@ -275,37 +273,12 @@ export default function ListingDetailPage() {
               <div className="flex items-center gap-3">
                 <div
                   className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                    listing.hasVerifiedIdentifier
-                      ? "bg-jade/15 text-jade"
-                      : "bg-surface-2 text-foreground-subtle"
-                  }`}
-                >
-                  <Lock className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-sm text-foreground">Identificador verificado</p>
-                  <p className="text-xs text-foreground-subtle">
-                    {listing.hasVerifiedIdentifier
-                      ? "IMEI/Serial comprobado (no expuesto)"
-                      : "No verificado"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Separador */}
-              <div className="border-t border-border my-3 pt-3">
-                <p className="text-xs text-foreground-subtle mb-3">Verificaciones del vendedor</p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center ${
                     listing.seller?.isIdentityVerified
                       ? "bg-jade/15 text-jade"
                       : "bg-surface-2 text-foreground-subtle"
                   }`}
                 >
-                  <User className="h-4 w-4" />
+                  <User className={`h-4 w-4 ${listing.seller?.isIdentityVerified ? "text-jade" : ""}`} />
                 </div>
                 <div>
                   <p className="text-sm text-foreground">Identidad verificada</p>
@@ -325,7 +298,7 @@ export default function ListingDetailPage() {
                       : "bg-surface-2 text-foreground-subtle"
                   }`}
                 >
-                  <Mail className="h-4 w-4" />
+                  <Mail className={`h-4 w-4 ${listing.seller?.isEmailVerified ? "text-jade" : ""}`} />
                 </div>
                 <div>
                   <p className="text-sm text-foreground">Email verificado</p>
@@ -345,7 +318,7 @@ export default function ListingDetailPage() {
                       : "bg-surface-2 text-foreground-subtle"
                   }`}
                 >
-                  <Phone className="h-4 w-4" />
+                  <Phone className={`h-4 w-4 ${listing.seller?.isPhoneVerified ? "text-jade" : ""}`} />
                 </div>
                 <div>
                   <p className="text-sm text-foreground">Teléfono verificado</p>
@@ -398,27 +371,10 @@ export default function ListingDetailPage() {
                 Garantía activa
               </Badge>
             )}
-            {listing.hasVerifiedIdentifier && (
-              <Badge variant="serial" size="md">
-                ID verificado
-              </Badge>
-            )}
             {listing.seller?.isIdentityVerified && (
               <Badge variant="verified" size="md">
                 <User className="h-3 w-3" />
-                Vendedor verificado
-              </Badge>
-            )}
-            {listing.seller?.isEmailVerified && (
-              <Badge variant="info" size="md">
-                <Mail className="h-3 w-3" />
-                Email verificado
-              </Badge>
-            )}
-            {listing.seller?.isPhoneVerified && (
-              <Badge variant="info" size="md">
-                <Phone className="h-3 w-3" />
-                Teléfono verificado
+                Identidad verificada
               </Badge>
             )}
           </div>
