@@ -118,7 +118,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
           purchasePrice: productData.purchasePrice,
           purchaseStore: productData.purchaseStore,
           warrantyEndDate: productData.warrantyEndDate,
-          photos: productData.photos?.filter(p => p.startsWith("http")) || [],
+          photos: productData.photos || [],
           stockPhotos: productData.stockPhotos || [],
           accessories: productData.accessories,
           imeiLast4: productData.imeiLast4,

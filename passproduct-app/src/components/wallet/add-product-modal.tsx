@@ -380,7 +380,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
         warrantyNotes: formData.warrantyNotes || undefined,
         warrantyContact: enrichedData?.warrantyContact || undefined,
         proofOfPurchaseUrl: formData.hasTicket ? uploadedImage || undefined : undefined,
-        photos: formData.photos.filter(p => p.startsWith("http")), // Solo URLs, no base64
+        photos: formData.photos, // Guardar todas las fotos (URLs y base64)
         stockPhotos: formData.photos.length === 0 ? enrichedData?.stockImages || undefined : undefined,
         accessories: formData.accessories,
         hasAdditionalInsurance: formData.hasAdditionalInsurance || undefined,
