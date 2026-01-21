@@ -16,6 +16,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/enrich-product(.*)",
   "/api/infer-category(.*)",
   "/api/verify/(.*)",
+  "/api/market-prices(.*)", // Análisis de precios de mercado
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

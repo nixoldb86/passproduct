@@ -74,6 +74,11 @@ export async function POST(request: NextRequest) {
       manualUrl,
       specs,
       estimatedValue,
+      proofOfPurchaseUrl,
+      hasAdditionalInsurance,
+      additionalInsuranceEndDate,
+      additionalInsuranceProvider,
+      additionalInsuranceNotes,
     } = body;
 
     // Validar campos requeridos
@@ -129,6 +134,7 @@ export async function POST(request: NextRequest) {
         purchasePrice: purchasePrice ? parseFloat(String(purchasePrice)) : null,
         purchaseStore: purchaseStore || null,
         warrantyEndDate: warrantyEndDate ? new Date(warrantyEndDate) : null,
+        proofOfPurchaseUrl: proofOfPurchaseUrl || null,
         photos: photos || [],
         accessories: accessories || {},
         imeiLast4: imeiLast4 || null,
@@ -139,6 +145,11 @@ export async function POST(request: NextRequest) {
           warrantyNotes: warrantyNotes || null,
           manualUrl: manualUrl || null,
           specs: specs || [],
+          // Seguro adicional
+          hasAdditionalInsurance: hasAdditionalInsurance || false,
+          additionalInsuranceEndDate: additionalInsuranceEndDate || null,
+          additionalInsuranceProvider: additionalInsuranceProvider || null,
+          additionalInsuranceNotes: additionalInsuranceNotes || null,
         },
       },
       include: { category: true },

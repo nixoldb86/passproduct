@@ -65,9 +65,9 @@ export function getLast4(str: string): string {
 // Calculate price recommendations
 export function getPriceRecommendations(estimatedValue: number) {
   return {
-    fast: Math.round(estimatedValue * 0.85), // -15% for quick sale
-    fair: Math.round(estimatedValue * 0.95), // -5% balanced
-    max: Math.round(estimatedValue * 1.05), // +5% premium
+    minimo: Math.round(estimatedValue * 0.80), // El más bajo (venta instantánea)
+    rapido: Math.round(estimatedValue * 0.90), // 90% del ideal (sin malvender)
+    ideal: Math.round(estimatedValue),         // El precio justo del mercado
   };
 }
 

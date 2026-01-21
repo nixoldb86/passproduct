@@ -136,6 +136,13 @@ export interface Product {
   estimatedValue?: number;
   estimatedValueUpdatedAt?: Date;
   resaleValue?: ResaleValue;
+  // Precios de mercado calculados
+  marketPrices?: {
+    minimo: number;    // El más bajo del mercado
+    ideal: number;     // El promedio del mercado (= estimatedValue)
+    rapido: number;    // 90% del promedio
+    lastUpdated: Date;
+  };
   manualUrl?: string;
   specs?: Array<{ label: string; value: string }>;
   createdAt: Date;

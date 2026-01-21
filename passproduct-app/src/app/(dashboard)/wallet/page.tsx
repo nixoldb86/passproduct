@@ -11,7 +11,7 @@ import { calculateWalletValue } from "@/lib/mock-data";
 import { Product } from "@/types";
 
 export default function WalletPage() {
-  const { products, isLoading, error, fetchProducts, deleteProduct, clearError } = useWalletStore();
+  const { products, isLoading, error, fetchProducts, deleteProduct, clearError, refreshMarketPrices } = useWalletStore();
   const { setAddProductModalOpen } = useUIStore();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -167,6 +167,7 @@ export default function WalletPage() {
                   product={product}
                   onEdit={handleEditProduct}
                   onDelete={handleDeleteProduct}
+                  onRefreshMarketPrices={refreshMarketPrices}
                 />
               </motion.div>
             ))

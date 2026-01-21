@@ -73,7 +73,7 @@ type DetectedProduct = {
 };
 
 export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
-  const { addProduct } = useWalletStore();
+  const { addProduct, refreshMarketPrices } = useWalletStore();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -401,6 +401,9 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
       const savedProduct = await addProduct(productData);
       
       if (savedProduct) {
+        // Ejecutar valoración de mercado en segundo plano
+        // No esperamos a que termine para no bloquear el cierre del modal
+        refreshMarketPrices(savedProduct.id).catch(console.error);
         resetAndClose();
       } else {
         setAnalyzeError("Error al guardar el producto. Inténtalo de nuevo.");

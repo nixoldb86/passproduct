@@ -83,6 +83,7 @@ export async function PUT(
     if (body.serialLast4 !== undefined) updateData.serialLast4 = body.serialLast4;
     if (body.accessories !== undefined) updateData.accessories = body.accessories;
     if (body.photos !== undefined) updateData.photos = body.photos;
+    if (body.proofOfPurchaseUrl !== undefined) updateData.proofOfPurchaseUrl = body.proofOfPurchaseUrl;
     
     if (body.purchaseDate !== undefined) {
       updateData.purchaseDate = body.purchaseDate ? new Date(body.purchaseDate) : null;
@@ -92,6 +93,19 @@ export async function PUT(
     }
     if (body.warrantyEndDate !== undefined) {
       updateData.warrantyEndDate = body.warrantyEndDate ? new Date(body.warrantyEndDate) : null;
+    }
+    if (body.estimatedValue !== undefined) {
+      updateData.estimatedValue = body.estimatedValue ? parseFloat(body.estimatedValue) : null;
+    }
+    
+    // Manejar marketPrices en attributes
+    if (body.marketPrices !== undefined) {
+      // Obtener attributes existentes
+      const currentAttributes = existingProduct.attributes as Record<string, unknown> || {};
+      updateData.attributes = {
+        ...currentAttributes,
+        marketPrices: body.marketPrices,
+      };
     }
 
     const product = await prisma.product.update({

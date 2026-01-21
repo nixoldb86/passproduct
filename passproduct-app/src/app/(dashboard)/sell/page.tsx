@@ -24,6 +24,7 @@ import {
   Fingerprint,
   Mail,
   Phone,
+  TrendingUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button, Card, Input, Select, Badge } from "@/components/ui";
@@ -31,6 +32,7 @@ import { useWalletStore, useMarketplaceStore } from "@/store";
 import { getProductById, mockCategories, getPriceRecommendations } from "@/lib/mock-data";
 import { formatPrice } from "@/lib/utils";
 import { Product, ProductCondition, CONDITION_LABELS } from "@/types";
+import { useMarketPrices, formatMarketPrice, getMarketTrendLabel } from "@/hooks";
 
 function SellPageContent() {
   const searchParams = useSearchParams();
@@ -56,13 +58,21 @@ function SellPageContent() {
   // Existing listing state
   const [existingListing, setExistingListing] = useState<{ id: string; status: string } | null>(null);
   const [isCheckingListing, setIsCheckingListing] = useState(false);
+  
+  // Market prices hook
+  const { 
+    isLoading: isLoadingMarketPrices, 
+    result: marketPriceResult, 
+    fetchMarketPrices,
+    error: marketPriceError 
+  } = useMarketPrices();
 
   // Form state
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     price: "",
-    priceStrategy: "fair" as "fast" | "fair" | "max",
+    priceStrategy: "ideal" as "minimo" | "rapido" | "ideal",
     photos: [] as string[],
     shippingEnabled: true,
     shippingCost: "5.99",
@@ -143,7 +153,7 @@ function SellPageContent() {
           description: generateDescription(product),
           photos: realPhotos, // Solo fotos reales
           price: product.estimatedValue
-            ? getPriceRecommendations(product.estimatedValue).fair.toString()
+            ? getPriceRecommendations(product.estimatedValue).ideal.toString()
             : "",
           condition: product.condition,
         }));
@@ -184,14 +194,6 @@ function SellPageContent() {
       "photos",
       formData.photos.filter((_, i) => i !== index)
     );
-  };
-
-  const handlePriceStrategy = (strategy: "fast" | "fair" | "max") => {
-    updateFormData("priceStrategy", strategy);
-    if (selectedProduct?.estimatedValue) {
-      const prices = getPriceRecommendations(selectedProduct.estimatedValue);
-      updateFormData("price", prices[strategy].toString());
-    }
   };
 
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -408,7 +410,7 @@ function SellPageContent() {
                         description: generateDescription(product),
                         photos: product.photos,
                         price: product.estimatedValue
-                          ? getPriceRecommendations(product.estimatedValue).fair.toString()
+                          ? getPriceRecommendations(product.estimatedValue).ideal.toString()
                           : "",
                         condition: product.condition,
                       }));
@@ -727,101 +729,166 @@ function SellPageContent() {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
-            <Card padding="md">
-              <h2 className="font-medium text-foreground mb-4">
-                Precio de venta
-              </h2>
-
-              {/* Price strategies */}
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                <button
-                  onClick={() => handlePriceStrategy("fast")}
-                  className={`p-4 rounded-xl border transition-colors ${
-                    formData.priceStrategy === "fast"
-                      ? "border-jade bg-jade/5"
-                      : "border-border hover:border-border-hover"
-                  }`}
-                >
-                  <Zap
-                    className={`h-5 w-5 mx-auto mb-2 ${
-                      formData.priceStrategy === "fast"
-                        ? "text-jade"
-                        : "text-foreground-subtle"
-                    }`}
-                  />
-                  <p className="text-xs text-foreground-muted mb-1">Rápido</p>
-                  <p
-                    className={`font-semibold ${
-                      formData.priceStrategy === "fast"
-                        ? "text-jade"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {formatPrice(priceRecommendations.fast)}
+            {/* Market Analysis - Precios del producto */}
+            <Card padding="md" className="bg-gradient-to-br from-accent/5 to-purple-500/5 border-accent/30">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="font-medium text-foreground flex items-center gap-2">
+                    <Eye className="h-4 w-4 text-accent" />
+                    Análisis de mercado real
+                  </h2>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    Escaneamos anuncios reales. Nada de inventos.
                   </p>
-                </button>
+                </div>
+                {/* Botón amarillo para actualizar */}
                 <button
-                  onClick={() => handlePriceStrategy("fair")}
-                  className={`p-4 rounded-xl border transition-colors ${
-                    formData.priceStrategy === "fair"
-                      ? "border-accent bg-accent/5"
-                      : "border-border hover:border-border-hover"
-                  }`}
+                  onClick={() => fetchMarketPrices({
+                    brand: selectedProduct.brand,
+                    model: selectedProduct.model,
+                    variant: selectedProduct.variant,
+                    purchasePrice: selectedProduct.purchasePrice,
+                  })}
+                  disabled={isLoadingMarketPrices}
+                  className="px-3 py-1.5 text-sm font-medium rounded-lg bg-amber-400 hover:bg-amber-500 text-amber-950 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  <Scale
-                    className={`h-5 w-5 mx-auto mb-2 ${
-                      formData.priceStrategy === "fair"
-                        ? "text-accent"
-                        : "text-foreground-subtle"
-                    }`}
-                  />
-                  <p className="text-xs text-foreground-muted mb-1">Justo</p>
-                  <p
-                    className={`font-semibold ${
-                      formData.priceStrategy === "fair"
-                        ? "text-accent"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {formatPrice(priceRecommendations.fair)}
-                  </p>
-                </button>
-                <button
-                  onClick={() => handlePriceStrategy("max")}
-                  className={`p-4 rounded-xl border transition-colors ${
-                    formData.priceStrategy === "max"
-                      ? "border-[#8B5CF6] bg-[#8B5CF6]/5"
-                      : "border-border hover:border-border-hover"
-                  }`}
-                >
-                  <Crown
-                    className={`h-5 w-5 mx-auto mb-2 ${
-                      formData.priceStrategy === "max"
-                        ? "text-[#8B5CF6]"
-                        : "text-foreground-subtle"
-                    }`}
-                  />
-                  <p className="text-xs text-foreground-muted mb-1">Máximo</p>
-                  <p
-                    className={`font-semibold ${
-                      formData.priceStrategy === "max"
-                        ? "text-[#8B5CF6]"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {formatPrice(priceRecommendations.max)}
-                  </p>
+                  {isLoadingMarketPrices ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Actualizando...
+                    </>
+                  ) : (
+                    "Actualizar"
+                  )}
                 </button>
               </div>
-
-              <Input
-                label="O introduce tu precio"
-                type="number"
-                value={formData.price}
-                onChange={(e) => updateFormData("price", e.target.value)}
-                hint="Precio en euros"
-              />
+              
+              {/* Mostrar precios guardados del producto o fallback */}
+              {(() => {
+                // Usar precios del producto, o marketPriceResult si acaba de actualizar, o fallback
+                const prices = marketPriceResult?.success 
+                  ? marketPriceResult.marketAnalysis.recommendedPrices
+                  : selectedProduct.marketPrices 
+                    ? selectedProduct.marketPrices
+                    : selectedProduct.estimatedValue 
+                      ? getPriceRecommendations(selectedProduct.estimatedValue)
+                      : null;
+                
+                const lastUpdated = marketPriceResult?.success
+                  ? new Date()
+                  : selectedProduct.marketPrices?.lastUpdated
+                    ? new Date(selectedProduct.marketPrices.lastUpdated)
+                    : null;
+                
+                if (!prices) {
+                  return (
+                    <div className="text-center py-4 text-foreground-muted">
+                      <p className="text-sm">No hay datos de mercado disponibles.</p>
+                      <p className="text-xs mt-1">Haz clic en &quot;Actualizar&quot; para analizar.</p>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <>
+                    {/* Los 3 precios - Orden: Mínimo, Ideal, Rápido */}
+                    <div className="grid grid-cols-3 gap-3 mb-3">
+                      {/* MÍNIMO */}
+                      <button
+                        onClick={() => {
+                          updateFormData("priceStrategy", "minimo");
+                          updateFormData("price", prices.minimo.toString());
+                        }}
+                        className={`p-3 rounded-xl border transition-colors ${
+                          formData.priceStrategy === "minimo"
+                            ? "border-amber-500 bg-amber-500/10"
+                            : "border-border hover:border-amber-500/50"
+                        }`}
+                      >
+                        <Zap className={`h-4 w-4 mx-auto mb-1 ${formData.priceStrategy === "minimo" ? "text-amber-500" : "text-foreground-subtle"}`} />
+                        <p className="text-xs text-foreground-muted">Mínimo</p>
+                        <p className={`font-bold ${formData.priceStrategy === "minimo" ? "text-amber-500" : "text-foreground"}`}>
+                          {formatMarketPrice(prices.minimo)}
+                        </p>
+                        <p className="text-[10px] text-foreground-subtle mt-1">Serás el más barato</p>
+                      </button>
+                      
+                      {/* IDEAL (en el medio) */}
+                      <button
+                        onClick={() => {
+                          updateFormData("priceStrategy", "ideal");
+                          updateFormData("price", prices.ideal.toString());
+                        }}
+                        className={`p-3 rounded-xl border transition-colors ${
+                          formData.priceStrategy === "ideal"
+                            ? "border-accent bg-accent/10"
+                            : "border-border hover:border-accent/50"
+                        }`}
+                      >
+                        <Scale className={`h-4 w-4 mx-auto mb-1 ${formData.priceStrategy === "ideal" ? "text-accent" : "text-foreground-subtle"}`} />
+                        <p className="text-xs text-foreground-muted">Ideal</p>
+                        <p className={`font-bold ${formData.priceStrategy === "ideal" ? "text-accent" : "text-foreground"}`}>
+                          {formatMarketPrice(prices.ideal)}
+                        </p>
+                        <p className="text-[10px] text-foreground-subtle mt-1">Precio promedio</p>
+                      </button>
+                      
+                      {/* RÁPIDO */}
+                      <button
+                        onClick={() => {
+                          updateFormData("priceStrategy", "rapido");
+                          updateFormData("price", prices.rapido.toString());
+                        }}
+                        className={`p-3 rounded-xl border transition-colors ${
+                          formData.priceStrategy === "rapido"
+                            ? "border-jade bg-jade/10"
+                            : "border-border hover:border-jade/50"
+                        }`}
+                      >
+                        <Crown className={`h-4 w-4 mx-auto mb-1 ${formData.priceStrategy === "rapido" ? "text-jade" : "text-foreground-subtle"}`} />
+                        <p className="text-xs text-foreground-muted">Rápido</p>
+                        <p className={`font-bold ${formData.priceStrategy === "rapido" ? "text-jade" : "text-foreground"}`}>
+                          {formatMarketPrice(prices.rapido)}
+                        </p>
+                        <p className="text-[10px] text-foreground-subtle mt-1">Sin malvender</p>
+                      </button>
+                    </div>
+                    
+                    {/* Fecha de última actualización */}
+                    {lastUpdated && (
+                      <p className="text-[11px] text-foreground-subtle text-center">
+                        Actualizado: {lastUpdated.toLocaleDateString("es-ES", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}, {lastUpdated.toLocaleTimeString("es-ES", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
+              
+              {/* Input precio personalizado */}
+              <div className="mt-4 pt-4 border-t border-border">
+                <Input
+                  label="O introduce tu precio"
+                  type="number"
+                  value={formData.price}
+                  onChange={(e) => updateFormData("price", e.target.value)}
+                  hint="Precio en euros"
+                />
+              </div>
+              
+              {marketPriceError && (
+                <p className="text-xs text-error mt-2">
+                  ⚠️ {marketPriceError}
+                </p>
+              )}
             </Card>
+
 
             {/* Shipping */}
             <Card padding="md">
@@ -954,13 +1021,13 @@ function SellPageContent() {
                     Comisión PassProduct (5%)
                   </span>
                   <span className="text-error">
-                    -{formatPrice((parseFloat(formData.price) || 0) * 0.07)}
+                    -{formatPrice((parseFloat(formData.price) || 0) * 0.05)}
                   </span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-border">
                   <span className="font-medium text-foreground">Recibirás</span>
                   <span className="font-semibold text-jade">
-                    {formatPrice((parseFloat(formData.price) || 0) * 0.93)}
+                    {formatPrice((parseFloat(formData.price) || 0) * 0.95)}
                   </span>
                 </div>
               </div>

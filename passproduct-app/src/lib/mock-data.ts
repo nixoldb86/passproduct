@@ -2515,8 +2515,8 @@ export function calculateWalletValue(products: Product[]): number {
 // Get price recommendation based on estimated value
 export function getPriceRecommendations(estimatedValue: number) {
   return {
-    fast: Math.round(estimatedValue * 0.85),
-    fair: Math.round(estimatedValue * 0.95),
-    max: Math.round(estimatedValue * 1.05),
+    minimo: Math.round(estimatedValue * 0.80), // El más bajo (venta instantánea)
+    rapido: Math.round(estimatedValue * 0.90), // 90% del ideal (sin malvender)
+    ideal: Math.round(estimatedValue),         // El precio justo del mercado
   };
 }

@@ -22,7 +22,9 @@ import {
   ExternalLink,
   FileImage,
   File,
-  BookOpen
+  BookOpen,
+  RefreshCw,
+  Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product, CONDITION_LABELS } from "@/types";
@@ -141,11 +143,14 @@ interface ProductCardProps {
   product: Product;
   onEdit?: (product: Product) => void;
   onDelete?: (productId: string) => void;
+  onRefreshMarketPrices?: (productId: string) => Promise<void>;
 }
 
-export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
+export function ProductCard({ product, onEdit, onDelete, onRefreshMarketPrices }: ProductCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+  const [showFullInvoice, setShowFullInvoice] = useState(false);
+  const [isRefreshingPrices, setIsRefreshingPrices] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   
   const warranty = getWarrantyStatus(product.warrantyEndDate);
@@ -217,8 +222,26 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
     setShowDocumentsModal(false);
   };
 
-  // Detectar tipo de archivo por extensión
+  const handleRefreshPrices = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!onRefreshMarketPrices || isRefreshingPrices) return;
+    
+    setIsRefreshingPrices(true);
+    try {
+      await onRefreshMarketPrices(product.id);
+    } finally {
+      setIsRefreshingPrices(false);
+    }
+  };
+
+  // Detectar tipo de archivo por extensión o base64
   const getFileType = (url: string): "pdf" | "image" | "other" => {
+    // Detectar base64
+    if (url.startsWith("data:image/")) return "image";
+    if (url.startsWith("data:application/pdf")) return "pdf";
+    
+    // Detectar por extensión
     const ext = url.split(".").pop()?.toLowerCase();
     if (ext === "pdf") return "pdf";
     if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext || "")) return "image";
@@ -226,8 +249,9 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
   };
 
   return (
-    <Link href={`/wallet/${product.id}`}>
-      <Card variant="interactive" padding="none" className="group overflow-hidden">
+    <>
+      <Link href={`/wallet/${product.id}`}>
+        <Card variant="interactive" padding="none" className="group overflow-hidden">
         {/* Image */}
         <div className="relative aspect-[4/3] bg-surface-2 overflow-hidden">
           {displayImage ? (
@@ -365,37 +389,42 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
             )}
           </div>
 
-          {/* Document Buttons */}
-          {(product.proofOfPurchaseUrl || documentsCount > 0) && (
-            <div className="flex gap-2 mb-4">
-              {product.proofOfPurchaseUrl && (
-                <button
-                  onClick={handleViewInvoice}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-accent bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  Ver factura
-                </button>
-              )}
-              <button
-                onClick={handleOpenDocuments}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-foreground-muted bg-surface-2 hover:bg-surface-3 rounded-lg transition-colors"
-              >
-                <FolderOpen className="h-3.5 w-3.5" />
-                Documentos {documentsCount > 0 && `(${documentsCount})`}
-              </button>
-            </div>
-          )}
+          {/* Invoice Button */}
+          <div className="mb-4">
+            <button
+              onClick={handleOpenDocuments}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-accent bg-accent/10 hover:bg-accent/20 rounded-lg transition-colors"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Factura y garantía
+            </button>
+          </div>
 
           {/* Value */}
           <div className="flex items-end justify-between">
             <div>
               <p className="text-xs text-foreground-subtle">Valor estimado</p>
-              <p className="text-lg font-semibold text-foreground tabular-nums">
-                {product.estimatedValue
-                  ? formatPrice(product.estimatedValue)
-                  : "—"}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-lg font-semibold text-foreground tabular-nums">
+                  {product.estimatedValue
+                    ? formatPrice(product.estimatedValue)
+                    : "—"}
+                </p>
+                {onRefreshMarketPrices && (
+                  <button
+                    onClick={handleRefreshPrices}
+                    disabled={isRefreshingPrices}
+                    className="p-1 rounded-full hover:bg-surface-2 transition-colors disabled:opacity-50"
+                    title="Actualizar valoración de mercado"
+                  >
+                    {isRefreshingPrices ? (
+                      <Loader2 className="h-4 w-4 text-accent animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 text-foreground-subtle hover:text-accent" />
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
             {product.purchasePrice && product.estimatedValue && (
               <div className="text-right">
@@ -416,15 +445,16 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
           </div>
         </div>
       </Card>
+      </Link>
       
-      {/* Modal de Documentos */}
+      {/* Modal de Factura y Garantía */}
       <AnimatePresence>
         {showDocumentsModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
             onClick={handleCloseDocuments}
           >
             <motion.div
@@ -432,13 +462,13 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-surface-1 rounded-xl max-w-lg w-full max-h-[85vh] overflow-hidden shadow-2xl border border-border"
+              className="bg-surface-1 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-border"
             >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-border">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">
-                    Documentos
+                    Factura y garantía
                   </h3>
                   <p className="text-sm text-foreground-muted">
                     {product.brand} {product.model}
@@ -452,182 +482,185 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
                 </button>
               </div>
 
-              {/* Documents List */}
-              <div className="p-4 space-y-3 overflow-y-auto max-h-[60vh]">
-                {/* Factura */}
-                {product.proofOfPurchaseUrl ? (
-                  <div className="bg-surface-2 rounded-lg p-4 border border-border">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2.5 bg-accent/10 rounded-lg">
-                        {getFileType(product.proofOfPurchaseUrl) === "pdf" ? (
-                          <FileText className="h-6 w-6 text-accent" />
-                        ) : (
-                          <FileImage className="h-6 w-6 text-accent" />
-                        )}
+              {/* Content */}
+              <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+                
+                {/* Factura - Imagen grande */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-accent" />
+                    Factura de compra
+                  </h4>
+                  
+                  {product.proofOfPurchaseUrl ? (
+                    <div className="bg-surface-2 rounded-lg border border-border overflow-hidden">
+                      {/* Info de compra */}
+                      <div className="p-3 flex items-center justify-between border-b border-border">
+                        <div className="text-sm">
+                          {product.purchaseStore && (
+                            <span className="text-foreground font-medium">{product.purchaseStore}</span>
+                          )}
+                          {product.purchaseDate && (
+                            <span className="text-foreground-muted ml-2">
+                              {formatDate(product.purchaseDate)}
+                            </span>
+                          )}
+                          {product.purchasePrice && (
+                            <span className="text-foreground font-semibold ml-3">
+                              {formatPrice(product.purchasePrice)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => window.open(product.proofOfPurchaseUrl, "_blank")}
+                            className="p-2 rounded-lg hover:bg-surface-3 transition-colors text-foreground-muted hover:text-accent flex items-center gap-1 text-xs"
+                            title="Abrir en nueva pestaña"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            <span className="hidden sm:inline">Abrir</span>
+                          </button>
+                          <a
+                            href={product.proofOfPurchaseUrl}
+                            download
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-2 rounded-lg hover:bg-surface-3 transition-colors text-foreground-muted hover:text-accent flex items-center gap-1 text-xs"
+                            title="Descargar"
+                          >
+                            <Download className="h-4 w-4" />
+                            <span className="hidden sm:inline">Descargar</span>
+                          </a>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground">Factura de compra</p>
-                        <p className="text-xs text-foreground-muted mt-0.5">
-                          {product.purchaseStore && `${product.purchaseStore} • `}
-                          {product.purchaseDate && formatDate(product.purchaseDate)}
-                        </p>
-                        {product.purchasePrice && (
-                          <p className="text-sm text-foreground-subtle mt-1">
-                            Importe: {formatPrice(product.purchasePrice)}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex gap-1">
+                      
+                      {/* Preview de la factura */}
+                      {getFileType(product.proofOfPurchaseUrl) === "image" ? (
+                        <button
+                          onClick={() => setShowFullInvoice(true)}
+                          className="w-full relative bg-black/50 cursor-zoom-in group"
+                        >
+                          <div className="relative w-full" style={{ minHeight: "300px", maxHeight: "500px" }}>
+                            <Image
+                              src={product.proofOfPurchaseUrl}
+                              alt="Factura de compra"
+                              fill
+                              className="object-contain"
+                              sizes="(max-width: 768px) 100vw, 600px"
+                            />
+                          </div>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-2">
+                              🔍 Ampliar
+                            </span>
+                          </div>
+                        </button>
+                      ) : getFileType(product.proofOfPurchaseUrl) === "pdf" ? (
                         <button
                           onClick={() => window.open(product.proofOfPurchaseUrl, "_blank")}
-                          className="p-2 rounded-lg hover:bg-surface-3 transition-colors text-foreground-muted hover:text-accent"
-                          title="Abrir"
+                          className="w-full p-8 flex flex-col items-center justify-center gap-3 hover:bg-surface-3 transition-colors cursor-pointer"
                         >
-                          <ExternalLink className="h-4 w-4" />
+                          <FileText className="h-16 w-16 text-accent" />
+                          <span className="text-sm text-foreground-muted">
+                            Clic para abrir el PDF
+                          </span>
                         </button>
-                        <a
-                          href={product.proofOfPurchaseUrl}
-                          download
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-2 rounded-lg hover:bg-surface-3 transition-colors text-foreground-muted hover:text-accent"
-                          title="Descargar"
+                      ) : (
+                        <button
+                          onClick={() => window.open(product.proofOfPurchaseUrl, "_blank")}
+                          className="w-full p-8 flex flex-col items-center justify-center gap-3 hover:bg-surface-3 transition-colors cursor-pointer"
                         >
-                          <Download className="h-4 w-4" />
-                        </a>
-                      </div>
+                          <File className="h-16 w-16 text-foreground-muted" />
+                          <span className="text-sm text-foreground-muted">
+                            Clic para abrir documento
+                          </span>
+                        </button>
+                      )}
                     </div>
-                    
-                    {/* Preview si es imagen */}
-                    {getFileType(product.proofOfPurchaseUrl) === "image" && (
-                      <div className="mt-3 relative aspect-video rounded-lg overflow-hidden bg-surface-3">
-                        <Image
-                          src={product.proofOfPurchaseUrl}
-                          alt="Factura"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-surface-2/50 rounded-lg p-4 border border-dashed border-border">
-                    <div className="flex items-center gap-3 text-foreground-muted">
-                      <FileText className="h-5 w-5" />
-                      <div>
-                        <p className="font-medium">Sin factura</p>
-                        <p className="text-xs">Edita el producto para añadir una factura</p>
-                      </div>
+                  ) : (
+                    <div className="bg-surface-2/50 rounded-lg p-6 border border-dashed border-border text-center">
+                      <FileText className="h-10 w-10 text-foreground-subtle mx-auto mb-2" />
+                      <p className="text-foreground-muted font-medium">Sin factura registrada</p>
+                      <p className="text-xs text-foreground-subtle mt-1">
+                        Puedes añadir una factura editando el producto
+                      </p>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
-                {/* Documento de garantía */}
-                {product.warrantyNotes ? (
-                  <div className="bg-surface-2 rounded-lg p-4 border border-border">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2.5 bg-jade/10 rounded-lg">
-                        <ShieldCheck className="h-6 w-6 text-jade" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground">Información de garantía</p>
-                        <p className="text-sm text-foreground-muted mt-1">
+                {/* Garantía */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-jade" />
+                    Información de garantía
+                  </h4>
+                  
+                  {(product.warrantyEndDate || product.warrantyNotes) ? (
+                    <div className="bg-jade/5 rounded-lg p-4 border border-jade/20">
+                      {product.warrantyNotes && (
+                        <p className="text-sm text-foreground mb-2">
                           {product.warrantyNotes}
                         </p>
-                        {product.warrantyEndDate && (
-                          <p className="text-xs text-foreground-subtle mt-2">
-                            Válida hasta: {formatDate(product.warrantyEndDate)}
-                          </p>
-                        )}
-                        {product.warrantyContact && (
-                          <div className="mt-2 text-xs text-foreground-subtle">
-                            {product.warrantyContact.phone && (
-                              <p>📞 {product.warrantyContact.phone}</p>
-                            )}
-                            {product.warrantyContact.email && (
-                              <p>✉️ {product.warrantyContact.email}</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : product.warrantyEndDate ? (
-                  <div className="bg-surface-2 rounded-lg p-4 border border-border">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2.5 bg-jade/10 rounded-lg">
-                        <ShieldCheck className="h-6 w-6 text-jade" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">Garantía del fabricante</p>
-                        <p className="text-sm text-foreground-muted mt-1">
-                          Válida hasta: {formatDate(product.warrantyEndDate)}
+                      )}
+                      {product.warrantyEndDate && (
+                        <p className="text-sm text-foreground-muted">
+                          <span className="font-medium text-jade">Válida hasta:</span>{" "}
+                          {formatDate(product.warrantyEndDate)}
                         </p>
-                      </div>
+                      )}
+                      {product.warrantyContact && (
+                        <div className="mt-3 pt-3 border-t border-jade/20 text-sm space-y-1">
+                          <p className="text-foreground-muted font-medium">Contacto de garantía:</p>
+                          {product.warrantyContact.phone && (
+                            <p className="text-foreground-subtle">📞 {product.warrantyContact.phone}</p>
+                          )}
+                          {product.warrantyContact.email && (
+                            <p className="text-foreground-subtle">✉️ {product.warrantyContact.email}</p>
+                          )}
+                          {product.warrantyContact.url && (
+                            <a 
+                              href={product.warrantyContact.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-accent hover:underline flex items-center gap-1"
+                            >
+                              🌐 {product.warrantyContact.url}
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ) : null}
+                  ) : (
+                    <div className="bg-surface-2/50 rounded-lg p-4 border border-dashed border-border text-center">
+                      <ShieldOff className="h-8 w-8 text-foreground-subtle mx-auto mb-2" />
+                      <p className="text-foreground-muted text-sm">Sin información de garantía</p>
+                    </div>
+                  )}
+                </div>
 
-                {/* Seguro adicional */}
+                {/* Seguro adicional (si existe) */}
                 {product.hasAdditionalInsurance && product.additionalInsuranceEndDate && (
-                  <div className="bg-surface-2 rounded-lg p-4 border border-border">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2.5 bg-info/10 rounded-lg">
-                        <ShieldPlus className="h-6 w-6 text-info" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">Seguro adicional</p>
-                        {product.additionalInsuranceProvider && (
-                          <p className="text-sm text-foreground-muted">
-                            {product.additionalInsuranceProvider}
-                          </p>
-                        )}
-                        <p className="text-xs text-foreground-subtle mt-1">
-                          Válido hasta: {formatDate(product.additionalInsuranceEndDate)}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <ShieldPlus className="h-4 w-4 text-info" />
+                      Seguro adicional
+                    </h4>
+                    <div className="bg-info/5 rounded-lg p-4 border border-info/20">
+                      {product.additionalInsuranceProvider && (
+                        <p className="text-sm font-medium text-foreground mb-1">
+                          {product.additionalInsuranceProvider}
                         </p>
-                        {product.additionalInsuranceNotes && (
-                          <p className="text-sm text-foreground-muted mt-2">
-                            {product.additionalInsuranceNotes}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Manual (si existe) */}
-                {product.manualUrl && (
-                  <div className="bg-surface-2 rounded-lg p-4 border border-border">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2.5 bg-purple-500/10 rounded-lg">
-                        <BookOpen className="h-6 w-6 text-purple-500" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">Manual de usuario</p>
-                        <p className="text-xs text-foreground-muted mt-0.5">
-                          PDF del fabricante
+                      )}
+                      <p className="text-sm text-foreground-muted">
+                        <span className="font-medium text-info">Válido hasta:</span>{" "}
+                        {formatDate(product.additionalInsuranceEndDate)}
+                      </p>
+                      {product.additionalInsuranceNotes && (
+                        <p className="text-sm text-foreground-subtle mt-2">
+                          {product.additionalInsuranceNotes}
                         </p>
-                      </div>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => window.open(product.manualUrl, "_blank")}
-                          className="p-2 rounded-lg hover:bg-surface-3 transition-colors text-foreground-muted hover:text-purple-500"
-                          title="Abrir"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </button>
-                      </div>
+                      )}
                     </div>
-                  </div>
-                )}
-
-                {/* Empty state si no hay nada */}
-                {!product.proofOfPurchaseUrl && !product.warrantyNotes && !product.warrantyEndDate && !product.hasAdditionalInsurance && !product.manualUrl && (
-                  <div className="text-center py-8">
-                    <FolderOpen className="h-12 w-12 text-foreground-subtle mx-auto mb-3" />
-                    <p className="text-foreground-muted font-medium">Sin documentos</p>
-                    <p className="text-sm text-foreground-subtle mt-1">
-                      Edita el producto para añadir documentos
-                    </p>
                   </div>
                 )}
               </div>
@@ -651,7 +684,7 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
                     }}
                   >
                     <Pencil className="h-4 w-4 mr-2" />
-                    Editar producto
+                    Editar
                   </Button>
                 </div>
               </div>
@@ -659,6 +692,69 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
           </motion.div>
         )}
       </AnimatePresence>
-    </Link>
+      
+      {/* Lightbox - Factura a pantalla completa */}
+      <AnimatePresence>
+        {showFullInvoice && product.proofOfPurchaseUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 flex items-center justify-center z-[60] p-4"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowFullInvoice(false);
+            }}
+          >
+            {/* Botón cerrar */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowFullInvoice(false);
+              }}
+              className="absolute top-4 right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            
+            {/* Botón descargar */}
+            <a
+              href={product.proofOfPurchaseUrl}
+              download
+              onClick={(e) => e.stopPropagation()}
+              className="absolute top-4 left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10 flex items-center gap-2"
+            >
+              <Download className="h-5 w-5" />
+              <span className="text-sm">Descargar</span>
+            </a>
+            
+            {/* Imagen */}
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="relative w-full h-full max-w-5xl max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Image
+                src={product.proofOfPurchaseUrl}
+                alt="Factura de compra"
+                fill
+                className="object-contain"
+                sizes="100vw"
+                priority
+              />
+            </motion.div>
+            
+            {/* Texto de ayuda */}
+            <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/50 text-sm">
+              Clic fuera de la imagen o en ✕ para cerrar
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

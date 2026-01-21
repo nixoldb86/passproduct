@@ -27,6 +27,7 @@ interface WalletState {
   selectProduct: (product: Product | null) => void;
   fetchProducts: () => Promise<void>;
   clearError: () => void;
+  refreshMarketPrices: (productId: string) => Promise<void>;
 }
 
 // Transformar producto de la API al formato del frontend
@@ -55,6 +56,22 @@ const transformProductFromAPI = (apiProduct: Record<string, unknown>): Product =
     estimatedValue: apiProduct.estimatedValue ? Number(apiProduct.estimatedValue) : undefined,
     manualUrl: attributes?.manualUrl as string | undefined,
     specs: attributes?.specs as Array<{ label: string; value: string }> | undefined,
+    // Seguro adicional
+    hasAdditionalInsurance: attributes?.hasAdditionalInsurance as boolean | undefined,
+    additionalInsuranceEndDate: attributes?.additionalInsuranceEndDate 
+      ? new Date(attributes.additionalInsuranceEndDate as string) 
+      : undefined,
+    additionalInsuranceProvider: attributes?.additionalInsuranceProvider as string | undefined,
+    additionalInsuranceNotes: attributes?.additionalInsuranceNotes as string | undefined,
+    // Precios de mercado
+    marketPrices: attributes?.marketPrices 
+      ? {
+          minimo: (attributes.marketPrices as { minimo: number }).minimo,
+          ideal: (attributes.marketPrices as { ideal: number }).ideal,
+          rapido: (attributes.marketPrices as { rapido: number }).rapido,
+          lastUpdated: new Date((attributes.marketPrices as { lastUpdated: string }).lastUpdated),
+        }
+      : undefined,
     createdAt: new Date(apiProduct.createdAt as string),
     updatedAt: new Date(apiProduct.updatedAt as string),
   };
@@ -121,6 +138,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
           purchasePrice: productData.purchasePrice,
           purchaseStore: productData.purchaseStore,
           warrantyEndDate: productData.warrantyEndDate,
+          proofOfPurchaseUrl: productData.proofOfPurchaseUrl,
           photos: productData.photos || [],
           stockPhotos: productData.stockPhotos || [],
           accessories: productData.accessories,
@@ -130,6 +148,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
           manualUrl: productData.manualUrl,
           specs: productData.specs,
           estimatedValue: productData.estimatedValue,
+          hasAdditionalInsurance: productData.hasAdditionalInsurance,
+          additionalInsuranceEndDate: productData.additionalInsuranceEndDate,
+          additionalInsuranceProvider: productData.additionalInsuranceProvider,
+          additionalInsuranceNotes: productData.additionalInsuranceNotes,
         }),
       });
       
@@ -254,6 +276,70 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
   
   selectProduct: (product) => set({ selectedProduct: product }),
+  
+  // Actualizar precios de mercado para un producto
+  refreshMarketPrices: async (productId: string) => {
+    const product = get().products.find(p => p.id === productId);
+    if (!product) return;
+    
+    try {
+      // Llamar al API de precios de mercado
+      const response = await fetch("/api/market-prices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brand: product.brand,
+          model: product.model,
+          variant: product.variant,
+          purchasePrice: product.purchasePrice,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.marketAnalysis?.recommendedPrices) {
+        const { minimo, ideal, rapido } = data.marketAnalysis.recommendedPrices;
+        
+        // Actualizar el producto con los nuevos precios
+        const marketPrices = {
+          minimo,
+          ideal,
+          rapido,
+          lastUpdated: new Date().toISOString(),
+        };
+        
+        // Actualizar en la BD
+        await fetch(`/api/db/products/${productId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            estimatedValue: ideal, // El valor ideal es el valor estimado
+            marketPrices,
+          }),
+        });
+        
+        // Actualizar estado local
+        set((state) => ({
+          products: state.products.map((p) =>
+            p.id === productId
+              ? {
+                  ...p,
+                  estimatedValue: ideal,
+                  marketPrices: {
+                    minimo,
+                    ideal,
+                    rapido,
+                    lastUpdated: new Date(),
+                  },
+                }
+              : p
+          ),
+        }));
+      }
+    } catch (error) {
+      console.error("Error refreshing market prices:", error);
+    }
+  },
 }));
 
 // ==========================================
@@ -526,25 +612,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
       
       if (data.success && data.message) {
         // Actualizar estado local - añadir mensaje al chat activo
-        set((state) => ({
-          conversations: state.conversations.map((conv) =>
-            conv.id === conversationId
+    set((state) => ({
+      conversations: state.conversations.map((conv) =>
+        conv.id === conversationId
               ? { 
                   ...conv, 
                   lastMessage: data.message,
                   updatedAt: new Date(),
                   ...(isOffer && { currentOffer: offerAmount, offerStatus: "pending" }),
                 }
-              : conv
-          ),
-          activeConversation:
-            state.activeConversation?.id === conversationId
-              ? {
-                  ...state.activeConversation,
+          : conv
+      ),
+      activeConversation:
+        state.activeConversation?.id === conversationId
+          ? {
+              ...state.activeConversation,
                   messages: [...(state.activeConversation.messages || []), data.message],
-                }
-              : state.activeConversation,
-        }));
+            }
+          : state.activeConversation,
+    }));
         
         // Las notificaciones de mensajes se crean en el servidor (ver API de mensajes)
       }
