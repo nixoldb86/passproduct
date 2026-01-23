@@ -67,6 +67,26 @@ function SellPageContent() {
     error: marketPriceError 
   } = useMarketPrices();
 
+  // Verificar si han pasado 24 horas desde la última actualización
+  const canRefreshPrices = (product: Product | null): boolean => {
+    if (!product?.marketPrices?.lastUpdated) return true;
+    const lastUpdate = new Date(product.marketPrices.lastUpdated);
+    const now = new Date();
+    const hoursSinceUpdate = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
+    return hoursSinceUpdate >= 24;
+  };
+
+  const getTimeUntilNextRefresh = (product: Product | null): string => {
+    if (!product?.marketPrices?.lastUpdated) return "";
+    const lastUpdate = new Date(product.marketPrices.lastUpdated);
+    const nextRefresh = new Date(lastUpdate.getTime() + 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const hoursLeft = Math.ceil((nextRefresh.getTime() - now.getTime()) / (1000 * 60 * 60));
+    if (hoursLeft <= 0) return "";
+    if (hoursLeft === 1) return "Disponible en 1 hora";
+    return `Disponible en ${hoursLeft}h`;
+  };
+
   // Form state
   const [formData, setFormData] = useState({
     title: "",
@@ -741,22 +761,26 @@ function SellPageContent() {
                     Escaneamos anuncios reales. Nada de inventos.
                   </p>
                 </div>
-                {/* Botón amarillo para actualizar */}
+                {/* Botón amarillo para actualizar (limitado a cada 24h) */}
                 <button
                   onClick={() => fetchMarketPrices({
                     brand: selectedProduct.brand,
                     model: selectedProduct.model,
                     variant: selectedProduct.variant,
                     purchasePrice: selectedProduct.purchasePrice,
+                    condition: selectedProduct.condition,
                   })}
-                  disabled={isLoadingMarketPrices}
+                  disabled={isLoadingMarketPrices || !canRefreshPrices(selectedProduct)}
                   className="px-3 py-1.5 text-sm font-medium rounded-lg bg-amber-400 hover:bg-amber-500 text-amber-950 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  title={canRefreshPrices(selectedProduct) ? "Actualizar valoración" : getTimeUntilNextRefresh(selectedProduct)}
                 >
                   {isLoadingMarketPrices ? (
                     <>
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       Actualizando...
                     </>
+                  ) : !canRefreshPrices(selectedProduct) ? (
+                    getTimeUntilNextRefresh(selectedProduct)
                   ) : (
                     "Actualizar"
                   )}

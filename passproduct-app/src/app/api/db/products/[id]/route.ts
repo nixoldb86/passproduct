@@ -75,15 +75,16 @@ export async function PUT(
     
     if (body.brand !== undefined) updateData.brand = body.brand;
     if (body.model !== undefined) updateData.model = body.model;
-    if (body.variant !== undefined) updateData.variant = body.variant;
+    // Campos opcionales: si es null o string vacío, guardar null para borrar
+    if (body.variant !== undefined) updateData.variant = body.variant || null;
     if (body.condition !== undefined) updateData.condition = body.condition;
     if (body.categoryId !== undefined) updateData.categoryId = body.categoryId;
-    if (body.purchaseStore !== undefined) updateData.purchaseStore = body.purchaseStore;
-    if (body.imeiLast4 !== undefined) updateData.imeiLast4 = body.imeiLast4;
-    if (body.serialLast4 !== undefined) updateData.serialLast4 = body.serialLast4;
+    if (body.purchaseStore !== undefined) updateData.purchaseStore = body.purchaseStore || null;
+    if (body.imeiLast4 !== undefined) updateData.imeiLast4 = body.imeiLast4 || null;
+    if (body.serialLast4 !== undefined) updateData.serialLast4 = body.serialLast4 || null;
     if (body.accessories !== undefined) updateData.accessories = body.accessories;
     if (body.photos !== undefined) updateData.photos = body.photos;
-    if (body.proofOfPurchaseUrl !== undefined) updateData.proofOfPurchaseUrl = body.proofOfPurchaseUrl;
+    if (body.proofOfPurchaseUrl !== undefined) updateData.proofOfPurchaseUrl = body.proofOfPurchaseUrl || null;
     
     if (body.purchaseDate !== undefined) {
       updateData.purchaseDate = body.purchaseDate ? new Date(body.purchaseDate) : null;

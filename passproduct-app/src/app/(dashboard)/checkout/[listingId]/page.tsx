@@ -17,6 +17,7 @@ import {
   Loader2,
   Package,
   Info,
+  Phone,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -25,7 +26,7 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { Button, Card, Input } from "@/components/ui";
+import { Button, Card, Input, AddressAutocomplete } from "@/components/ui";
 import { formatPrice } from "@/lib/utils";
 import { getStripe } from "@/lib/stripe";
 import { Listing, CONDITION_LABELS, ProductCondition } from "@/types";
@@ -67,6 +68,18 @@ export default function CheckoutPage() {
   });
 
   const listingId = params.listingId as string;
+  
+  // Estado para verificación de teléfono (desde nuestra BD)
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [isCheckingPhone, setIsCheckingPhone] = useState(true);
+  
+  // Estado para verificación de teléfono inline
+  const [phoneVerificationStep, setPhoneVerificationStep] = useState<"idle" | "input" | "code" | "success">("idle");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [phoneVerificationError, setPhoneVerificationError] = useState<string | null>(null);
+  const [phoneVerificationHint, setPhoneVerificationHint] = useState<string | null>(null);
+  const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
 
   // Fetch listing details
   useEffect(() => {
@@ -98,6 +111,100 @@ export default function CheckoutPage() {
       fetchListing();
     }
   }, [listingId, user]);
+
+  // Verificar estado del teléfono al cargar
+  useEffect(() => {
+    const checkPhoneStatus = async () => {
+      try {
+        const response = await fetch("/api/verify/phone/status");
+        const data = await response.json();
+        if (data.success && data.phoneVerified) {
+          setIsPhoneVerified(true);
+        }
+      } catch {
+        console.error("Error checking phone status");
+      } finally {
+        setIsCheckingPhone(false);
+      }
+    };
+
+    if (isUserLoaded) {
+      checkPhoneStatus();
+    }
+  }, [isUserLoaded]);
+
+  // Enviar código de verificación al teléfono
+  const handleSendVerificationCode = async () => {
+    if (!phoneNumber || !user) return;
+    
+    setIsVerifyingPhone(true);
+    setPhoneVerificationError(null);
+    setPhoneVerificationHint(null);
+    
+    try {
+      const response = await fetch("/api/verify/phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber }),
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        setPhoneVerificationError(data.error || "Error al procesar el teléfono");
+        return;
+      }
+      
+      if (data.alreadyVerified) {
+        // Ya está verificado
+        setIsPhoneVerified(true);
+        setPhoneVerificationStep("success");
+        return;
+      }
+      
+      // Guardar hint si viene (solo en desarrollo)
+      if (data.hint) {
+        setPhoneVerificationHint(data.hint);
+      }
+      
+      setPhoneVerificationStep("code");
+    } catch {
+      setPhoneVerificationError("Error de conexión. Inténtalo de nuevo.");
+    } finally {
+      setIsVerifyingPhone(false);
+    }
+  };
+
+  // Verificar código SMS
+  const handleVerifyCode = async () => {
+    if (!verificationCode || !user) return;
+    
+    setIsVerifyingPhone(true);
+    setPhoneVerificationError(null);
+    
+    try {
+      const response = await fetch("/api/verify/phone/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber, code: verificationCode }),
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        setPhoneVerificationError(data.error || "Código incorrecto");
+        return;
+      }
+      
+      // Marcar como verificado
+      setIsPhoneVerified(true);
+      setPhoneVerificationStep("success");
+    } catch {
+      setPhoneVerificationError("Error de conexión. Inténtalo de nuevo.");
+    } finally {
+      setIsVerifyingPhone(false);
+    }
+  };
 
   // Create payment intent
   const createPaymentIntent = async () => {
@@ -258,16 +365,26 @@ export default function CheckoutPage() {
                   }
                   placeholder="Juan García López"
                 />
-                <Input
+                <AddressAutocomplete
                   label="Dirección"
                   value={shippingAddress.street}
-                  onChange={(e) =>
+                  onChange={(value) =>
                     setShippingAddress((prev) => ({
                       ...prev,
-                      street: e.target.value,
+                      street: value,
                     }))
                   }
-                  placeholder="Calle Mayor 123, 2ºB"
+                  onAddressSelect={(address) =>
+                    setShippingAddress((prev) => ({
+                      ...prev,
+                      street: address.street,
+                      city: address.city || prev.city,
+                      postalCode: address.postalCode || prev.postalCode,
+                      country: address.country || prev.country,
+                    }))
+                  }
+                  placeholder="Escribe tu dirección..."
+                  country="es"
                 />
                 <div className="grid grid-cols-2 gap-4">
                   <Input
@@ -390,20 +507,198 @@ export default function CheckoutPage() {
               </Elements>
             </Card>
           ) : (
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={createPaymentIntent}
-              disabled={
-                listing.shippingEnabled &&
-                (!shippingAddress.fullName ||
-                  !shippingAddress.street ||
-                  !shippingAddress.city ||
-                  !shippingAddress.postalCode)
-              }
-            >
-              Continuar al pago
-            </Button>
+            <>
+              {/* Verificación de teléfono inline */}
+              {!isPhoneVerified && phoneVerificationStep !== "success" && (
+                <Card padding="md" className="bg-amber-500/10 border-amber-500/30">
+                  <div className="flex items-start gap-3">
+                    <Phone className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-medium text-amber-500">
+                        Verifica tu teléfono para continuar
+                      </p>
+                      <p className="text-sm text-amber-500/80 mt-1">
+                        Para proteger a compradores y vendedores, necesitamos verificar tu número de teléfono antes de realizar la compra.
+                      </p>
+                      <p className="text-sm text-muted mt-2 mb-4 italic">
+                        Tu número no se lo damos a nadie. Ni al vendedor, ni a empresas de marketing que te llamen a las 3 de la tarde para venderte seguros. Solo lo usamos para verificar que eres una persona real. Punto.
+                      </p>
+                      
+                      {phoneVerificationStep === "idle" && (
+                        <Button 
+                          size="sm" 
+                          className="bg-amber-500 hover:bg-amber-600 text-black"
+                          onClick={() => setPhoneVerificationStep("input")}
+                        >
+                          <Phone className="h-4 w-4 mr-2" />
+                          Verificar teléfono
+                        </Button>
+                      )}
+                      
+                      {phoneVerificationStep === "input" && (
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-sm text-amber-500/80">
+                              Número de teléfono
+                            </label>
+                            <div className="flex gap-2">
+                              <div className="flex items-center px-3 bg-surface-2 border border-border rounded-lg text-sm text-muted">
+                                +34
+                              </div>
+                              <Input
+                                type="tel"
+                                placeholder="612 345 678"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+                          
+                          {phoneVerificationError && (
+                            <p className="text-sm text-error flex items-center gap-1">
+                              <AlertCircle className="h-4 w-4" />
+                              {phoneVerificationError}
+                            </p>
+                          )}
+                          
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setPhoneVerificationStep("idle");
+                                setPhoneNumber("");
+                                setPhoneVerificationError(null);
+                              }}
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={handleSendVerificationCode}
+                              disabled={!phoneNumber || isVerifyingPhone}
+                              className="bg-amber-500 hover:bg-amber-600 text-black"
+                            >
+                              {isVerifyingPhone ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Enviando...
+                                </>
+                              ) : (
+                                "Enviar código SMS"
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {phoneVerificationStep === "code" && (
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-sm text-amber-500/80">
+                              Código de verificación
+                            </label>
+                            <p className="text-xs text-muted">
+                              Hemos enviado un SMS al +34 {phoneNumber}
+                            </p>
+                            {phoneVerificationHint && (
+                              <p className="text-xs text-accent bg-accent/10 px-2 py-1 rounded">
+                                🧪 {phoneVerificationHint}
+                              </p>
+                            )}
+                            <Input
+                              type="text"
+                              placeholder="0000"
+                              value={verificationCode}
+                              onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                              className="text-center text-xl tracking-widest font-mono"
+                              maxLength={4}
+                            />
+                          </div>
+                          
+                          {phoneVerificationError && (
+                            <p className="text-sm text-error flex items-center gap-1">
+                              <AlertCircle className="h-4 w-4" />
+                              {phoneVerificationError}
+                            </p>
+                          )}
+                          
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setPhoneVerificationStep("input");
+                                setVerificationCode("");
+                                setPhoneVerificationError(null);
+                              }}
+                            >
+                              Cambiar número
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={handleVerifyCode}
+                              disabled={verificationCode.length !== 4 || isVerifyingPhone}
+                              className="bg-amber-500 hover:bg-amber-600 text-black"
+                            >
+                              {isVerifyingPhone ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Verificando...
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="h-4 w-4 mr-2" />
+                                  Verificar
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                          
+                          <button
+                            type="button"
+                            className="text-xs text-amber-500/70 hover:text-amber-500 underline"
+                            onClick={handleSendVerificationCode}
+                            disabled={isVerifyingPhone}
+                          >
+                            ¿No recibiste el código? Reenviar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              )}
+              
+              {/* Teléfono verificado - Mensaje de éxito */}
+              {(isPhoneVerified || phoneVerificationStep === "success") && (
+                <Card padding="md" className="bg-success/10 border-success/30">
+                  <div className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-success" />
+                    <p className="font-medium text-success">
+                      ¡Teléfono verificado correctamente!
+                    </p>
+                  </div>
+                </Card>
+              )}
+              
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={createPaymentIntent}
+                disabled={
+                  !(isPhoneVerified || phoneVerificationStep === "success") ||
+                  (listing.shippingEnabled &&
+                    (!shippingAddress.fullName ||
+                      !shippingAddress.street ||
+                      !shippingAddress.city ||
+                      !shippingAddress.postalCode))
+                }
+              >
+                {(isPhoneVerified || phoneVerificationStep === "success") ? "Continuar al pago" : "Verifica tu teléfono primero"}
+              </Button>
+            </>
           )}
 
           {error && (

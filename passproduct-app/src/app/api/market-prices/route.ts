@@ -370,12 +370,81 @@ async function fetchAllWallapopListings(
 }
 
 // ============================================
-// FILTRADO CON IA (CON LOGGING)
+// FILTRADO CON IA (CON LOGGING) - PROMPT TOML
 // ============================================
+
+// Mapeo de condiciones del prompt a nuestro sistema
+const CONDITION_MAP: Record<string, string> = {
+  'n': 'NEW',        // Precintado, sellado
+  'ln': 'LIKE_NEW',  // Como nuevo
+  'g': 'GOOD',       // Buen estado (muy bueno)
+  'u': 'USED',       // Usado (bueno)
+  'a': 'ACCEPTABLE', // Aceptable
+  'nd': 'GOOD',      // No determinado -> default a GOOD
+};
+
+// Orden de condiciones (1 = mejor, 5 = peor)
+const CONDITION_ORDER: Record<string, number> = {
+  'n': 1,    // new - mejor
+  'ln': 2,   // like_new
+  'g': 3,    // good
+  'u': 4,    // used
+  'a': 5,    // acceptable - peor
+  'nd': 3,   // not determined -> asumimos good
+};
+
+// Mapeo del sistema del usuario a código de condición
+const USER_CONDITION_TO_CODE: Record<string, string> = {
+  'NEW': 'n',
+  'LIKE_NEW': 'ln',
+  'GOOD': 'g',
+  'VERY_GOOD': 'g',  // alias
+  'USED': 'u',
+  'ACCEPTABLE': 'a',
+};
+
+// Función para verificar si un estado de anuncio es igual o mejor que el del usuario
+function isConditionEqualOrBetter(adCondition: string, userConditionCode: string): boolean {
+  const adOrder = CONDITION_ORDER[adCondition] || 3;
+  const userOrder = CONDITION_ORDER[userConditionCode] || 3;
+  return adOrder <= userOrder; // Menor número = mejor estado
+}
+
+// Parser simple de TOML para la respuesta de la IA
+function parseTOMLResponse(toml: string): Array<{ index: number; match: boolean; condition: string }> {
+  const results: Array<{ index: number; match: boolean; condition: string }> = [];
+  
+  // Buscar todos los bloques [[r]]
+  const blocks = toml.split('[[r]]').slice(1); // Ignorar lo que hay antes del primer [[r]]
+  
+  for (const block of blocks) {
+    const lines = block.trim().split('\n');
+    let index = -1;
+    let match = false;
+    let condition = 'nd';
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('i=')) {
+        index = parseInt(trimmed.substring(2), 10);
+      } else if (trimmed.startsWith('m=')) {
+        match = trimmed.substring(2) === '1';
+      } else if (trimmed.startsWith('c=')) {
+        condition = trimmed.substring(2).replace(/"/g, '').trim();
+      }
+    }
+    
+    if (index >= 0) {
+      results.push({ index, match, condition });
+    }
+  }
+  
+  return results;
+}
 
 async function filterRelevantListingsWithAI(
   anuncios: AnuncioNormalizado[],
-  product: { brand: string; model: string; variant?: string; purchasePrice?: number },
+  product: { brand: string; model: string; variant?: string; purchasePrice?: number; condition?: string },
   logger: MarketLogger
 ): Promise<AnuncioNormalizado[]> {
   if (anuncios.length === 0) return [];
@@ -384,118 +453,158 @@ async function filterRelevantListingsWithAI(
     apiKey: process.env.OPENAI_API_KEY,
   });
   
-  const anunciosParaAnalizar = anuncios.slice(0, 50).map((a, i) => ({
-    index: i,
-    titulo: a.titulo,
-    precio: a.precio,
-    descripcion: a.descripcion.substring(0, 200),
-  }));
+  // Limitar a 80 anuncios para el análisis
+  const anunciosParaAnalizar = anuncios.slice(0, 80);
   
-  // Crear nombre corto del producto para búsqueda flexible
-  const productShortNames = [
-    `${product.brand} ${product.model}`,
-    product.model,
-  ];
-  if (product.model.includes(' ')) {
-    productShortNames.push(product.model.split(' ')[0]); // e.g., "PlayStation" de "PlayStation 5"
-  }
+  // Construir query de búsqueda
+  const searchQuery = `${product.brand} ${product.model}${product.variant ? ` ${product.variant}` : ''}`;
   
-  const prompt = `Eres un experto en análisis de mercado de segunda mano. DEBES identificar TODOS los anuncios que vendan el PRODUCTO COMPLETO del usuario.
+  // Construir el prompt en formato TOML
+  let prompt = `Per item: 1) match title to query (EXACT model) 2) classify condition
 
-PRODUCTO DEL USUARIO:
-- Marca: ${product.brand}
-- Modelo: ${product.model}
-${product.variant ? `- Variante: ${product.variant}` : ''}
-${product.purchasePrice ? `- Precio de compra original: ${product.purchasePrice}€` : ''}
+q="${searchQuery}"
+l="es"
 
-SINÓNIMOS ACEPTABLES:
-${product.model === 'PlayStation 5' ? '- "PS5", "PlayStation 5", "Play Station 5", "Playstation5" son TODOS lo mismo\n- "Slim", "Digital", "Disco", "Lector" son VARIANTES válidas de la consola completa' : ''}
-${product.brand === 'Dyson' ? '- "Aspiradora", "Aspirador", "Vacuum" son lo mismo\n- V15, V15s, V15 Detect son variantes válidas' : ''}
+`;
 
-ANUNCIOS ENCONTRADOS:
-${JSON.stringify(anunciosParaAnalizar, null, 2)}
+  // Añadir cada anuncio como [[i]]
+  anunciosParaAnalizar.forEach((a, i) => {
+    const titulo = a.titulo.replace(/"/g, '\\"');
+    const descripcion = a.descripcion.substring(0, 300).replace(/"/g, '\\"').replace(/\n/g, ' ');
+    prompt += `[[i]]
+n=${i}
+t="${titulo}"
+d="${descripcion}"
 
-🟢 INCLUIR (SER MUY INCLUSIVO):
-- CUALQUIER anuncio que venda la CONSOLA/PRODUCTO COMPLETO
-- Títulos con variaciones: "PS5 Slim", "PlayStation 5 Slim", "Consola PS5", etc.
-- Productos "nuevos", "seminuevos", "como nuevo", "poco uso", "precintado"
-- Aunque diga "sin mando" o "sin caja" SI el precio sugiere producto completo (>200€ para consolas)
-- Aunque tenga errores ortográficos: "ocacion" = "ocasión", "Playstion" = "PlayStation"
+`;
+  });
 
-🔴 EXCLUIR (SOLO estos casos):
-- ACCESORIOS claramente separados: mandos sueltos, cables, cargadores, fundas, soportes
-- SOLO la caja vacía o embalaje
-- PIEZAS de reparación: lectores, placas, ventiladores
-- Productos de OTRA GENERACIÓN: PS4, PS3, PS2 (NO son PS5)
-- Precio < 50€ (muy bajo para ser el producto completo)
-- El título dice EXPLÍCITAMENTE "para PS5" (indica accesorio)
+  prompt += `Input: q=query, l=language, [[i]] with n=index, t=title, d=description
+Language: Spanish (Spain)
 
-⚠️ EN CASO DE DUDA: INCLUIR el anuncio (es mejor incluir de más que excluir de más)
+Conditions (use nd ONLY if impossible):
+n: sealed/unopened | ln: opened+flawless | g: light wear | u: visible wear | a: broken
 
-RESPUESTA OBLIGATORIA en JSON:
-{
-  "relevant_indices": [lista de índices a INCLUIR],
-  "excluded": [{"index": X, "reason": "razón breve"}]
-}
+Keywords (semantic, not literal):
+• n: sealed/unopened → "precintado", "sin abrir", "sellado"
+• ln: opened+flawless → "como nuevo", "impecable", "sin uso"
+• g: light wear → "buen/excelente estado", "usado 1-6 meses"
+• u: visible wear → "usado >6 meses", "señales uso"
 
-EJEMPLO para PS5 Slim:
-- "PlayStation 5 Slim Sony.Nueva a estrenar 420€" → INCLUIR (es PS5 Slim completa)
-- "PS5 Slim Digital Blanca 850GB 350€" → INCLUIR (es PS5 Slim Digital completa)
-- "Mando DualSense PS5 50€" → EXCLUIR (accesorio, dice "Mando")
-- "PS4 Slim 150€" → EXCLUIR (es PS4, no PS5)`;
+CRITICAL Match Rules:
+Generations/Sizes exact: ❌ "iPhone 12" ≠ "iPhone 13" | ❌ "Sofá 2 plazas" ≠ "3 plazas" | ❌ "Talla 42" ≠ "43"
+Accessories NOT product: ❌ "Funda/Cargador/Caja iPhone" NOT "iPhone" | ❌ "Sábanas/Funda almohada" NOT "cama/almohada"
+
+Output [[r]] with i=index, m=match(1=yes 0=no), c=condition(n/ln/g/u/a/nd).
+CRITICAL: If input has N items [[i]], output MUST have exactly N results [[r]]. Never skip items.
+ONLY TOML, NO explanations:
+
+[[r]]
+i=0
+m=1
+c="ln"
+
+[[r]]
+i=1
+m=0
+c="u"`;
 
   try {
     logger.addPhase('AI_FILTERING_START', {
-      message: 'Iniciando filtrado con IA',
+      message: 'Iniciando filtrado con IA (TOML prompt)',
       model: 'gpt-4o-mini',
       anuncios_to_analyze: anunciosParaAnalizar.length,
+      search_query: searchQuery,
     });
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
       temperature: 0.1,
+      max_tokens: 4000,
     });
     
-    const result = JSON.parse(response.choices[0].message.content || '{}');
-    // Aceptar ambos formatos: relevant_indices o indices_seleccionados
-    const relevantIndices: number[] = result.relevant_indices || result.indices_seleccionados || [];
-    const excludedByAI: Array<{ index: number; reason: string }> = result.excluded || result.excluidos || [];
+    const rawResponse = response.choices[0].message.content || '';
+    const parsedResults = parseTOMLResponse(rawResponse);
     
-    // Obtener anuncios seleccionados
-    const selectedAnuncios = relevantIndices
-      .filter(i => i >= 0 && i < anuncios.length)
-      .map(i => ({ ...anuncios[i], relevancia: 1 }));
+    // Separar matches y no-matches
+    const matches = parsedResults.filter(r => r.match);
+    const nonMatches = parsedResults.filter(r => !r.match);
     
-    // Crear mapa de razones de exclusión de la IA
+    // Obtener anuncios seleccionados con su condición
+    const selectedAnuncios = matches
+      .filter(r => r.index >= 0 && r.index < anuncios.length)
+      .map(r => ({
+        ...anuncios[r.index],
+        relevancia: 1,
+        condition_detected: CONDITION_MAP[r.condition] || 'GOOD',
+      }));
+    
+    // Crear mapa de razones de exclusión
     const exclusionReasons = new Map<number, string>();
-    excludedByAI.forEach(e => exclusionReasons.set(e.index, e.reason));
+    nonMatches.forEach(r => {
+      exclusionReasons.set(r.index, `No coincide (condition: ${r.condition})`);
+    });
     
-    // Log del filtrado IA con detalle de descartados (usando razones de la IA)
+    // Log del filtrado IA
     logger.logAIFiltering(
       anuncios.length,
-      prompt,
-      result,
-      relevantIndices.length,
+      `TOML prompt with query: "${searchQuery}"`,
+      {
+        total_parsed: parsedResults.length,
+        matches: matches.length,
+        non_matches: nonMatches.length,
+        conditions_detected: matches.map(m => ({ index: m.index, condition: m.condition })),
+      },
+      selectedAnuncios.length,
       anuncios.map(a => ({ titulo: a.titulo, precio: a.precio, descripcion: a.descripcion })),
-      selectedAnuncios.map(a => ({ titulo: a.titulo, precio: a.precio })),
+      selectedAnuncios.map(a => ({ 
+        titulo: a.titulo, 
+        precio: a.precio,
+        condition: a.condition_detected,
+      })),
       exclusionReasons
     );
     
+    // Filtrar por estado si el usuario tiene un estado específico
+    if (product.condition) {
+      const userConditionCode = USER_CONDITION_TO_CODE[product.condition.toUpperCase()] || 'g';
+      
+      const filteredByCondition = selectedAnuncios.filter(anuncio => {
+        // Obtener el código de condición del anuncio
+        const match = matches.find(m => anuncios[m.index]?.titulo === anuncio.titulo);
+        const adConditionCode = match?.condition || 'nd';
+        return isConditionEqualOrBetter(adConditionCode, userConditionCode);
+      });
+      
+      // Log del filtrado por condición
+      logger.addPhase('CONDITION_FILTERING', {
+        message: 'Filtrado por estado del producto',
+        user_condition: product.condition,
+        user_condition_code: userConditionCode,
+        before_filter: selectedAnuncios.length,
+        after_filter: filteredByCondition.length,
+        removed_by_condition: selectedAnuncios.length - filteredByCondition.length,
+        kept_conditions: filteredByCondition.map(a => a.condition_detected),
+      });
+      
+      return filteredByCondition;
+    }
+    
     return selectedAnuncios;
+    
   } catch (error) {
     logger.addPhase('AI_FILTERING_ERROR', {
       message: 'Error en filtrado IA, usando fallback',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
     
-    // Fallback
+    // Fallback: filtro básico por texto
     return anuncios.filter(a => {
       const titulo = a.titulo_normalizado;
       const brand = normalizeText(product.brand);
       const model = normalizeText(product.model);
-      return titulo.includes(brand) && titulo.includes(model);
+      return titulo.includes(brand) || titulo.includes(model);
     });
   }
 }
@@ -696,7 +805,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.json();
-    const { brand, model, variant, purchasePrice } = body;
+    const { brand, model, variant, purchasePrice, condition } = body;
     
     if (!brand || !model) {
       return NextResponse.json(
@@ -742,10 +851,10 @@ export async function POST(request: NextRequest) {
       });
     }
     
-    // PASO 2: Filtrar con IA
+    // PASO 2: Filtrar con IA (incluyendo filtrado por condición del producto)
     const relevantAnuncios = await filterRelevantListingsWithAI(
       allAnuncios,
-      { brand, model, variant, purchasePrice },
+      { brand, model, variant, purchasePrice, condition },
       logger
     );
     

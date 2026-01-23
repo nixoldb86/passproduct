@@ -334,6 +334,15 @@ body {
   50% { opacity: 0.5; }
 }
 
+@keyframes breathingFade {
+  0%, 100% { 
+    opacity: 0.3;
+  }
+  50% { 
+    opacity: 1;
+  }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -353,6 +362,10 @@ body {
 
 .animate-pulse {
   animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-breathing {
+  animation: breathingFade 2s ease-in-out infinite;
 }
 
 /* Skeleton loading */

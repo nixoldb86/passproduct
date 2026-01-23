@@ -292,6 +292,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
           model: product.model,
           variant: product.variant,
           purchasePrice: product.purchasePrice,
+          condition: product.condition, // Para comparar "peras con peras"
         }),
       });
       

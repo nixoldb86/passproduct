@@ -60,6 +60,7 @@ export default function SettingsPage() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [verificationStep, setVerificationStep] = useState<"idle" | "code-sent" | "verifying">("idle");
   const [verificationCode, setVerificationCode] = useState("");
+  const [phoneVerificationHint, setPhoneVerificationHint] = useState<string | null>(null);
   
   // Unfollow state
   const [unfollowingId, setUnfollowingId] = useState<string | null>(null);
@@ -78,10 +79,17 @@ export default function SettingsPage() {
           if (data.success && data.privacy) {
             setPrivacySettings(data.privacy);
           }
-          // Also load phone from the same response if available
-          if (data.phone) {
-            setPhoneNumber(data.phone);
-            setIsPhoneVerified(data.isPhoneVerified || false);
+        }
+        
+        // Fetch phone status from our API
+        const phoneResponse = await fetch("/api/verify/phone/status");
+        if (phoneResponse.ok) {
+          const phoneData = await phoneResponse.json();
+          if (phoneData.success) {
+            if (phoneData.phone) {
+              setPhoneNumber(phoneData.phone.replace(/^\+34/, "")); // Remove prefix for display
+            }
+            setIsPhoneVerified(phoneData.phoneVerified || false);
           }
         }
         
@@ -131,7 +139,7 @@ export default function SettingsPage() {
     return phone;
   };
 
-  // Handle phone save
+  // Handle phone save - usar la misma API que el checkout
   const handleSavePhone = async () => {
     if (!phoneNumber.trim()) {
       setPhoneError("Introduce un número de teléfono");
@@ -147,35 +155,45 @@ export default function SettingsPage() {
     
     setIsSavingPhone(true);
     setPhoneError(null);
+    setPhoneVerificationHint(null);
     
     try {
-      const response = await fetch("/api/db/users/phone", {
-        method: "PUT",
+      const response = await fetch("/api/verify/phone", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: cleanedPhone }),
+        body: JSON.stringify({ phoneNumber: cleanedPhone }),
       });
       
       const data = await response.json();
       
       if (data.success) {
-        setIsEditingPhone(false);
-        setVerificationStep("code-sent");
-        // Phone saved, now waiting for verification code
+        if (data.alreadyVerified) {
+          setIsPhoneVerified(true);
+          setIsEditingPhone(false);
+          setVerificationStep("idle");
+        } else {
+          setIsEditingPhone(false);
+          setVerificationStep("code-sent");
+          // Guardar hint si viene (solo en desarrollo)
+          if (data.hint) {
+            setPhoneVerificationHint(data.hint);
+          }
+        }
       } else {
-        setPhoneError(data.error || "Error al guardar el teléfono");
+        setPhoneError(data.error || "Error al enviar el código");
       }
     } catch (error) {
       console.error("Error saving phone:", error);
-      setPhoneError("Error al guardar el teléfono");
+      setPhoneError("Error al enviar el código");
     } finally {
       setIsSavingPhone(false);
     }
   };
 
-  // Handle verification code submission
+  // Handle verification code submission - usar la misma API que el checkout
   const handleVerifyCode = async () => {
-    if (!verificationCode || verificationCode.length !== 6) {
-      setPhoneError("Introduce el código de 6 dígitos");
+    if (!verificationCode || verificationCode.length !== 4) {
+      setPhoneError("Introduce el código de 4 dígitos");
       return;
     }
     
@@ -183,10 +201,10 @@ export default function SettingsPage() {
     setPhoneError(null);
     
     try {
-      const response = await fetch("/api/db/users/phone/verify", {
+      const response = await fetch("/api/verify/phone/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: verificationCode }),
+        body: JSON.stringify({ phoneNumber, code: verificationCode }),
       });
       
       const data = await response.json();
@@ -195,6 +213,7 @@ export default function SettingsPage() {
         setIsPhoneVerified(true);
         setVerificationStep("idle");
         setVerificationCode("");
+        setPhoneVerificationHint(null);
       } else {
         setPhoneError(data.error || "Código incorrecto");
         setVerificationStep("code-sent");
@@ -212,6 +231,7 @@ export default function SettingsPage() {
     setVerificationStep("idle");
     setVerificationCode("");
     setPhoneError(null);
+    setPhoneVerificationHint(null);
   };
 
   const updatePrivacySetting = async (
@@ -351,18 +371,23 @@ export default function SettingsPage() {
                     <p className="text-sm text-foreground-muted">
                       Hemos enviado un código de verificación a {formatPhoneDisplay(phoneNumber)}
                     </p>
+                    {phoneVerificationHint && (
+                      <p className="text-xs text-accent bg-accent/10 px-2 py-1 rounded">
+                        🧪 {phoneVerificationHint}
+                      </p>
+                    )}
                     <div className="flex gap-2">
                       <Input
-                        placeholder="Código de 6 dígitos"
+                        placeholder="0000"
                         value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                        className="flex-1"
-                        maxLength={6}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                        className="flex-1 text-center text-xl tracking-widest font-mono"
+                        maxLength={4}
                       />
                       <Button
                         onClick={handleVerifyCode}
                         isLoading={verificationStep === "verifying"}
-                        disabled={verificationCode.length !== 6}
+                        disabled={verificationCode.length !== 4}
                       >
                         Verificar
                       </Button>
@@ -410,6 +435,9 @@ export default function SettingsPage() {
                         Cancelar
                       </button>
                     </div>
+                    <p className="text-xs text-foreground-subtle italic mt-2">
+                      Tu número no se lo damos a nadie. Ni al vendedor, ni a empresas de marketing que te llamen a las 3 de la tarde para venderte seguros. Solo lo usamos para verificar que eres una persona real. Punto.
+                    </p>
                     {phoneError && (
                       <p className="text-sm text-error">{phoneError}</p>
                     )}

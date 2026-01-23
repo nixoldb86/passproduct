@@ -222,10 +222,30 @@ export function ProductCard({ product, onEdit, onDelete, onRefreshMarketPrices }
     setShowDocumentsModal(false);
   };
 
+  // Verificar si han pasado 24 horas desde la última actualización
+  const canRefreshPrices = (): boolean => {
+    if (!product.marketPrices?.lastUpdated) return true;
+    const lastUpdate = new Date(product.marketPrices.lastUpdated);
+    const now = new Date();
+    const hoursSinceUpdate = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
+    return hoursSinceUpdate >= 24;
+  };
+
+  const getTimeUntilNextRefresh = (): string => {
+    if (!product.marketPrices?.lastUpdated) return "";
+    const lastUpdate = new Date(product.marketPrices.lastUpdated);
+    const nextRefresh = new Date(lastUpdate.getTime() + 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const hoursLeft = Math.ceil((nextRefresh.getTime() - now.getTime()) / (1000 * 60 * 60));
+    if (hoursLeft <= 0) return "";
+    if (hoursLeft === 1) return "Disponible en 1 hora";
+    return `Disponible en ${hoursLeft} horas`;
+  };
+
   const handleRefreshPrices = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!onRefreshMarketPrices || isRefreshingPrices) return;
+    if (!onRefreshMarketPrices || isRefreshingPrices || !canRefreshPrices()) return;
     
     setIsRefreshingPrices(true);
     try {
@@ -400,44 +420,60 @@ export function ProductCard({ product, onEdit, onDelete, onRefreshMarketPrices }
             </button>
           </div>
 
-          {/* Value */}
+          {/* Value - Solo muestra valor real de mercado, no estimaciones fake */}
           <div className="flex items-end justify-between">
             <div>
               <p className="text-xs text-foreground-subtle">Valor estimado</p>
               <div className="flex items-center gap-2">
-                <p className="text-lg font-semibold text-foreground tabular-nums">
-                  {product.estimatedValue
-                    ? formatPrice(product.estimatedValue)
-                    : "—"}
-                </p>
-                {onRefreshMarketPrices && (
+                {product.marketPrices ? (
+                  // Tiene valoración real de mercado
+                  <p className="text-lg font-semibold text-foreground tabular-nums">
+                    {formatPrice(product.marketPrices.ideal)}
+                  </p>
+                ) : (
+                  // No tiene valoración - mostrar "Calculando valor..." con animación breathing
+                  <span className="text-sm text-accent animate-breathing">
+                    Calculando valor...
+                  </span>
+                )}
+                {product.marketPrices && onRefreshMarketPrices && (
                   <button
                     onClick={handleRefreshPrices}
-                    disabled={isRefreshingPrices}
-                    className="p-1 rounded-full hover:bg-surface-2 transition-colors disabled:opacity-50"
-                    title="Actualizar valoración de mercado"
+                    disabled={isRefreshingPrices || !canRefreshPrices()}
+                    className="p-1 rounded-full hover:bg-surface-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={canRefreshPrices() ? "Actualizar valoración de mercado" : getTimeUntilNextRefresh()}
                   >
                     {isRefreshingPrices ? (
                       <Loader2 className="h-4 w-4 text-accent animate-spin" />
                     ) : (
-                      <RefreshCw className="h-4 w-4 text-foreground-subtle hover:text-accent" />
+                      <RefreshCw className={`h-4 w-4 ${canRefreshPrices() ? "text-foreground-subtle hover:text-accent" : "text-foreground-subtle/30"}`} />
                     )}
                   </button>
                 )}
               </div>
+              {/* Fecha de última actualización con año */}
+              {product.marketPrices?.lastUpdated && (
+                <p className="text-[10px] text-foreground-subtle mt-0.5">
+                  Actualizado: {new Date(product.marketPrices.lastUpdated).toLocaleDateString("es-ES", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
+              )}
             </div>
-            {product.purchasePrice && product.estimatedValue && (
+            {product.purchasePrice && product.marketPrices && (
               <div className="text-right">
                 <p className="text-xs text-foreground-subtle">
                   Compra: {formatPrice(product.purchasePrice)}
                 </p>
-                {product.estimatedValue < product.purchasePrice ? (
+                {product.marketPrices.ideal < product.purchasePrice ? (
                   <p className="text-xs text-error">
-                    -{Math.round(((product.purchasePrice - product.estimatedValue) / product.purchasePrice) * 100)}%
+                    -{Math.round(((product.purchasePrice - product.marketPrices.ideal) / product.purchasePrice) * 100)}%
                   </p>
                 ) : (
                   <p className="text-xs text-jade">
-                    +{Math.round(((product.estimatedValue - product.purchasePrice) / product.purchasePrice) * 100)}%
+                    +{Math.round(((product.marketPrices.ideal - product.purchasePrice) / product.purchasePrice) * 100)}%
                   </p>
                 )}
               </div>

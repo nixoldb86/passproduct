@@ -47,6 +47,7 @@ interface UseMarketPricesReturn {
     model: string;
     variant?: string;
     purchasePrice?: number;
+    condition?: string; // Para comparar "peras con peras"
   }) => Promise<MarketPriceResult | null>;
   clearResult: () => void;
 }
@@ -61,6 +62,7 @@ export function useMarketPrices(): UseMarketPricesReturn {
     model: string;
     variant?: string;
     purchasePrice?: number;
+    condition?: string; // Para comparar "peras con peras"
   }): Promise<MarketPriceResult | null> => {
     setIsLoading(true);
     setError(null);

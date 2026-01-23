@@ -152,17 +152,30 @@ export class MarketLogger {
   logAIFiltering(
     inputCount: number,
     prompt: string,
-    aiResponse: { relevant_indices: number[]; reasoning?: string; excluded?: Array<{ index: number; reason: string }> },
+    aiResponse: unknown, // Flexible para aceptar diferentes formatos (JSON o TOML parsed)
     outputCount: number,
     allAnuncios: Array<{ titulo: string; precio: number; descripcion?: string }>,
-    selectedAnuncios: Array<{ titulo: string; precio: number }>,
+    selectedAnuncios: Array<{ titulo: string; precio: number; condition?: string }>,
     exclusionReasons?: Map<number, string>
   ): void {
+    // Extraer índices relevantes del aiResponse (puede venir en diferentes formatos)
+    let relevantIndices: number[] = [];
+    const response = aiResponse as Record<string, unknown>;
+    
+    if (Array.isArray(response.relevant_indices)) {
+      relevantIndices = response.relevant_indices;
+    } else if (Array.isArray(response.indices_seleccionados)) {
+      relevantIndices = response.indices_seleccionados;
+    } else if (typeof response.matches === 'number') {
+      // Formato TOML: usamos los índices de selectedAnuncios
+      relevantIndices = selectedAnuncios.map((_, i) => i);
+    }
+    
     // Identificar anuncios descartados
-    const selectedIndices = new Set(aiResponse.relevant_indices);
+    const selectedTitles = new Set(selectedAnuncios.map(a => a.titulo));
     const descartados = allAnuncios
       .map((anuncio, index) => ({ ...anuncio, index }))
-      .filter(a => !selectedIndices.has(a.index))
+      .filter(a => !selectedTitles.has(a.titulo))
       .map(a => {
         // Usar razón de la IA si está disponible, sino inferir
         let razon = exclusionReasons?.get(a.index) || '';
@@ -188,7 +201,7 @@ export class MarketLogger {
           } else if (a.precio < 50) {
             razon = 'Precio muy bajo para ser el producto completo';
           } else {
-            razon = 'Descartado por la IA (sin razón específica)';
+            razon = 'No coincide con el producto buscado';
           }
         }
         
@@ -201,16 +214,14 @@ export class MarketLogger {
       });
 
     this.addPhase('AI_FILTERING', {
-      message: 'Filtrado con IA (OpenAI GPT-4o-mini)',
+      message: 'Filtrado con IA (OpenAI GPT-4o-mini - TOML prompt)',
       input_count: inputCount,
       prompt_summary: prompt.substring(0, 500) + '...',
-      ai_response: {
-        indices_seleccionados: aiResponse.relevant_indices,
-        razonamiento: aiResponse.reasoning,
-      },
+      ai_response: response,
       anuncios_seleccionados: selectedAnuncios.map(a => ({
         titulo: a.titulo,
         precio: `${a.precio}€`,
+        condition: a.condition || 'no detectado',
       })),
       anuncios_descartados: {
         total: descartados.length,

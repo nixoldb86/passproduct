@@ -389,8 +389,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
           : undefined,
         additionalInsuranceProvider: formData.additionalInsuranceProvider || undefined,
         additionalInsuranceNotes: formData.additionalInsuranceNotes || undefined,
-        estimatedValue: enrichedData?.resaleValue?.maxPrice || 
-          (formData.purchasePrice ? parseFloat(formData.purchasePrice) * 0.8 : undefined),
+        // NO asignamos estimatedValue aquí - se calcula con refreshMarketPrices después de crear
         resaleValue: enrichedData?.resaleValue || undefined,
         manualUrl: enrichedData?.manualUrl || undefined,
         specs: enrichedData?.specs || undefined,

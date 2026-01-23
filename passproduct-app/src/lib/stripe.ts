@@ -1,18 +1,43 @@
 import Stripe from "stripe";
 import { loadStripe, Stripe as StripeJS } from "@stripe/stripe-js";
 
-// Server-side Stripe instance
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
-  typescript: true,
+// Server-side Stripe instance (lazy initialization)
+let _stripe: Stripe | null = null;
+
+export const getStripeServer = (): Stripe => {
+  if (!_stripe) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error(
+        "STRIPE_SECRET_KEY no está configurada. Añádela a tu archivo .env.local"
+      );
+    }
+    _stripe = new Stripe(secretKey, {
+      apiVersion: "2024-12-18.acacia",
+      typescript: true,
+    });
+  }
+  return _stripe;
+};
+
+// Alias para compatibilidad (pero con inicialización lazy)
+export const stripe = new Proxy({} as Stripe, {
+  get(_, prop) {
+    return getStripeServer()[prop as keyof Stripe];
+  },
 });
 
 // Client-side Stripe promise (singleton)
-let stripePromise: Promise<StripeJS | null>;
+let stripePromise: Promise<StripeJS | null> | null = null;
 
 export const getStripe = () => {
   if (!stripePromise) {
-    stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+    const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    if (!publishableKey) {
+      console.warn("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY no está configurada");
+      return Promise.resolve(null);
+    }
+    stripePromise = loadStripe(publishableKey);
   }
   return stripePromise;
 };

@@ -95,19 +95,19 @@ export function EditProductModal({ isOpen, onClose, product, onSave }: EditProdu
     const updates: Partial<Product> = {
       brand: formData.brand,
       model: formData.model,
-      variant: formData.variant || undefined,
+      variant: formData.variant || null, // null para borrar el campo
       condition: formData.condition,
-      purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : undefined,
-      purchaseStore: formData.purchaseStore || undefined,
-      warrantyEndDate: formData.warrantyEndDate ? new Date(formData.warrantyEndDate) : undefined,
-      accessories: Object.keys(accessories).length > 0 ? accessories : undefined,
+      purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : null,
+      purchaseStore: formData.purchaseStore || null,
+      warrantyEndDate: formData.warrantyEndDate ? new Date(formData.warrantyEndDate) : null,
+      accessories: Object.keys(accessories).length > 0 ? accessories : null,
       // Seguro adicional
-      hasAdditionalInsurance: formData.hasAdditionalInsurance || undefined,
+      hasAdditionalInsurance: formData.hasAdditionalInsurance,
       additionalInsuranceEndDate: formData.additionalInsuranceEndDate 
         ? new Date(formData.additionalInsuranceEndDate) 
-        : undefined,
-      additionalInsuranceProvider: formData.additionalInsuranceProvider || undefined,
-      additionalInsuranceNotes: formData.additionalInsuranceNotes || undefined,
+        : null,
+      additionalInsuranceProvider: formData.additionalInsuranceProvider || null,
+      additionalInsuranceNotes: formData.additionalInsuranceNotes || null,
     };
 
     // Guardar en BD a través de la API

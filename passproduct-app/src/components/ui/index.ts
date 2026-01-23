@@ -7,3 +7,4 @@ export { Badge, VerifiedPurchaseBadge, WarrantyBadge, AccessoriesBadge, SerialBa
 export { Skeleton, SkeletonCard, SkeletonProductDetail, SkeletonList } from "./skeleton";
 export { LanguageSelector } from "./language-selector";
 export { NotificationBell } from "./notification-bell";
+export { AddressAutocomplete } from "./address-autocomplete";
