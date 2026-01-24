@@ -12,6 +12,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navbarFeatures => 'Características';
 
   @override
+  String get navbarWhyItWorks => '¿Por qué funciona?';
+
+  @override
   String get navbarPricing => 'Precios';
 
   @override
@@ -34,19 +37,26 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get heroDescription =>
-      'Expandimos automáticamente tu búsqueda desde tu entorno local a plataformas de todo el mundo, conectando compradores y vendedores globalmente.';
+      'Decenas de plataformas de segunda mano en una sola búsqueda. Mientras tú decides, nosotros comparamos.';
 
   @override
-  String get heroSearchPlaceholder => 'Busca productos de segunda mano...';
+  String get heroSearchPlaceholder => '¿Qué quieres encontrar hoy?';
 
   @override
   String get heroSearchButton => 'Buscar';
 
   @override
-  String get heroStartFree => 'Crear cuenta Gratis';
+  String get heroStartFree => 'Empieza gratis';
 
   @override
   String get heroViewDemo => 'Ver Demo';
+
+  @override
+  String get heroBadge => 'El buscador que debería existir hace años';
+
+  @override
+  String get heroMicrocopy =>
+      'Sin registro obligatorio. Sin tarjeta. Sin trampa.';
 
   @override
   String get useCasesTitle => 'Dos formas de usar Pricofy';
@@ -92,39 +102,258 @@ class AppLocalizationsEs extends AppLocalizations {
   String get useCasesBuyButton => 'Buscar producto';
 
   @override
-  String get featuresTitle => 'Características Principales';
+  String get featuresTitle => 'Deja de perder dinero vendiendo a ciegas';
 
   @override
   String get featuresSubtitle =>
-      'Todo lo que necesitas para optimizar tus precios';
+      'El 73% de los vendedores subestiman o sobrestiman sus productos';
 
   @override
-  String get featuresAiTitle => 'IA Avanzada';
+  String get featuresHeroDescription =>
+      'Pricofy te dice el precio exacto basado en lo que los usuarios REALMENTE están pagando. Sin suposiciones. Sin perder horas buscando.';
+
+  @override
+  String get featuresAiTitle => 'Precio justo en tiempo real';
 
   @override
   String get featuresAiDescription =>
-      'Algoritmos de machine learning que analizan miles de datos para darte el precio óptimo.';
+      'No más horas comparando. Sube tu producto y te decimos cuánto vale basándonos en miles de anuncios reales.';
 
   @override
-  String get featuresRealTimeTitle => 'Tiempo Real';
+  String get featuresRealTimeTitle => 'Datos de HOY, no de hace 6 meses';
 
   @override
   String get featuresRealTimeDescription =>
-      'Actualización constante de precios del mercado para mantenerte siempre competitivo.';
+      'El mercado cambia cada día. Analizamos anuncios publicados en las últimas 24-48 horas para darte el precio real.';
 
   @override
-  String get featuresAnalyticsTitle => 'Analíticas';
+  String get featuresAnalyticsTitle => 'Encuentra tu cliente perfecto';
 
   @override
   String get featuresAnalyticsDescription =>
-      'Dashboards detallados con métricas clave para tomar mejores decisiones.';
+      'Si no vendes hielo en el Polo Norte, ¿el problema es el hielo? Encuentra el lugar de venta perfecto para tu producto.';
 
   @override
-  String get featuresSecurityTitle => 'Seguro';
+  String get featuresSecurityTitle => 'Tus datos son TUYOS';
 
   @override
   String get featuresSecurityDescription =>
-      'Tus datos están protegidos con encriptación de nivel nuclear.';
+      'Sin vender a terceros. Sin spam. Sin sorpresas. Encriptación de extremo a extremo.';
+
+  @override
+  String get featuresProblemTitle =>
+      '¿Por qué tu anuncio lleva semanas sin venderse?';
+
+  @override
+  String get featuresProblemSubtitle =>
+      'El problema no eres tú. Es que no tienes información.';
+
+  @override
+  String get featuresProblem1Title => 'Precio muy alto';
+
+  @override
+  String get featuresProblem1Description =>
+      'Nadie pregunta. Tu producto se queda ahí acumulando polvo digital.';
+
+  @override
+  String get featuresProblem2Title => 'Precio muy bajo';
+
+  @override
+  String get featuresProblem2Description =>
+      'Vendes rápido pero pierdes dinero. Alguien lo revende por más.';
+
+  @override
+  String get featuresProblem3Title => 'Sin saber dónde publicar';
+
+  @override
+  String get featuresProblem3Description =>
+      '¿Con envío? ¿Reviso el precio en más sitios web? ¿Por cuánto se vende en otro país? Cada plataforma tiene compradores diferentes.';
+
+  @override
+  String get featuresSolutionTitle => 'Con Pricofy encuentras el punto exacto';
+
+  @override
+  String get featuresSolutionSubtitle => 'Donde VENDES rápido y GANAS lo justo';
+
+  @override
+  String get featuresSolution1 =>
+      'Analizamos miles de anuncios similares al tuyo';
+
+  @override
+  String get featuresSolution2 =>
+      'Te decimos el precio ideal, el mínimo y el rápido';
+
+  @override
+  String get featuresSolution3 => 'Te recomendamos en qué plataformas publicar';
+
+  @override
+  String get featuresCompareTitle => 'Antes vs Con Pricofy';
+
+  @override
+  String get featuresCompareBefore1 => 'Horas buscando en 5 plataformas';
+
+  @override
+  String get featuresCompareAfter1 =>
+      'Resultados al instante, todas las plataformas';
+
+  @override
+  String get featuresCompareBefore2 => 'Precio basado en \'lo que yo creo\'';
+
+  @override
+  String get featuresCompareAfter2 => 'Precio basado en datos reales';
+
+  @override
+  String get featuresCompareBefore3 => 'Vendido en 3 semanas (o nunca)';
+
+  @override
+  String get featuresCompareAfter3 => 'Vendido en días al precio justo';
+
+  @override
+  String get featuresCompareBefore4 => 'Dudas constantes: ¿es buen precio?';
+
+  @override
+  String get featuresCompareAfter4 =>
+      'Certeza: sabes que es el precio correcto';
+
+  @override
+  String get featuresCtaTitle =>
+      'Tu próximo producto ya tiene un precio óptimo esperándote';
+
+  @override
+  String get featuresCtaSubtitle =>
+      'Sin permanencias. Sin compromiso. Sin excusas.';
+
+  @override
+  String get featuresCtaButton => 'Analizar mi primer producto';
+
+  @override
+  String get featuresBuyerTitle => '¿Estás pagando de más sin saberlo?';
+
+  @override
+  String get featuresBuyerSubtitle =>
+      'El mismo producto puede costar €200 menos en otra plataforma o país';
+
+  @override
+  String get featuresBuyerProblem1Title => 'Horas perdidas comparando';
+
+  @override
+  String get featuresBuyerProblem1Description =>
+      'Abres 5 apps, 10 pestañas, y sigues sin saber cuál es el mejor precio.';
+
+  @override
+  String get featuresBuyerProblem2Title => 'Precios que varían sin sentido';
+
+  @override
+  String get featuresBuyerProblem2Description =>
+      'La misma consola por 400€, 350€, 380€. ¿Cuál eliges? Primero tienes que encontrar todos los anuncios para decidir, de eso nos encargamos nosotros.';
+
+  @override
+  String get featuresBuyerProblem3Title => 'Miedo a que te timen';
+
+  @override
+  String get featuresBuyerProblem3Description =>
+      '¿Es buen precio o te están tomando el pelo? Sin datos, no lo sabes.';
+
+  @override
+  String get featuresBuyerSolutionTitle =>
+      'Con Pricofy encuentras el chollo REAL';
+
+  @override
+  String get featuresBuyerSolutionSubtitle =>
+      'El mejor precio, en la plataforma correcta, sin perder horas';
+
+  @override
+  String get featuresBuyerSolution1 =>
+      'Buscamos en todas las plataformas a la vez';
+
+  @override
+  String get featuresBuyerSolution2 =>
+      'Filtramos el ruido: solo resultados relevantes';
+
+  @override
+  String get featuresBuyerSolution3 => 'Te decimos si es buen precio o esperar';
+
+  @override
+  String get featuresBuyerCompareBefore1 => '5 apps abiertas, 10 pestañas';
+
+  @override
+  String get featuresBuyerCompareAfter1 => '1 búsqueda, todas las plataformas';
+
+  @override
+  String get featuresBuyerCompareBefore2 => 'Dudas: ¿será buen precio?';
+
+  @override
+  String get featuresBuyerCompareAfter2 => 'Certeza: ves el precio de mercado';
+
+  @override
+  String get featuresBuyerCompareBefore3 => 'Solo ves ofertas de tu país';
+
+  @override
+  String get featuresBuyerCompareAfter3 => 'Ves ofertas de toda Europa';
+
+  @override
+  String get featuresBuyerCompareBefore4 => 'Resultados llenos de accesorios';
+
+  @override
+  String get featuresBuyerCompareAfter4 => 'Solo el producto que buscas';
+
+  @override
+  String get featuresBuyerCtaButton => 'Buscar mi primer producto';
+
+  @override
+  String get featuresToggleSeller => 'Quiero Vender';
+
+  @override
+  String get featuresToggleBuyer => 'Quiero Comprar';
+
+  @override
+  String get featuresBadgeProblem => 'El Problema';
+
+  @override
+  String get featuresBadgeSolution => 'La Solución';
+
+  @override
+  String get featuresBadgeCompare => 'Antes vs Después';
+
+  @override
+  String get featuresBadgeWhyItWorks => 'Por qué funciona';
+
+  @override
+  String get featuresTechTitleSeller => 'Tecnología que trabaja por ti';
+
+  @override
+  String get featuresTechTitleBuyer => 'Tecnología a tu favor';
+
+  @override
+  String get featuresBuyerAiTitle => 'El mejor precio en segundos';
+
+  @override
+  String get featuresBuyerAiDescription =>
+      'Comparamos automáticamente en todas las plataformas. Tú solo dices qué buscas y te mostramos dónde está más barato.';
+
+  @override
+  String get featuresBuyerRealTimeTitle => 'Ofertas de HOY, no de hace meses';
+
+  @override
+  String get featuresBuyerRealTimeDescription =>
+      'Analizamos anuncios publicados en las últimas horas. Nada de chollos fantasma que ya se vendieron.';
+
+  @override
+  String get featuresBuyerAnalyticsTitle => 'Sabe cuándo esperar';
+
+  @override
+  String get featuresBuyerAnalyticsDescription =>
+      '¿Mejor comprar ahora o esperar? Te decimos si el precio actual es bueno o si suele bajar.';
+
+  @override
+  String get featuresBuyerSecurityTitle => 'Solo resultados contrastados';
+
+  @override
+  String get featuresBuyerSecurityDescription =>
+      'Filtramos anuncios duplicados, relacionados pero que no coinciden con tu búsqueda y eliminamos el ruido de anuncios de productos similares. Solo ves lo que vale la pena.';
+
+  @override
+  String get featuresBuyerTechTitle => 'Tecnología a tu favor';
 
   @override
   String get pricingTitle => 'Planes y Precios';
@@ -269,7 +498,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pricingEnterpriseButton => 'Contactar ventas';
 
   @override
-  String get pricingFaqTitle => 'Preguntas Frecuentes';
+  String get pricingFaqTitle => '¿Cómo funcionan los créditos?';
 
   @override
   String get pricingFaqQuestion1 =>
@@ -295,58 +524,44 @@ class AppLocalizationsEs extends AppLocalizations {
       'Todos los planes incluyen soporte. El plan Pro incluye soporte prioritario.';
 
   @override
-  String get marketProblemBadge => 'El Problema Real';
+  String get marketProblemBadge => 'Esto te suena, ¿verdad?';
 
   @override
-  String get marketProblemTitle =>
-      'El mercado de segunda mano está fragmentado geográficamente';
+  String get marketProblemTitle => 'El problema no eres tú. Es el sistema.';
 
   @override
   String get marketProblemSubtitle =>
-      'Aunque estés dispuesto a comprar con envío, solo buscas en plataformas de tu zona. ¿Por qué perder oportunidades?';
+      'Llevas años buscando mal porque nadie te dio una herramienta mejor.';
 
   @override
-  String get marketProblem1Title => 'Búsqueda limitada geográficamente';
+  String get marketProblem1Title => 'Pierdes horas buscando';
 
   @override
   String get marketProblem1Description =>
-      'Aunque estés dispuesto a comprar con envío, solo buscas en Vinted, eBay, y plataformas locales de tu país. Te pierdes oportunidades en todo el mundo donde el mismo producto podría estar más barato o en mejor estado.';
+      'Abres una web, buscas, filtras, descartas anuncios que no tienen nada que ver, luego vas a otra, repites el proceso... y repites la misma búsqueda 3 veces más y al final no encuentras lo que buscas.';
 
   @override
-  String get marketProblem1Stat =>
-      '60% de compradores están dispuestos a comprar con envío';
+  String get marketProblem1Stat => '3+ horas de media por búsqueda';
 
   @override
-  String get marketProblem2Title => 'Vendedores con alcance limitado';
+  String get marketProblem2Title => 'Pagas más de lo que deberías';
 
   @override
   String get marketProblem2Description =>
-      'El 80% de vendedores están dispuestos a enviar su producto, pero solo publican en plataformas locales. Cierras la barrera limitando tu alcance a tu ciudad o país, cuando podrías vender a todo el mundo si encuentras el comprador perfecto.';
+      'Sin ver todos los anuncios del mercado, no sabes si estás pagando un precio justo o te están timando.';
 
   @override
-  String get marketProblem2Stat =>
-      '80% de vendedores están dispuestos a enviar';
+  String get marketProblem2Stat => '€127 de ahorro medio perdido';
 
   @override
-  String get marketProblem3Title => 'Miles de resultados irrelevantes';
+  String get marketProblem3Title => 'Acabas frustrado sin comprar';
 
   @override
   String get marketProblem3Description =>
-      'Sería ingobernable leer cientos y miles de anuncios en plataformas de todo el mundo si la mitad de ellos son anuncios irrelevantes, accesorios o productos relacionados pero distintos.';
+      'El 67% de los usuarios abandonan la búsqueda por agotamiento antes de encontrar lo que buscan.';
 
   @override
-  String get marketProblem3Stat =>
-      '65% de resultados son irrelevantes sin filtrado';
-
-  @override
-  String get marketProblem4Title => 'Desconocimiento de la demanda real';
-
-  @override
-  String get marketProblem4Description =>
-      'Los vendedores no conocen la verdadera demanda de su producto, ni el precio que podrían ponerle, ni si se dirigen al público correcto en la plataforma idónea del país que corresponde. El precio depende del valor que le quiera dar el comprador, y por tanto de la necesidad real del comprador que depende de muchas aristas desconocidas por el vendedor.';
-
-  @override
-  String get marketProblem4Stat => 'Demanda global desconocida';
+  String get marketProblem3Stat => '67% abandonan por frustración';
 
   @override
   String get marketProblemCtaTitle =>
@@ -354,146 +569,145 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get marketProblemCtaDescription =>
-      'PRICOFY elimina estas barreras geográficas y conecta compradores y vendedores de todo el mundo';
+      'PRICOFY elimina estas barreras y conecta compradores y vendedores globalmente';
 
   @override
-  String get globalSolutionBadge => 'La Solución PRICOFY';
+  String get globalSolutionBadge => 'La solución que cambia las reglas';
 
   @override
-  String get globalSolutionTitle =>
-      'Globalizamos y democratizamos el mercado de segunda mano';
+  String get globalSolutionTitle => 'Imagina buscar UNA vez y encontrar TODO';
 
   @override
   String get globalSolutionSubtitle =>
-      'Una sola búsqueda. Todos los mercados. La forma más inteligente de encontrar exactamente lo que quieres.';
+      'Eso es exactamente lo que hace Pricofy.';
 
   @override
-  String get globalSolution1Title => 'Búsqueda Global Automática';
+  String get globalSolution1Title => 'Una búsqueda. Todas las plataformas.';
 
   @override
   String get globalSolution1Description =>
-      'Expandimos automáticamente tu alcance desde tu entorno limitado y conocido a plataformas de todo el mundo. Una sola búsqueda te conecta con la verdadera oferta del mercado.';
+      'Decenas de plataformas de segunda mano. Miles de anuncios. Al instante. Sin abrir 10 pestañas.';
 
   @override
-  String get globalSolution1Highlight => 'De local a global en un clic';
+  String get globalSolution1Highlight => '8 plataformas en un clic';
 
   @override
-  String get globalSolution2Title => 'Filtrado Inteligente con IA';
+  String get globalSolution2Title => 'Solo ves lo que importa';
 
   @override
   String get globalSolution2Description =>
-      'Limpiamos automáticamente los resultados usando IA avanzada, eliminando anuncios irrelevantes, accesorios y productos relacionados. Sería ingobernable leer miles de anuncios sin este filtrado.';
+      'Nuestra IA elimina anuncios duplicados, accesorios y basura. Solo resultados 100% relevantes para ti.';
 
   @override
-  String get globalSolution2Highlight => '65% menos resultados irrelevantes';
+  String get globalSolution2Highlight => '65% menos ruido';
 
   @override
-  String get globalSolution3Title => 'Democratización del Acceso';
+  String get globalSolution3Title => 'El mundo entero a tu alcance';
 
   @override
   String get globalSolution3Description =>
-      'Antes solo unos pocos sabían buscar bien en múltiples plataformas y países. Ahora cualquiera puede acceder al mercado global de segunda mano con un solo clic.';
+      '¿El mismo producto más barato en Italia? Lo encuentras. ¿Mejor vendedor en Francia? También. Sin barreras.';
 
   @override
-  String get globalSolution3Highlight => 'Acceso global para todos';
-
-  @override
-  String get globalSolution4Title => 'Conexión Global';
-
-  @override
-  String get globalSolution4Description =>
-      'Conectamos compradores y vendedores de todo el mundo para desbloquear la verdadera oferta y demanda. Tu producto puede encontrar su comprador ideal en cualquier país.';
-
-  @override
-  String get globalSolution4Highlight => 'Mercado global conectado';
+  String get globalSolution3Highlight => 'Mercado europeo completo';
 
   @override
   String get globalSolutionBuyersTitle => 'Para Compradores';
 
   @override
   String get globalSolutionBuyersItem1 =>
-      'Búsqueda automática en plataformas de todo el mundo';
+      'Encuentra el mejor precio en segundos, no en horas';
 
   @override
   String get globalSolutionBuyersItem2 =>
-      'Resultados limpios y relevantes, sin accesorios ni productos relacionados';
+      'Solo resultados relevantes, sin basura ni accesorios';
 
   @override
   String get globalSolutionBuyersItem3 =>
-      'Acceso a la verdadera oferta global, no solo la de tu zona';
+      'Ofertas de toda Europa que nunca hubieras encontrado';
 
   @override
   String get globalSolutionBuyersItem4 =>
-      'Encuentra el mejor precio en cualquier país';
+      'Sabrás si es buen precio o mejor esperar';
 
   @override
   String get globalSolutionSellersTitle => 'Para Vendedores';
 
   @override
   String get globalSolutionSellersItem1 =>
-      'Conecta con compradores de todo el mundo';
+      'Descubre el precio exacto al que venden otros';
 
   @override
   String get globalSolutionSellersItem2 =>
-      'Descubre la verdadera demanda global de tu producto';
+      'Encuentra compradores en cualquier país';
 
   @override
   String get globalSolutionSellersItem3 =>
-      'Precios basados en la demanda real mundial';
+      'Sabe en qué plataforma publicar para vender rápido';
 
   @override
   String get globalSolutionSellersItem4 =>
-      'Encuentra el comprador perfecto en cualquier país';
+      'Vende al precio justo, ni más bajo ni más alto';
 
   @override
-  String get globalSolutionButtonText => 'Crear cuenta Gratis';
+  String get globalSolutionButtonText => 'Empezar gratis';
 
   @override
-  String get statsItem1Highlight => 'Mercado mundial';
+  String get statsTitle => 'Resultados que hablan por sí solos';
 
   @override
-  String get statsItem1Label => 'Búsqueda Global';
+  String get statsItem1Highlight => '2 segundos';
+
+  @override
+  String get statsItem1Label => 'Tiempo medio de búsqueda';
 
   @override
   String get statsItem1Description =>
-      'Plataformas de múltiples países en una sola búsqueda';
+      'Lo que antes te llevaba horas, ahora pestañeas y te lo pierdes';
 
   @override
-  String get statsItem2Highlight => 'Resultados limpios';
+  String get statsItem2Highlight => '€127 ahorrados';
 
   @override
-  String get statsItem2Label => 'Filtrado Inteligente';
+  String get statsItem2Label => 'Ahorro medio por búsqueda';
 
   @override
   String get statsItem2Description =>
-      '65% menos resultados irrelevantes gracias a nuestra IA';
+      'Comparado con elegir la primera opción que encuentras';
 
   @override
-  String get statsItem3Highlight => 'Para todos';
+  String get statsItem3Highlight => '8 plataformas';
 
   @override
-  String get statsItem3Label => 'Acceso Democratizado';
+  String get statsItem3Label => 'Búsqueda simultánea';
 
   @override
   String get statsItem3Description =>
-      'Antes solo unos pocos sabían buscar bien. Ahora cualquiera puede.';
+      'Decenas de plataformas de segunda mano en un clic';
 
   @override
-  String get ctaTitle => '¿Listo para conectar con el mercado de segunda mano?';
+  String get ctaTitle => 'Tu próxima búsqueda puede ser la última';
 
   @override
-  String get ctaSubtitle =>
-      'Únete a cientos de usuarios que ya están maximizando sus ingresos con Pricofy';
+  String get ctaSubtitle => 'Deja de perder tiempo. Empieza a encontrar.';
 
   @override
-  String get ctaDescription =>
-      'Únete a cientos de usuarios que ya están maximizando sus ingresos con Pricofy';
+  String get ctaDescription => 'Deja de perder tiempo. Empieza a encontrar.';
 
   @override
-  String get ctaStartFree => 'Comenzar Prueba Gratuita';
+  String get ctaStartFree => 'Empezar gratis ahora';
 
   @override
-  String get ctaTalkSales => 'Hablar con Ventas';
+  String get ctaTalkSales => 'Contactar';
+
+  @override
+  String get ctaGuarantee1 => 'Funciona sin registro';
+
+  @override
+  String get ctaGuarantee2 => 'Datos 100% privados';
+
+  @override
+  String get ctaGuarantee3 => 'Cancela cuando quieras';
 
   @override
   String get footerDescription =>
@@ -908,6 +1122,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get errorInvalidEmail => 'El correo electrónico no es válido';
+
+  @override
+  String get errorDuplicateEmail => 'Este correo ya está registrado';
+
+  @override
+  String get errorUserNotFound => 'Usuario no encontrado';
+
+  @override
+  String get errorMissingEmail => 'El correo electrónico es obligatorio';
+
+  @override
+  String get errorInvalidSteps => 'Formato de pasos no válido';
+
+  @override
+  String get errorMaxPositionsReached =>
+      'Se ha alcanzado el máximo de plazas en la lista de espera';
+
+  @override
+  String get errorInvalidReferral => 'Código de referido no válido';
 
   @override
   String get errorInternalError => 'Error interno del servidor';
@@ -1516,6 +1749,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get searchPublished => 'Publicado';
 
   @override
+  String get searchModified => 'Modificado';
+
+  @override
   String get sortPrice => 'Precio';
 
   @override
@@ -1857,32 +2093,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get registrationModalLater => 'Quizás más tarde';
 
   @override
-  String get registrationModalAdvancedSearch =>
-      'Activa la búsqueda avanzada para filtrar mejor tus resultados.';
-
-  @override
-  String get advancedSearchPromoTitle =>
-      'Mejora estos resultados con Búsqueda Avanzada';
-
-  @override
-  String advancedSearchPromoBenefit1(String searchTerm) {
-    return 'Elimina resultados no esperados relacionados con tu búsqueda de $searchTerm';
-  }
-
-  @override
-  String get advancedSearchPromoBenefit2 =>
-      'Encuentra filtros avanzados sobre tus resultados';
-
-  @override
-  String get advancedSearchPromoBenefit3 => 'Crea alertas de nuevas ofertas';
-
-  @override
-  String get advancedSearchPromoActivate => 'Activar avanzada';
-
-  @override
-  String get advancedSearchPromoNotNow => 'Ahora no';
-
-  @override
   String get restrictedSell =>
       'Las búsquedas de venta requieren una cuenta registrada';
 
@@ -1960,11 +2170,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dashboardNoSellSearches => 'Aún no tienes búsquedas de venta';
 
   @override
-  String get buyEmptyStateTitle => 'Dinos qué estás buscando';
+  String get buyEmptyStateTitle => 'El mejor precio está en algún sitio';
 
   @override
   String get buyEmptyStateDescription =>
-      'Si nos dices lo que buscas, Pricofy buscará en todas las plataformas de segunda mano, enfocándose en el mejor resultado para ti.';
+      '¿iPhone? ¿Bici? ¿Sofá? Lo que sea. Pricofy lo encuentra por ti.';
 
   @override
   String get buyEmptyStateNote =>
@@ -2030,14 +2240,601 @@ class AppLocalizationsEs extends AppLocalizations {
       'Plataformas con garantía de devolución';
 
   @override
-  String get mapLegendTitle => 'LEYENDA';
+  String get searchTypeCarouselTitle => 'Elige tu tipo de búsqueda';
+
+  @override
+  String get searchTypeClassicBadge1 => 'Rápida';
+
+  @override
+  String get searchTypeClassicBadge2 => 'Multiplataforma';
+
+  @override
+  String get searchTypeClassicBadge3 => 'Multipaís';
+
+  @override
+  String get searchTypeClassicTitle => 'Búsqueda Clásica';
+
+  @override
+  String get searchTypeClassicBenefit1 => 'Buscamos como tú';
+
+  @override
+  String get searchTypeClassicBenefit1Expanded =>
+      'Busca lo mismo que tú, pero en los principales portales de segunda mano, y a la vez. Para no perderte nada.';
+
+  @override
+  String get searchTypeClassicBenefit2 => 'Multiplataforma, multipaís';
+
+  @override
+  String get searchTypeClassicBenefit2Expanded =>
+      'Multi-todo. Buscamos tu producto en varios portales y países en paralelo.';
+
+  @override
+  String get searchTypeClassicBenefit3 =>
+      'Resultados \"como si lo hicieras manual\": verás anuncios equivalentes a buscar uno por uno en cada web.';
+
+  @override
+  String get searchTypeClassicBenefit4 =>
+      'Filtrado potente sobre los anuncios encontrados';
+
+  @override
+  String get searchTypeClassicBenefit4Expanded =>
+      'Necesitarás ayuda para manejar todos los anuncios, por eso podrás filtrar por palabras clave, país, precio, tipo de envío y distancia.';
+
+  @override
+  String get searchTypeClassicButton => 'Iniciar búsqueda clásica';
+
+  @override
+  String get searchTypeAdvancedBadge => 'Inteligente';
+
+  @override
+  String get searchTypeAdvancedBadge2 => 'Filtros avanzados';
+
+  @override
+  String get searchTypeAdvancedTitle => 'Búsqueda Inteligente';
+
+  @override
+  String get searchTypeAdvancedBenefit1 =>
+      'Resultados más limpios y relevantes';
+
+  @override
+  String get searchTypeAdvancedBenefit1Expanded =>
+      'Porque si buscas una PS5, te mostramos PS5 (no mandos, juegos, soportes ni una PS4).';
+
+  @override
+  String get searchTypeAdvancedBenefit2 => 'Filtros pro';
+
+  @override
+  String get searchTypeAdvancedBenefit2Expanded =>
+      'Afina los resultados para comprar con seguridad: además de país/precio/envío/distancia, filtrarás por marca, estado, plataforma, productos con garantía y factura…';
+
+  @override
+  String get searchTypeAdvancedBenefit3 => 'Seguimiento inteligente';
+
+  @override
+  String get searchTypeAdvancedBenefit3Expanded =>
+      'Guarda el histórico de tus búsquedas para ver cómo cambia el mercado (precios y disponibilidad), además de crear alertas de mercado.';
+
+  @override
+  String get searchTypeAdvancedButton => 'Iniciar búsqueda inteligente';
+
+  @override
+  String get searchTypeMarketBadge => 'Mercado';
+
+  @override
+  String get searchTypeMarketTitle => 'Análisis de Mercado';
+
+  @override
+  String get searchTypeMarketBenefit1 =>
+      'Precios de venta ideal, rápido y mínimo';
+
+  @override
+  String get searchTypeMarketBenefit2 =>
+      'Conoce en qué plataformas se vende mejor';
+
+  @override
+  String get searchTypeMarketBenefit3 => 'Análisis de demanda y competencia';
+
+  @override
+  String get searchTypeMarketButton => 'Analizar mercado';
+
+  @override
+  String get advancedSearchPromoTitle => '¿Resultados raros? Normal.';
+
+  @override
+  String advancedSearchPromoMessage(String searchTerm) {
+    return 'Buscamos en 8 plataformas de 5 países. A la vez.\n\nEl problema: ellos devuelven basura. Buscas \"$searchTerm\" y te devuelven anuncios que de alguna forma consideran relacionados.\n\nNosotros te lo enseñamos todo. Sin filtrar. Gratis.\n\n¿Quieres solo lo relevante?\nNuestra IA sabe qué es basura y qué no.';
+  }
+
+  @override
+  String advancedSearchPromoBenefit1(String searchTerm) {
+    return 'Elimina resultados inesperados relacionados con tu búsqueda de $searchTerm';
+  }
+
+  @override
+  String get advancedSearchPromoBenefit2 =>
+      'Encuentra filtros avanzados para tus resultados';
+
+  @override
+  String get advancedSearchPromoBenefit3 => 'Crea alertas para nuevas ofertas';
+
+  @override
+  String get advancedSearchPromoActivate => 'Prefiero resultados filtrados';
+
+  @override
+  String get advancedSearchPromoNotNow => 'Entendido, quiero ver todo';
+
+  @override
+  String get registrationModalAdvancedSearch =>
+      'Regístrate para acceder a la Búsqueda Avanzada con filtrado por IA';
+
+  @override
+  String get mapLegendTitle => 'Leyenda';
 
   @override
   String get mapLegendExactLocation => 'Ubicación exacta';
 
   @override
-  String get mapLegendCityLevel => 'Nivel ciudad';
+  String get mapLegendCityLevel => 'Ubicación aproximada';
 
   @override
-  String get mapNoLocationTitle => 'Sin ubicación precisa';
+  String get mapNoLocationTitle => 'Sin ubicación';
+
+  @override
+  String get pricingBadge => 'Planes y Precios';
+
+  @override
+  String get pricingHeroTitle => 'Elige el plan perfecto para tus necesidades';
+
+  @override
+  String get pricingHeroSubtitle1 =>
+      'Pricofy funciona con un modelo Freemium donde cualquier usuario puede analizar, en un solo click, precios en plataformas nacionales e internacionales de forma ilimitada.';
+
+  @override
+  String get pricingHeroSubtitle2 =>
+      'Cuando necesitas ver oportunidades en otros países —ya sea para comprar o para vender— puedes activar un plan internacional o pagar por uso.';
+
+  @override
+  String get pricingFreemiumTitle => 'Cuenta Freemium';
+
+  @override
+  String get pricingFreemiumSubtitle => 'Para todos los usuarios';
+
+  @override
+  String get pricingPriceUnit => '€/mes';
+
+  @override
+  String get pricingForBuying => 'Para comprar';
+
+  @override
+  String get pricingForSelling => 'Para vender';
+
+  @override
+  String get pricingUnlimitedSearches => 'Búsquedas ilimitadas';
+
+  @override
+  String get pricingUnlimited => 'ilimitadas';
+
+  @override
+  String get pricingFreeIntelligentSearch =>
+      '1 búsqueda inteligente gratuita incluida';
+
+  @override
+  String get pricingIntelligent => 'inteligente';
+
+  @override
+  String get pricingFreeMarketAnalysis => '1 Análisis gratuito de mercado';
+
+  @override
+  String get pricingFreemiumDisclaimer =>
+      'Probablemente exista una demanda superior en otros países para tu producto. Contrata un plan internacional o paga por uso para ver cómo está el mercado internacional.';
+
+  @override
+  String get pricingCreateFreeAccount => 'Crear cuenta gratuita';
+
+  @override
+  String get pricingFreemiumCompraItem1 =>
+      'Búsqueda simultánea en portales de segunda mano de nivel nacional e internacional';
+
+  @override
+  String get pricingFreemiumCompraItem2 => 'Resultados agregados';
+
+  @override
+  String get pricingFreemiumCompraItem3 => 'Filtros sobre anuncios encontrados';
+
+  @override
+  String get pricingFreemiumCompraIntItem1 =>
+      '1 búsqueda inteligente en portales de segunda mano nacionales e internacionales';
+
+  @override
+  String get pricingFreemiumCompraIntItem2 =>
+      'Aplicamos inteligencia sobre todos los anuncios, para mostrarte solamente aquellos relevantes, filtrando accesorios o productos relacionados pero distintos';
+
+  @override
+  String get pricingFreemiumVentaItem1 =>
+      'Análisis de mercado nacional e internacional';
+
+  @override
+  String get pricingFreemiumVentaItem2 =>
+      'Métricas de demanda por precio, plataforma, país';
+
+  @override
+  String get pricingFreemiumVentaItem3 =>
+      'Estimación de precios óptimos de venta';
+
+  @override
+  String get pricingForBuyingTab => 'Para Comprar';
+
+  @override
+  String get pricingForSellingTab => 'Para Vender';
+
+  @override
+  String get pricingNationalBuyingTitle => 'Planes para Comprar en tu País';
+
+  @override
+  String get pricingNationalBuyingSubtitle =>
+      'Encuentra los mejores precios en el mercado nacional';
+
+  @override
+  String get pricingInternationalBuyingTitle =>
+      'Planes para Comprar Internacionalmente';
+
+  @override
+  String get pricingInternationalBuyingSubtitle =>
+      'Encuentra productos más baratos en otros países *';
+
+  @override
+  String get pricingNationalSellingTitle => 'Planes para Vender en tu País';
+
+  @override
+  String get pricingNationalSellingSubtitle =>
+      'Optimiza tus precios en el mercado nacional';
+
+  @override
+  String get pricingInternationalSellingTitle =>
+      'Planes para Vender Internacionalmente';
+
+  @override
+  String get pricingInternationalSellingSubtitle =>
+      'Expande tu mercado a otros países *';
+
+  @override
+  String get pricingInternationalDisclaimer =>
+      '* Planes internacionales limitados a 3 países a elegir. Actualmente soportados: España, Portugal, Francia, Italia y Alemania';
+
+  @override
+  String get pricingMostPopular => 'Más Popular';
+
+  @override
+  String get pricingPayPerUse => 'Pago por uso';
+
+  @override
+  String get pricingSubscribePlan => 'Contratar plan';
+
+  @override
+  String get pricingContact => 'Contactar';
+
+  @override
+  String get pricingComingSoon => 'Próximamente';
+
+  @override
+  String get pricingNational => 'Nacional';
+
+  @override
+  String get pricingInternational => 'Internacional';
+
+  @override
+  String get pricingPerMonth => '€/mes';
+
+  @override
+  String get pricingPerSearch => '€ por búsqueda';
+
+  @override
+  String get pricingPerQuery => '€ por consulta';
+
+  @override
+  String get pricingPlanPayPerUse => 'Pago por uso';
+
+  @override
+  String get pricingPlanNinjaLocalFeature1 =>
+      '20 créditos para búsquedas inteligentes en portales de segunda mano nacionales.';
+
+  @override
+  String get pricingPlanNinjaLocalFeature2 =>
+      'Aplicamos inteligencia sobre todos los anuncios, para mostrarte solamente aquellos relevantes, filtrando accesorios o productos relacionados pero distintos.';
+
+  @override
+  String get pricingPlanRadarLocalFeature1 =>
+      '100 créditos que puedes usar como quieras para:';
+
+  @override
+  String get pricingPlanRadarLocalFeature2 =>
+      'Búsquedas inteligentes en portales de segunda mano nacionales.';
+
+  @override
+  String get pricingPlanRadarLocalFeature3 =>
+      'Alertas nacionales (bajadas de precio y nuevos listados)';
+
+  @override
+  String get pricingPlanRadarLocalFeature4 =>
+      'Aplicamos inteligencia sobre todos los anuncios, para mostrarte solamente aquellos relevantes, filtrando accesorios o productos relacionados pero distintos.';
+
+  @override
+  String get pricingPlanPayPerUseCompraLocalFeature1 =>
+      '1 Búsqueda inteligente en portales de segunda mano nacionales.';
+
+  @override
+  String get pricingPlanPayPerUseCompraLocalFeature2 =>
+      'Resultados optimizados';
+
+  @override
+  String get pricingPlanPayPerUseCompraLocalFeature3 =>
+      'Filtrado avanzado para eliminar anuncios irrelevantes, accesorios o productos relacionados pero distintos';
+
+  @override
+  String get pricingPlanNinjaFeature1 =>
+      '20 créditos para búsquedas en portales de segunda mano internacionales.';
+
+  @override
+  String get pricingPlanNinjaFeature2 =>
+      'Aplicamos inteligencia sobre todos los anuncios, para mostrarte solamente aquellos relevantes, filtrando accesorios o productos relacionados pero distintos.';
+
+  @override
+  String get pricingPlanRadarFeature1 =>
+      '100 créditos que puedes usar como quieras para:';
+
+  @override
+  String get pricingPlanRadarFeature2 =>
+      'Búsquedas en portales de segunda mano internacionales.';
+
+  @override
+  String get pricingPlanRadarFeature3 =>
+      'Alertas internacionales (bajadas de precio y nuevos listados)';
+
+  @override
+  String get pricingPlanRadarFeature4 =>
+      'Aplicamos inteligencia sobre todos los anuncios, para mostrarte solamente aquellos relevantes, filtrando accesorios o productos relacionados pero distintos.';
+
+  @override
+  String get pricingPlanPayPerUseCompraFeature1 =>
+      '1 Búsqueda inteligente en portales de segunda mano internacionales.';
+
+  @override
+  String get pricingPlanPayPerUseCompraFeature2 => 'Resultados optimizados';
+
+  @override
+  String get pricingPlanPayPerUseCompraFeature3 =>
+      'Filtrado avanzado para eliminar anuncios irrelevantes, accesorios o productos relacionados pero distintos';
+
+  @override
+  String get pricingVentaNacionalDisclaimer =>
+      'Probablemente exista una demanda superior en otros países para tu producto. Contrata un plan internacional o paga por uso para ver cómo está el mercado internacional.';
+
+  @override
+  String get pricingPlanExpressFeature1 =>
+      '20 créditos para analizar el mercado nacional, en búsqueda de oportunidades de demanda de forma inteligente';
+
+  @override
+  String get pricingPlanExpressFeature2 =>
+      'Ver precios reales de mercado, competencia, oferta y demanda nacionales';
+
+  @override
+  String get pricingPlanTurboFeature1 =>
+      '100 créditos que puedes usar como quieras para:';
+
+  @override
+  String get pricingPlanTurboFeature2 =>
+      'Búsqueda de oportunidades de demanda de forma inteligente (estimación del precio óptimo)';
+
+  @override
+  String get pricingPlanTurboFeature3 =>
+      'Alertas nacionales (ver si alguien publica más barato que tú)';
+
+  @override
+  String get pricingPlanPayPerUseVentaNacionalFeature1 =>
+      '1 Análisis de tu mercado nacional';
+
+  @override
+  String get pricingPlanPayPerUseVentaNacionalFeature2 =>
+      'Búsqueda inteligente de oportunidades de demanda';
+
+  @override
+  String get pricingPlanPayPerUseVentaNacionalFeature3 =>
+      'Estimación del precio óptimo de venta';
+
+  @override
+  String get pricingPlanInterExpressFeature1 =>
+      '20 créditos para analizar el mercado internacional, en búsqueda de oportunidades de demanda de forma inteligente';
+
+  @override
+  String get pricingPlanInterExpressFeature2 =>
+      'Ver precios reales en otros países';
+
+  @override
+  String get pricingPlanInterTurboFeature1 =>
+      '100 créditos que puedes usar como quieras para:';
+
+  @override
+  String get pricingPlanInterTurboFeature2 =>
+      'Búsqueda de oportunidades de demanda en otros países (estimación del precio óptimo)';
+
+  @override
+  String get pricingPlanInterTurboFeature3 =>
+      'Alertas internacionales (ver si alguien publica más barato que tú en otros países)';
+
+  @override
+  String get pricingPlanPayPerUseVentaFeature1 =>
+      '1 Análisis de tu mercado internacional';
+
+  @override
+  String get pricingPlanPayPerUseVentaFeature2 =>
+      'Búsqueda inteligente de oportunidades de demanda';
+
+  @override
+  String get pricingPlanPayPerUseVentaFeature3 =>
+      'Estimación del precio óptimo de venta';
+
+  @override
+  String get pricingFaqBadge => 'Preguntas Frecuentes';
+
+  @override
+  String get pricingFaqQ1 => '¿Qué son los créditos?';
+
+  @override
+  String get pricingFaqA1 =>
+      'Cada búsqueda internacional (compra o venta) consume 1 crédito. Cada alerta internacional también consume créditos en el setup. Las búsquedas nacionales de compra siempre son ilimitadas, incluso sin plan.';
+
+  @override
+  String get pricingFaqQ2 => '¿Puedo cambiar de plan en cualquier momento?';
+
+  @override
+  String get pricingFaqA2 =>
+      'Sí, puedes actualizar o cambiar tu plan en cualquier momento desde tu cuenta. Los créditos no utilizados se mantienen hasta el final del período de facturación.';
+
+  @override
+  String get pricingFaqQ3 => '¿Qué pasa si me quedo sin créditos?';
+
+  @override
+  String get pricingFaqA3 =>
+      'Te notificaremos cuando te acerques al límite. Puedes actualizar tu plan, usar el pago por uso, o esperar al siguiente mes cuando se renueven tus créditos.';
+
+  @override
+  String get pricingCtaTitle => '¿Listo para comenzar?';
+
+  @override
+  String get pricingCtaSubtitle =>
+      'Únete a cientos de usuarios que ya están optimizando sus precios con Pricofy';
+
+  @override
+  String get whyItWorksHeroTitle => 'No es magia.';
+
+  @override
+  String get whyItWorksHeroSubtitle => 'Es matemática.';
+
+  @override
+  String get whyItWorksHeroDescription =>
+      'Mientras tú buscas en 1 sitio, nosotros buscamos en 20. Y filtramos la basura antes de que la veas.';
+
+  @override
+  String get whyItWorksHeroCta => 'Ver cómo funciona';
+
+  @override
+  String get whyItWorksProblemTitle => 'El problema no es que no encuentres.';
+
+  @override
+  String get whyItWorksProblemSubtitle => 'Es que encuentras DEMASIADO.';
+
+  @override
+  String get whyItWorksProblem1 => 'anuncios del mismo producto.';
+
+  @override
+  String get whyItWorksProblem2 => 'son basura.';
+
+  @override
+  String get whyItWorksProblem3 => 'son duplicados.';
+
+  @override
+  String get whyItWorksProblem4 => 'son estafas.';
+
+  @override
+  String get whyItWorksProblem5 => 'es el bueno.';
+
+  @override
+  String get whyItWorksProblemQuestion =>
+      '¿Cuánto tiempo pierdes encontrando ese 1?';
+
+  @override
+  String get whyItWorksFunnelTitle => 'Nosotros filtramos por ti';
+
+  @override
+  String get whyItWorksFunnelSubtitle => 'Solo ves lo que vale la pena';
+
+  @override
+  String get whyItWorksSolutionTitle => 'Esto es lo que hacemos:';
+
+  @override
+  String get whyItWorksSolution1Title => 'BUSCAMOS';
+
+  @override
+  String get whyItWorksSolution1Description =>
+      'En 8+ plataformas a la vez. Mientras tú escribes, nosotros ya comparamos.';
+
+  @override
+  String get whyItWorksSolution2Title => 'LIMPIAMOS';
+
+  @override
+  String get whyItWorksSolution2Description =>
+      'Eliminamos duplicados, accesorios y ruido. Solo ves lo que importa.';
+
+  @override
+  String get whyItWorksSolution3Title => 'COMPARAMOS';
+
+  @override
+  String get whyItWorksSolution3Description =>
+      'El mismo producto: 350€, 280€, 195€. Tú decides. Con información real.';
+
+  @override
+  String get whyItWorksStatsTitle => 'Datos. No promesas.';
+
+  @override
+  String get whyItWorksStats1Label => 'búsqueda completa';
+
+  @override
+  String get whyItWorksStats2Label => 'menos ruido';
+
+  @override
+  String get whyItWorksStats3Label => 'ahorro medio';
+
+  @override
+  String get whyItWorksStatsFooter =>
+      'No lo decimos nosotros. Lo dicen los usuarios.';
+
+  @override
+  String get whyItWorksQuestionTitle => 'LA PREGUNTA QUE NADIE HACE:';
+
+  @override
+  String get whyItWorksQuestionMain =>
+      'Si buscas un producto de segunda mano, ¿prefieres ver 200 resultados irrelevantes o 15 que SÍ son lo que buscas?';
+
+  @override
+  String get whyItWorksQuestionAnswer => 'Eso pensábamos.';
+
+  @override
+  String get whyItWorksQuestionCta => 'Probar gratis';
+
+  @override
+  String get whyItWorksObjectionsTitle => 'Lo que estás pensando:';
+
+  @override
+  String get whyItWorksObjection1Question => '¿Y si es muy complicado?';
+
+  @override
+  String get whyItWorksObjection1Answer =>
+      'Escribes. Buscas. Listo. Como Google.';
+
+  @override
+  String get whyItWorksObjection2Question => '¿Tengo que pagar?';
+
+  @override
+  String get whyItWorksObjection2Answer =>
+      'Prueba gratis. Sin tarjeta. Sin trucos.';
+
+  @override
+  String get whyItWorksObjection3Question => '¿Y mis datos?';
+
+  @override
+  String get whyItWorksObjection3Answer =>
+      'Ni los vendemos ni los miramos. No somos Facebook.';
+
+  @override
+  String get whyItWorksFinalTitle => 'Ya sabes por qué funciona.';
+
+  @override
+  String get whyItWorksFinalSubtitle => 'Ahora pruébalo.';
+
+  @override
+  String get whyItWorksFinalCta => 'Empezar a buscar';
+
+  @override
+  String get whyItWorksFinalMicrocopy =>
+      '2 segundos. Sin registro obligatorio.';
 }

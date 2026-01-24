@@ -180,18 +180,18 @@ class _SearchControlsBarState extends State<SearchControlsBar> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // List view button (first - rounded left)
-          _buildViewModeButton(
-            icon: Icons.format_list_bulleted,
-            isSelected: searchProvider.viewMode == ViewMode.list,
-            onTap: () => searchProvider.setViewMode(ViewMode.list),
-            position: _ButtonPosition.first,
-          ),
-          // Cards view button (middle)
+          // Cards view button (first - rounded left)
           _buildViewModeButton(
             icon: Icons.grid_view,
             isSelected: searchProvider.viewMode == ViewMode.cards,
             onTap: () => searchProvider.setViewMode(ViewMode.cards),
+            position: _ButtonPosition.first,
+          ),
+          // List view button (middle)
+          _buildViewModeButton(
+            icon: Icons.format_list_bulleted,
+            isSelected: searchProvider.viewMode == ViewMode.list,
+            onTap: () => searchProvider.setViewMode(ViewMode.list),
             position: _ButtonPosition.middle,
           ),
           // Map view button (last - rounded right)
@@ -322,7 +322,7 @@ class _AnimatedControlsBarState extends State<AnimatedControlsBar>
     final l10n = context.l10n;
     final searchProvider = context.watch<SearchProvider>();
 
-    // When expanded, show full-width controls
+    // When expanded, show full-width controls with fade animation
     if (widget.isExpanded) {
       return FadeTransition(
         opacity: _fadeAnimation,
@@ -331,7 +331,7 @@ class _AnimatedControlsBarState extends State<AnimatedControlsBar>
             // Search within results (takes available space)
             Expanded(
               child: SizedBox(
-                height: 28, // Más estrecho
+                height: 28,
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
@@ -382,26 +382,27 @@ class _AnimatedControlsBarState extends State<AnimatedControlsBar>
             ),
             const SizedBox(width: 6),
 
-            // iOS-style filter button (más pequeño)
+            // Filter button
             _buildIOSFilterButton(context, searchProvider),
             const SizedBox(width: 6),
 
-            // Círculo rojo con X para cerrar
+            // Close button (red circle with X)
             _buildCloseButton(onTap: widget.onToggle),
           ],
         ),
       );
     }
 
-    // Collapsed state: botón de filtro (funnel) más pequeño
+    // Collapsed state: filter toggle button with funnel icon
     return _buildFilterToggleButton(onTap: widget.onToggle);
   }
 
+  /// Filter toggle button (collapsed state) with funnel icon only
   Widget _buildFilterToggleButton({required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 28, // Más pequeño
+        width: 28,
         height: 28,
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -429,7 +430,7 @@ class _AnimatedControlsBarState extends State<AnimatedControlsBar>
     );
   }
 
-  /// Círculo rojo con X para cerrar el panel expandido
+  /// Close button (red circle with X)
   Widget _buildCloseButton({required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
@@ -462,8 +463,9 @@ class _AnimatedControlsBarState extends State<AnimatedControlsBar>
     );
   }
 
-  /// iOS-style filter button with badge (single icon: tune/equalizer) - más pequeño
+  /// iOS-style filter button with icon + "Filtros" text and badge
   Widget _buildIOSFilterButton(BuildContext context, SearchProvider searchProvider) {
+    final l10n = context.l10n;
     final filterCount = searchProvider.filters.activeFilterCount;
     final sortCount = searchProvider.activeSortCount;
     final totalActive = filterCount + sortCount;
@@ -474,8 +476,8 @@ class _AnimatedControlsBarState extends State<AnimatedControlsBar>
         clipBehavior: Clip.none,
         children: [
           Container(
-            width: 28, // Más pequeño
-            height: 28,
+            height: 30,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               gradient: totalActive > 0
                   ? LinearGradient(
@@ -496,12 +498,24 @@ class _AnimatedControlsBarState extends State<AnimatedControlsBar>
                     ]
                   : null,
             ),
-            child: Center(
-              child: Icon(
-                Icons.tune_rounded,
-                size: 16,
-                color: totalActive > 0 ? Colors.white : AppTheme.gray600,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.tune_rounded,
+                  size: 16,
+                  color: totalActive > 0 ? Colors.white : AppTheme.gray600,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  l10n.filtersTab,
+                  style: TextStyle(
+                    color: totalActive > 0 ? Colors.white : AppTheme.gray600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
           if (totalActive > 0)
@@ -513,9 +527,9 @@ class _AnimatedControlsBarState extends State<AnimatedControlsBar>
                 decoration: BoxDecoration(
                   color: Colors.red.shade600,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1),
+                  border: Border.all(color: Colors.white, width: 1.5),
                 ),
-                constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                 child: Text(
                   '$totalActive',
                   style: const TextStyle(
@@ -528,81 +542,6 @@ class _AnimatedControlsBarState extends State<AnimatedControlsBar>
               ),
             ),
         ],
-      ),
-    );
-  }
-
-  /// iOS-style segmented control for view mode
-  Widget _buildIOSViewModeToggle(SearchProvider searchProvider) {
-    return Container(
-      height: 36,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppTheme.gray100,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildIOSViewModeButton(
-            icon: Icons.format_list_bulleted_rounded,
-            isSelected: searchProvider.viewMode == ViewMode.list,
-            onTap: () => searchProvider.setViewMode(ViewMode.list),
-          ),
-          _buildIOSViewModeButton(
-            icon: Icons.grid_view_rounded,
-            isSelected: searchProvider.viewMode == ViewMode.cards,
-            onTap: () => searchProvider.setViewMode(ViewMode.cards),
-          ),
-          _buildIOSViewModeButton(
-            icon: Icons.map_rounded,
-            isSelected: searchProvider.viewMode == ViewMode.map,
-            onTap: () => searchProvider.setViewMode(ViewMode.map),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIOSViewModeButton({
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-        width: 28,
-        height: 30,
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [AppTheme.primary500, AppTheme.primary600],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isSelected ? null : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppTheme.primary600.withValues(alpha: 0.3),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Icon(
-            icon,
-            size: 18,
-            color: isSelected ? Colors.white : AppTheme.gray500,
-          ),
-        ),
       ),
     );
   }

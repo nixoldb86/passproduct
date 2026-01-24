@@ -36,8 +36,7 @@ const Color _kCityColorDark = Color(0xFFD97706);
 /// Blue color for user location marker
 const Color _kUserLocationColor = Color(0xFF3B82F6);
 
-/// Primary purple for general markers
-const Color _kPrimaryColor = Color(0xFF8B5CF6);
+// _kPrimaryColor removed - was unused
 
 // ============================================================================
 // MAIN WIDGET
@@ -132,8 +131,8 @@ class _SearchResultsMapViewState extends State<SearchResultsMapView> {
                             _fitBoundsWhenReady(bounds);
                           },
                           onPositionChanged: (position, hasGesture) {
-                            if (position.zoom != null && position.zoom != _currentZoom) {
-                              setState(() => _currentZoom = position.zoom!);
+                            if (position.zoom != _currentZoom) {
+                              setState(() => _currentZoom = position.zoom);
                             }
                           },
                         ),

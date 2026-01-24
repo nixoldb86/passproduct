@@ -47,6 +47,10 @@ class AppTheme {
   static const Color vintedColor = Color(0xFF09B1BA);
   static const Color backmarketColor = Color(0xFF000000);
   static const Color leboncoinColor = Color(0xFFFF6E14);
+  static const Color kleinanzeigenColor = Color(0xFF1D4B00); // Verdun Green
+  static const Color subitoColor = Color(0xFFE13333); // Subito Red
+  static const Color olxColor = Color(0xFF002F34); // OLX Dark Teal
+  static const Color ebayColor = Color(0xFF0064D2); // eBay Blue
 
   /// Get platform brand color by platform name
   static Color platformColor(String platform) {
@@ -56,7 +60,10 @@ class AppTheme {
       'vinted' => vintedColor,
       'backmarket' => backmarketColor,
       'leboncoin' => leboncoinColor,
-      'ebay' => milanunciosColor, // eBay also uses orange
+      'ebay' => ebayColor,
+      'kleinanzeigen' => kleinanzeigenColor,
+      'subito' => subitoColor,
+      'olx' => olxColor,
       _ => gray500,
     };
   }

@@ -1,0 +1,11 @@
+# Robots.txt for Pricofy
+# This file will be the same for dev and prod, but dev.pricofy.com is blocked
+
+User-agent: *
+# Block everything on dev.pricofy.com (development environment)
+# Allow indexing only on pricofy.com (production)
+Disallow: /
+
+# Sitemap (only for production)
+Sitemap: https://pricofy.com/sitemap.xml
+

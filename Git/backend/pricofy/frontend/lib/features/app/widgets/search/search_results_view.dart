@@ -8,16 +8,18 @@
 //    - "Los más económicos" (scroll vertical, ordenados por precio)
 // 3. Flechas chevron para navegar entre secciones
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:remixicon/remixicon.dart';
+import 'package:circle_flags/circle_flags.dart';
 import '../../../../config/theme.dart';
 import '../../../../config/api_config.dart';
+import '../../../../config/feature_flags.dart';
 import '../../../../core/extensions/l10n_extension.dart';
 import '../../../../core/providers/auth_provider.dart';
-import '../../../../core/providers/location_provider.dart';
 import '../../../../core/providers/search_provider.dart';
 import '../../../../core/models/search_result.dart';
 import '../../../../core/models/search_filters.dart';
@@ -25,8 +27,6 @@ import '../../../../shared/components/images/network_image_widget.dart';
 import '../../../../shared/components/loading/motivational_text_rotator.dart';
 import '../../../../shared/components/loading/youtube_style_progress_bar.dart';
 import '../../../../shared/components/badges/platform_icon_with_flag.dart';
-import '../../../../core/utils/country_flags.dart';
-import 'package:circle_flags/circle_flags.dart';
 import 'search_controls.dart';
 import 'search_result_detail_modal.dart';
 import 'search_results_map_view.dart';
@@ -48,18 +48,21 @@ class _SearchResultsViewNewState extends State<SearchResultsViewNew> {
   double _lastScrollPosition = 0;
 
   void _onScrollNotification(ScrollNotification notification) {
-    if (notification is ScrollUpdateNotification) {
+    // Only react to vertical scroll (from list views), not horizontal (from PageView)
+    // Check the scroll axis to filter out PageView swipe events
+    if (notification is ScrollUpdateNotification &&
+        notification.metrics.axis == Axis.vertical) {
       final currentPosition = notification.metrics.pixels;
-      
-      // Si scrolleamos hacia abajo y no estamos al inicio, ocultar banner
+
+      // Scroll hacia abajo y no estamos al inicio → ocultar
       if (currentPosition > _lastScrollPosition && currentPosition > 50) {
         if (_showBanner) setState(() => _showBanner = false);
       }
-      // Si scrolleamos hasta arriba del todo, mostrar banner
-      else if (currentPosition <= 0) {
+      // Scroll hacia arriba (en cualquier punto) → mostrar
+      else if (currentPosition < _lastScrollPosition) {
         if (!_showBanner) setState(() => _showBanner = true);
       }
-      
+
       _lastScrollPosition = currentPosition;
     }
   }
@@ -75,7 +78,7 @@ class _SearchResultsViewNewState extends State<SearchResultsViewNew> {
         children: [
           // Banner animado
           _AnimatedGuestBanner(isVisible: _showBanner),
-          const SearchResultsHeader(),
+          SearchResultsHeader(isControlsRowVisible: _showBanner),
           Expanded(
             child: _SearchResultsSections(),
           ),
@@ -155,6 +158,8 @@ class _AnimatedGuestBanner extends StatelessWidget {
                           decoration: TextDecoration.underline,
                           decorationColor: AppTheme.primary600,
                         ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () => context.go(FeatureFlags.loginRoute),
                       ),
                       TextSpan(
                         text: l10n.guestModeBannerRest,
@@ -178,7 +183,9 @@ class _AnimatedGuestBanner extends StatelessWidget {
 
 /// Header original con barra de búsqueda
 class SearchResultsHeader extends StatefulWidget {
-  const SearchResultsHeader({super.key});
+  final bool isControlsRowVisible;
+  
+  const SearchResultsHeader({super.key, this.isControlsRowVisible = true});
 
   @override
   State<SearchResultsHeader> createState() => _SearchResultsHeaderState();
@@ -289,13 +296,11 @@ class _SearchResultsHeaderState extends State<SearchResultsHeader> {
           ),
           child: Row(
             children: [
-              // Icono de localización redondo en lugar del logo
-              if (isMobile) ...[
-                const Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: _SearchBarLocationIcon(),
-                ),
-              ],
+              // Location indicator (circular) - always visible
+              const Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: LocationIndicator(variant: LocationIndicatorVariant.searchBar),
+              ),
               Expanded(
                 child: TextField(
                   controller: _searchController,
@@ -399,31 +404,37 @@ class _SearchResultsHeaderState extends State<SearchResultsHeader> {
                 const Center(child: MotivationalTextRotator()),
               ],
 
-              const SizedBox(height: 8), // Más compacto
-
-              // Country pills + View mode + Filter toggle
-              // When controls are expanded, they take full width
-              if (hasResults && _isControlsExpanded)
-                AnimatedControlsBar(
-                  isExpanded: _isControlsExpanded,
-                  onToggle: () => setState(() => _isControlsExpanded = !_isControlsExpanded),
-                )
-              else
-                Row(
-                  children: [
-                    // Sin LocationIndicator aquí - ahora está en la barra de búsqueda
-                    Expanded(child: _CountryPills()),
-                    if (hasResults) ...[
-                      const SizedBox(width: 6),
-                      const _ResultsViewModeSegmentedControl(),
-                      const SizedBox(width: 6),
-                      AnimatedControlsBar(
-                        isExpanded: _isControlsExpanded,
-                        onToggle: () => setState(() => _isControlsExpanded = !_isControlsExpanded),
-                      ),
-                    ],
-                  ],
+              // Country pills + View mode toggle + Animated controls
+              // Animated visibility based on scroll (same behavior as guest banner)
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 200),
+                crossFadeState: widget.isControlsRowVisible
+                    ? CrossFadeState.showFirst
+                    : CrossFadeState.showSecond,
+                firstChild: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: hasResults && _isControlsExpanded
+                      ? AnimatedControlsBar(
+                          isExpanded: _isControlsExpanded,
+                          onToggle: () => setState(() => _isControlsExpanded = !_isControlsExpanded),
+                        )
+                      : Row(
+                          children: [
+                            Expanded(child: _CountryPills()),
+                            if (hasResults) ...[
+                              const SizedBox(width: 12),
+                              const _ResultsViewModeSegmentedControl(),
+                              const SizedBox(width: 10),
+                              AnimatedControlsBar(
+                                isExpanded: _isControlsExpanded,
+                                onToggle: () => setState(() => _isControlsExpanded = !_isControlsExpanded),
+                              ),
+                            ],
+                          ],
+                        ),
                 ),
+                secondChild: const SizedBox(width: double.infinity, height: 0),
+              ),
             ],
           ),
         ),
@@ -457,255 +468,56 @@ class _SearchResultsHeaderState extends State<SearchResultsHeader> {
   }
 }
 
-/// Icono de localización redondo para la barra de búsqueda
-/// Reemplaza al logo de Pricofy y muestra la ubicación del usuario
-class _SearchBarLocationIcon extends StatefulWidget {
-  const _SearchBarLocationIcon();
-
-  @override
-  State<_SearchBarLocationIcon> createState() => _SearchBarLocationIconState();
-}
-
-class _SearchBarLocationIconState extends State<_SearchBarLocationIcon> {
-  final GlobalKey _iconKey = GlobalKey();
-  OverlayEntry? _overlayEntry;
-  bool _isPopoverVisible = false;
-
-  @override
-  void dispose() {
-    _removeOverlay();
-    super.dispose();
-  }
-
-  void _removeOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    if (mounted) {
-      setState(() => _isPopoverVisible = false);
-    }
-  }
-
-  void _showPopover(BuildContext context, dynamic location) {
-    if (_isPopoverVisible) {
-      _removeOverlay();
-      return;
-    }
-
-    final RenderBox? renderBox = _iconKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-
-    final position = renderBox.localToGlobal(Offset.zero);
-    final size = renderBox.size;
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: _removeOverlay,
-              behavior: HitTestBehavior.opaque,
-              child: Container(color: Colors.transparent),
-            ),
-          ),
-          Positioned(
-            left: position.dx,
-            top: position.dy + size.height + 8,
-            child: Material(
-              elevation: 8,
-              borderRadius: BorderRadius.circular(12),
-              shadowColor: Colors.black26,
-              child: _buildPopoverContent(location),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    Overlay.of(context).insert(_overlayEntry!);
-    setState(() => _isPopoverVisible = true);
-  }
-
-  Widget _buildPopoverContent(dynamic location) {
-    final flag = getCountryFlagEmoji(location.countryCode);
-
-    final parts = <String>[];
-    if (location.postalCode != null) parts.add(location.postalCode!);
-    if (location.municipality != null) parts.add(location.municipality!);
-    if (parts.isEmpty) parts.add(location.countryCode);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      constraints: const BoxConstraints(maxWidth: 260),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.location_on_rounded, size: 16, color: AppTheme.primary600),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              parts.join(' · '),
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.gray800),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(flag, style: const TextStyle(fontSize: 16)),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final locationProvider = context.watch<LocationProvider>();
-
-    if (locationProvider.isDetecting) {
-      return Container(
-        key: _iconKey,
-        width: 28,
-        height: 28,
-        margin: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppTheme.gray100,
-        ),
-        child: Center(
-          child: SizedBox(
-            width: 12,
-            height: 12,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.gray400),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final location = locationProvider.location;
-    if (location == null) {
-      return Container(
-        key: _iconKey,
-        width: 28,
-        height: 28,
-        margin: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppTheme.gray100,
-        ),
-        child: Center(
-          child: Icon(Icons.location_off_rounded, size: 14, color: AppTheme.gray400),
-        ),
-      );
-    }
-
-    return GestureDetector(
-      onTap: () => _showPopover(context, location),
-      child: Container(
-        key: _iconKey,
-        width: 28,
-        height: 28,
-        margin: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: _isPopoverVisible
-              ? LinearGradient(
-                  colors: [AppTheme.primary500, Colors.purple.shade500],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: _isPopoverVisible ? null : AppTheme.primary50,
-          border: Border.all(
-            color: _isPopoverVisible ? Colors.transparent : AppTheme.primary200,
-            width: 1,
-          ),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.location_on_rounded,
-            size: 16,
-            color: _isPopoverVisible ? Colors.white : AppTheme.primary600,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Píldoras de países (funcionan como filtros)
 /// Altura igual al segmented control de vista (28px), banderas circulares
-class _CountryPills extends StatefulWidget {
-  @override
-  State<_CountryPills> createState() => _CountryPillsState();
-}
-
-class _CountryPillsState extends State<_CountryPills> {
-  Set<String> _selectedCountries = {};
-  bool _initialized = false;
-
-  void _applyCountryFilter(SearchProvider searchProvider) {
-    final currentFilters = searchProvider.filters;
-    final newFilters = currentFilters.copyWith(
-      countries: _selectedCountries.isEmpty ? null : _selectedCountries.toList(),
-    );
-    searchProvider.applyFilters(newFilters);
-  }
-
+/// Convención: provider.filters.countries vacío = todos seleccionados (sin filtro)
+class _CountryPills extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final searchProvider = context.watch<SearchProvider>();
-    final countries = searchProvider.availableCountries;
+    final availableCountries = searchProvider.availableCountries;
     final filterCountries = searchProvider.filters.countries;
 
-    if (countries.isEmpty) return const SizedBox.shrink();
+    if (availableCountries.isEmpty) return const SizedBox.shrink();
 
-    // Sync with provider filters - if provider has explicit countries, use those
-    if (filterCountries.isNotEmpty) {
-      _selectedCountries = Set.from(filterCountries);
-    } else if (!_initialized && countries.isNotEmpty) {
-      // Initialize all countries as selected only the first time
-      _selectedCountries = Set.from(countries);
-      _initialized = true;
-    }
+    // Empty = no filter = all countries selected
+    final selectedCountries = filterCountries.isEmpty
+        ? Set<String>.from(availableCountries)
+        : Set<String>.from(filterCountries);
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: countries.map((countryCode) {
-          final isSelected = _selectedCountries.contains(countryCode);
-          
+        children: availableCountries.map((countryCode) {
+          final isSelected = selectedCountries.contains(countryCode);
+
           return Padding(
             padding: const EdgeInsets.only(right: 6),
             child: InkWell(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               onTap: () {
-                setState(() {
-                  if (isSelected) {
-                    _selectedCountries.remove(countryCode);
-                  } else {
-                    _selectedCountries.add(countryCode);
-                  }
-                });
-                _applyCountryFilter(searchProvider);
+                final newSelected = Set<String>.from(selectedCountries);
+                if (isSelected) {
+                  newSelected.remove(countryCode);
+                } else {
+                  newSelected.add(countryCode);
+                }
+                // If all selected, store empty (= no filter)
+                final toStore = newSelected.length == availableCountries.length
+                    ? <String>[]
+                    : newSelected.toList();
+                final newFilters = searchProvider.filters.copyWith(
+                  countries: toStore.isEmpty ? null : toStore,
+                  clearCountries: toStore.isEmpty,
+                );
+                searchProvider.applyFilters(newFilters);
               },
               child: Container(
-                height: 28, // Misma altura que el segmented control
+                height: 24, // Misma altura que la parte seleccionada del segmented control
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   color: isSelected ? AppTheme.primary50 : AppTheme.gray100,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected ? AppTheme.primary500 : AppTheme.gray300,
                     width: isSelected ? 1.5 : 1,
@@ -741,183 +553,6 @@ class _CountryPillsState extends State<_CountryPills> {
   }
 }
 
-/// Segmented control iOS-like para cambiar el modo de vista (lista / mosaico / mapa)
-/// Compacto: botones más estrechos horizontal y verticalmente
-class _ResultsViewModeSegmentedControl extends StatelessWidget {
-  const _ResultsViewModeSegmentedControl();
-
-  @override
-  Widget build(BuildContext context) {
-    final searchProvider = context.watch<SearchProvider>();
-    final selected = searchProvider.viewMode;
-
-    const double height = 28; // Más estrecho verticalmente (era 36)
-    const double segmentWidth = 32; // Más estrecho horizontalmente (era 46)
-    const double radius = 10;
-
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: AppTheme.primary50,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: AppTheme.primary200),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primary600.withValues(alpha: 0.08),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(2),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _SegButton(
-            width: segmentWidth,
-            icon: Remix.menu_2_line,
-            isSelected: selected == ViewMode.list,
-            position: _SegPosition.left,
-            onTap: () => searchProvider.setViewMode(ViewMode.list),
-          ),
-          _SegButton(
-            width: segmentWidth,
-            icon: Remix.layout_grid_line,
-            isSelected: selected == ViewMode.cards,
-            position: _SegPosition.middle,
-            onTap: () => searchProvider.setViewMode(ViewMode.cards),
-          ),
-          _SegButton(
-            width: segmentWidth,
-            isSelected: selected == ViewMode.map,
-            position: _SegPosition.right,
-            onTap: () => searchProvider.setViewMode(ViewMode.map),
-            icon: Remix.map_2_line,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-enum _SegPosition { left, middle, right }
-
-class _SegButton extends StatelessWidget {
-  final double width;
-  final IconData? icon;
-  final bool isSelected;
-  final _SegPosition position;
-  final VoidCallback onTap;
-  final Widget Function(Color color)? customIconBuilder;
-
-  const _SegButton({
-    required this.width,
-    this.icon,
-    required this.isSelected,
-    required this.position,
-    required this.onTap,
-    this.customIconBuilder,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    BorderRadius? r;
-    if (position == _SegPosition.left) {
-      r = const BorderRadius.only(
-        topLeft: Radius.circular(8),
-        bottomLeft: Radius.circular(8),
-      );
-    } else if (position == _SegPosition.right) {
-      r = const BorderRadius.only(
-        topRight: Radius.circular(8),
-        bottomRight: Radius.circular(8),
-      );
-    }
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        width: width,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [AppTheme.primary500, Colors.purple.shade600],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isSelected ? null : Colors.white,
-          borderRadius: r,
-          border: position != _SegPosition.left
-              ? Border(left: BorderSide(color: AppTheme.primary200))
-              : null,
-        ),
-        child: Center(
-          child: customIconBuilder != null
-              ? customIconBuilder!(isSelected ? Colors.white : AppTheme.primary600)
-              : Icon(
-                  icon,
-                  size: 16, // Más pequeño (era 20)
-                  color: isSelected ? Colors.white : AppTheme.primary600,
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Icono tipo "pin + sonrisa" (Remix no trae el smile, lo dibujamos para clavar el estilo)
-class _MapPinWithSmile extends StatelessWidget {
-  final Color color;
-  final double size;
-
-  const _MapPinWithSmile({required this.color, this.size = 20});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size + 2,
-      height: size + 2,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(Remix.map_pin_2_line, size: size, color: color),
-          Positioned(
-            bottom: 1,
-            child: CustomPaint(
-              size: Size(size * 0.8, size * 0.4),
-              painter: _SmileArcPainter(color: color),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SmileArcPainter extends CustomPainter {
-  final Color color;
-  const _SmileArcPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-
-    final rect = Rect.fromLTWH(1, 0, size.width - 2, size.height - 1);
-    canvas.drawArc(rect, 0.15 * 3.14159, 0.7 * 3.14159, false, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SmileArcPainter oldDelegate) => oldDelegate.color != color;
-}
-
 /// Secciones de resultados con navegación horizontal entre secciones
 class _SearchResultsSections extends StatefulWidget {
   @override
@@ -925,28 +560,25 @@ class _SearchResultsSections extends StatefulWidget {
 }
 
 class _SearchResultsSectionsState extends State<_SearchResultsSections> {
-  late PageController _pageController;
   int _currentPage = 0;
-  
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-  }
-  
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-  
+
   void _goToPage(int page) {
     if (page >= 0 && page < 3) {
-      _pageController.animateToPage(
-        page,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-      );
+      setState(() => _currentPage = page);
+    }
+  }
+
+  /// Build only the current section - lazy loading to prevent memory issues
+  Widget _buildCurrentSection(int page) {
+    switch (page) {
+      case 0:
+        return _AllResultsSection();
+      case 1:
+        return _NearestResultsSectionVertical();
+      case 2:
+        return _CheapestResultsSection();
+      default:
+        return _AllResultsSection();
     }
   }
 
@@ -980,17 +612,10 @@ class _SearchResultsSectionsState extends State<_SearchResultsSections> {
           onNext: () => _goToPage(_currentPage + 1),
         ),
         
-        // PageView horizontal con las 3 secciones
+        // Lazy-loaded sections - only renders the active page
+        // This prevents 3x image loading that was crashing iOS Safari
         Expanded(
-          child: PageView(
-            controller: _pageController,
-            onPageChanged: (page) => setState(() => _currentPage = page),
-            children: [
-              _AllResultsSection(),
-              _NearestResultsSectionVertical(),
-              _CheapestResultsSection(),
-            ],
-          ),
+          child: _buildCurrentSection(_currentPage),
         ),
       ],
     );
@@ -1074,12 +699,13 @@ class _ChevronButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque, // Toda el área es clicable
       child: Container(
-        width: 28, // Más pequeño
-        height: 28,
+        width: 44, // Zona clicable ampliada para mejor accesibilidad
+        height: 44,
         alignment: Alignment.center,
         child: CustomPaint(
-          size: const Size(10, 16), // Más pequeño
+          size: const Size(10, 16), // Tamaño visual del chevron sin cambio
           painter: _ChevronPainter(
             direction: direction,
             color: isEnabled ? AppTheme.primary600 : AppTheme.gray300,
@@ -1128,20 +754,74 @@ class _ChevronPainter extends CustomPainter {
   }
 }
 
-/// Card promocional para activar búsqueda avanzada
-/// Se muestra después de 20 anuncios, luego cada 40 para usuarios no autenticados
+// ============================================================================
+// ADVANCED SEARCH PROMO CARD
+// Promotional card shown to unauthenticated users to encourage sign-up
+// ============================================================================
+
+/// First position where promo card is inserted
+const int _firstPromoPosition = 20;
+
+/// Interval between subsequent promo cards
+const int _promoInterval = 40;
+
+/// Calculates positions where promo cards should be shown
+List<int> _getPromoPositions(int totalResults, Set<int> dismissedPositions) {
+  final positions = <int>[];
+  // First position at 20
+  if (totalResults > _firstPromoPosition && !dismissedPositions.contains(_firstPromoPosition)) {
+    positions.add(_firstPromoPosition);
+  }
+  // Subsequent every 40 (60, 100, 140...)
+  int nextPosition = _firstPromoPosition + _promoInterval;
+  while (nextPosition < totalResults) {
+    if (!dismissedPositions.contains(nextPosition)) {
+      positions.add(nextPosition);
+    }
+    nextPosition += _promoInterval;
+  }
+  return positions;
+}
+
+/// Result of calculating promo card position for a given index
+class _PromoIndexResult {
+  final int? promoPosition; // If non-null, this index should show a promo card at this position
+  final int resultIndex;    // The actual result index after accounting for promo cards
+
+  const _PromoIndexResult({this.promoPosition, required this.resultIndex});
+}
+
+/// Calculates whether an index should show a promo card or a result
+/// Returns the promo position if it's a promo card, or the adjusted result index
+_PromoIndexResult _calculatePromoIndex(int index, List<int> promoPositions) {
+  int promosBefore = 0;
+  for (final pos in promoPositions) {
+    if (pos + promosBefore < index) {
+      promosBefore++;
+    } else if (pos + promosBefore == index) {
+      return _PromoIndexResult(promoPosition: pos, resultIndex: index - promosBefore);
+    }
+  }
+  return _PromoIndexResult(resultIndex: index - promosBefore);
+}
+
+/// Promotional card explaining why results may seem irrelevant
+/// Shown after 20 ads, then every 40 for unauthenticated users
 class _AdvancedSearchPromoCard extends StatelessWidget {
   final String searchText;
   final VoidCallback? onDismiss;
-  
+
   const _AdvancedSearchPromoCard({required this.searchText, this.onDismiss});
+
+  // Fluorescent purple color for the border
+  static const Color _fluorescentPurple = Color(0xFFBF00FF);
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final authProvider = context.watch<AuthProvider>();
-    
-    // No mostrar si el usuario está autenticado
+
+    // Don't show if user is authenticated
     if (authProvider.isAuthenticated) {
       return const SizedBox.shrink();
     }
@@ -1152,11 +832,12 @@ class _AdvancedSearchPromoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primary200, width: 1.5),
+        border: Border.all(color: _fluorescentPurple, width: 2.5),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary500.withValues(alpha: 0.08),
-            blurRadius: 12,
+            color: _fluorescentPurple.withValues(alpha: 0.25),
+            blurRadius: 16,
+            spreadRadius: 2,
             offset: const Offset(0, 4),
           ),
         ],
@@ -1164,22 +845,18 @@ class _AdvancedSearchPromoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header con icono y título
+          // Header with icon and title
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icono de estrellas/magia
-              const Text(
-                '✨',
-                style: TextStyle(fontSize: 24),
-              ),
+              const Text('🤔', style: TextStyle(fontSize: 24)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   l10n.advancedSearchPromoTitle,
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
                     color: AppTheme.gray900,
                     height: 1.3,
                   ),
@@ -1188,26 +865,33 @@ class _AdvancedSearchPromoCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          
-          // Lista de beneficios
-          _buildBenefitItem(context, l10n.advancedSearchPromoBenefit1(searchText)),
-          const SizedBox(height: 6),
-          _buildBenefitItem(context, l10n.advancedSearchPromoBenefit2),
-          const SizedBox(height: 6),
-          _buildBenefitItem(context, l10n.advancedSearchPromoBenefit3),
-          const SizedBox(height: 16),
-          
-          // Botones
+
+          // Message text
+          Text(
+            l10n.advancedSearchPromoMessage(searchText),
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.gray700,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Buttons - reversed logic:
+          // "Prefiero resultados filtrados" -> opens registration modal
+          // "Entendido, quiero ver todo" -> closes the card
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Botón principal
+              // Primary button - Opens registration modal for filtered results
               Expanded(
+                flex: 3,
                 child: ElevatedButton(
-                  onPressed: () => _onActivateAdvanced(context),
+                  onPressed: () => _onRequestFilteredResults(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary600,
+                    backgroundColor: _fluorescentPurple,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
@@ -1215,23 +899,29 @@ class _AdvancedSearchPromoCard extends StatelessWidget {
                   ),
                   child: Text(
                     l10n.advancedSearchPromoActivate,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, height: 1.3),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              // Botón secundario - cierra la tarjeta
-              TextButton(
-                onPressed: onDismiss,
-                child: Text(
-                  l10n.advancedSearchPromoNotNow,
-                  style: TextStyle(
-                    color: AppTheme.gray500,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
+              // Secondary button - Closes the card (user accepts unfiltered results)
+              Expanded(
+                flex: 2,
+                child: TextButton(
+                  onPressed: onDismiss,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                  ),
+                  child: Text(
+                    l10n.advancedSearchPromoNotNow,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.gray500,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                      height: 1.3,
+                    ),
                   ),
                 ),
               ),
@@ -1242,32 +932,7 @@ class _AdvancedSearchPromoCard extends StatelessWidget {
     );
   }
 
-  Widget _buildBenefitItem(BuildContext context, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          Icons.check,
-          size: 18,
-          color: Colors.green.shade600,
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.gray700,
-              height: 1.3,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _onActivateAdvanced(BuildContext context) {
-    // Mostrar modal de registro
+  void _onRequestFilteredResults(BuildContext context) {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
@@ -1279,29 +944,6 @@ class _AdvancedSearchPromoCard extends StatelessWidget {
   }
 }
 
-/// Primera posición donde se inserta la card promocional
-const int _firstPromoPosition = 20;
-/// Intervalo entre cards promocionales subsiguientes
-const int _promoInterval = 40;
-
-/// Calcula las posiciones de las promo cards que deben mostrarse
-List<int> _getPromoPositions(int totalResults, Set<int> dismissedPositions) {
-  final positions = <int>[];
-  // Primera posición en 20
-  if (totalResults > _firstPromoPosition && !dismissedPositions.contains(_firstPromoPosition)) {
-    positions.add(_firstPromoPosition);
-  }
-  // Siguientes cada 40 (60, 100, 140...)
-  int nextPosition = _firstPromoPosition + _promoInterval;
-  while (nextPosition < totalResults) {
-    if (!dismissedPositions.contains(nextPosition)) {
-      positions.add(nextPosition);
-    }
-    nextPosition += _promoInterval;
-  }
-  return positions;
-}
-
 /// 1. Sección "Todos los resultados" con scroll vertical
 class _AllResultsSection extends StatefulWidget {
   @override
@@ -1310,27 +952,27 @@ class _AllResultsSection extends StatefulWidget {
 
 class _AllResultsSectionState extends State<_AllResultsSection> {
   final Set<int> _dismissedPromoPositions = {};
-  
+
   void _dismissPromoAt(int position) {
     setState(() {
       _dismissedPromoPositions.add(position);
     });
   }
-
   @override
   Widget build(BuildContext context) {
     final searchProvider = context.watch<SearchProvider>();
     final authProvider = context.watch<AuthProvider>();
-    final results = searchProvider.filteredResults;
+    // Use displayedResults (limited to 20/40) instead of filteredResults (all 800+)
+    // This prevents memory issues on devices with limited RAM (iPhone)
+    final results = searchProvider.displayedResults;
     final viewMode = searchProvider.viewMode;
     final searchText = searchProvider.searchText ?? '';
-    
-    // Calcular posiciones de promo cards
-    final promoPositions = !authProvider.isAuthenticated 
+
+    // Calculate promo positions for unauthenticated users
+    final promoPositions = !authProvider.isAuthenticated
         ? _getPromoPositions(results.length, _dismissedPromoPositions)
         : <int>[];
-    final showPromoCard = promoPositions.isNotEmpty;
-    
+
     // Vista de mapa
     if (viewMode == ViewMode.map) {
       return const Padding(
@@ -1338,52 +980,153 @@ class _AllResultsSectionState extends State<_AllResultsSection> {
         child: SearchResultsMapView(),
       );
     }
-    
-    // Vista de lista con promo cards en múltiples posiciones
+
+    // Vista de lista con promo cards
     if (viewMode == ViewMode.list) {
       final totalItems = results.length + promoPositions.length;
-      
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: totalItems,
-        itemBuilder: (context, index) {
-          // Calcular cuántas promo cards hay antes de este índice
-          int promosBefore = 0;
-          int? currentPromoPosition;
-          for (final pos in promoPositions) {
-            if (pos + promosBefore < index) {
-              promosBefore++;
-            } else if (pos + promosBefore == index) {
-              currentPromoPosition = pos;
-              break;
+
+      return NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          // Load more when user scrolls near bottom
+          if (notification is ScrollUpdateNotification) {
+            final metrics = notification.metrics;
+            if (metrics.pixels >= metrics.maxScrollExtent - 200) {
+              if (searchProvider.hasMoreResults) {
+                searchProvider.loadMoreResults();
+              }
             }
           }
-          
-          // Si este índice es una promo card
-          if (currentPromoPosition != null) {
-            return _AdvancedSearchPromoCard(
-              searchText: searchText,
-              onDismiss: () => _dismissPromoAt(currentPromoPosition!),
-            );
-          }
-          
-          // Si no, mostrar resultado ajustando el índice
-          final resultIndex = index - promosBefore;
-          if (resultIndex < results.length) {
-            return _ResultListItem(result: results[resultIndex]);
-          }
-          return const SizedBox.shrink();
+          return false;
         },
+        child: ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: totalItems,
+          itemBuilder: (context, index) {
+            final promoResult = _calculatePromoIndex(index, promoPositions);
+
+            // If this index is a promo card
+            if (promoResult.promoPosition != null) {
+              return _AdvancedSearchPromoCard(
+                searchText: searchText,
+                onDismiss: () => _dismissPromoAt(promoResult.promoPosition!),
+              );
+            }
+
+            // Otherwise show result
+            if (promoResult.resultIndex < results.length) {
+              return _ResultListItem(result: results[promoResult.resultIndex]);
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       );
     }
-    
-    // Vista mosaico - usar CustomScrollView con múltiples promo cards
-    return _buildGridWithMultiplePromoCards(
-      context: context,
-      results: results,
-      promoPositions: promoPositions,
-      searchText: searchText,
-      onDismissPromo: _dismissPromoAt,
+
+    // Vista de mosaico (grid) con promo cards intercaladas
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        // Load more when user scrolls near bottom
+        if (notification is ScrollUpdateNotification) {
+          final metrics = notification.metrics;
+          if (metrics.pixels >= metrics.maxScrollExtent - 200) {
+            if (searchProvider.hasMoreResults) {
+              searchProvider.loadMoreResults();
+            }
+          }
+        }
+        return false;
+      },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final screenWidth = MediaQuery.of(context).size.width;
+          final isMobile = screenWidth < 600;
+
+          final spacing = isMobile ? 8.0 : 12.0;
+          final horizontalPadding = isMobile ? 12.0 : 16.0;
+
+          int actualColumns;
+          double aspectRatio;
+
+          if (isMobile) {
+            actualColumns = 2;
+            aspectRatio = 193 / 251;
+          } else {
+            final cardWidth = 200.0;
+            final availableWidth = constraints.maxWidth - (horizontalPadding * 2);
+            final columnsCount = (availableWidth / (cardWidth + spacing)).floor();
+            actualColumns = columnsCount > 0 ? columnsCount : 1;
+            aspectRatio = 0.75;
+          }
+
+          // Calculate number of rows and promo positions (in terms of rows)
+          final numRows = (results.length / actualColumns).ceil();
+          final promoRowPositions = promoPositions.map((p) => (p / actualColumns).floor()).toSet().toList()..sort();
+          final totalItems = numRows + promoRowPositions.length;
+
+          return ListView.builder(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+            itemCount: totalItems,
+            itemBuilder: (context, index) {
+              // Calculate how many promos appear before this index
+              int promosBeforeIndex = 0;
+              for (final promoRow in promoRowPositions) {
+                if (promoRow + promosBeforeIndex < index) {
+                  promosBeforeIndex++;
+                } else {
+                  break;
+                }
+              }
+              
+              // Check if this index is a promo position
+              final isPromoIndex = promoRowPositions.contains(index - promosBeforeIndex) && 
+                  promosBeforeIndex < promoRowPositions.length &&
+                  promoRowPositions[promosBeforeIndex] + promosBeforeIndex == index;
+              
+              if (isPromoIndex) {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: spacing),
+                  child: _AdvancedSearchPromoCard(
+                    searchText: searchText,
+                    onDismiss: () => _dismissPromoAt(promoRowPositions[promosBeforeIndex]),
+                  ),
+                );
+              }
+              
+              // Otherwise show a row of grid items
+              final rowIndex = index - promosBeforeIndex;
+              final startIndex = rowIndex * actualColumns;
+              final endIndex = (startIndex + actualColumns).clamp(0, results.length);
+              
+              if (startIndex >= results.length) {
+                return const SizedBox.shrink();
+              }
+              
+              final rowItems = results.sublist(startIndex, endIndex);
+              final cardHeight = (constraints.maxWidth - horizontalPadding * 2 - spacing * (actualColumns - 1)) / actualColumns / aspectRatio;
+              
+              return Padding(
+                padding: EdgeInsets.only(bottom: spacing),
+                child: SizedBox(
+                  height: cardHeight,
+                  child: Row(
+                    children: [
+                      for (int i = 0; i < rowItems.length; i++) ...[
+                        if (i > 0) SizedBox(width: spacing),
+                        Expanded(child: _ResultGridItem(result: rowItems[i])),
+                      ],
+                      // Fill remaining space if row is not complete
+                      for (int i = rowItems.length; i < actualColumns; i++) ...[
+                        SizedBox(width: spacing),
+                        const Expanded(child: SizedBox()),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
@@ -1396,7 +1139,7 @@ class _NearestResultsSectionVertical extends StatefulWidget {
 
 class _NearestResultsSectionVerticalState extends State<_NearestResultsSectionVertical> {
   final Set<int> _dismissedPromoPositions = {};
-  
+
   void _dismissPromoAt(int position) {
     setState(() {
       _dismissedPromoPositions.add(position);
@@ -1409,21 +1152,17 @@ class _NearestResultsSectionVerticalState extends State<_NearestResultsSectionVe
     final authProvider = context.watch<AuthProvider>();
     final viewMode = searchProvider.viewMode;
     final searchText = searchProvider.searchText ?? '';
-    
-    // Ordenar por cercanía
-    final nearestResults = List<SearchResult>.from(searchProvider.filteredResults)
-      ..sort((a, b) {
-        if (a.distance == null && b.distance == null) return 0;
-        if (a.distance == null) return 1;
-        if (b.distance == null) return -1;
-        return a.distance!.compareTo(b.distance!);
-      });
+
+    // Use displayedResultsByDistance: filters applied, sorted by distance, then limited
+    // This gives us the N nearest results from ALL filtered results
+    final nearestResults = searchProvider.displayedResultsByDistance;
 
     if (nearestResults.isEmpty) {
       return const Center(child: Text('No hay resultados cercanos'));
     }
-    
-    final promoPositions = !authProvider.isAuthenticated 
+
+    // Calculate promo positions for unauthenticated users
+    final promoPositions = !authProvider.isAuthenticated
         ? _getPromoPositions(nearestResults.length, _dismissedPromoPositions)
         : <int>[];
 
@@ -1434,49 +1173,125 @@ class _NearestResultsSectionVerticalState extends State<_NearestResultsSectionVe
         child: SearchResultsMapView(),
       );
     }
-    
+
     // Vista de lista con promo cards
     if (viewMode == ViewMode.list) {
       final totalItems = nearestResults.length + promoPositions.length;
-      
+
       return ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: totalItems,
         itemBuilder: (context, index) {
-          int promosBefore = 0;
-          int? currentPromoPosition;
-          for (final pos in promoPositions) {
-            if (pos + promosBefore < index) {
-              promosBefore++;
-            } else if (pos + promosBefore == index) {
-              currentPromoPosition = pos;
-              break;
-            }
-          }
-          
-          if (currentPromoPosition != null) {
+          final promoResult = _calculatePromoIndex(index, promoPositions);
+
+          // If this index is a promo card
+          if (promoResult.promoPosition != null) {
             return _AdvancedSearchPromoCard(
               searchText: searchText,
-              onDismiss: () => _dismissPromoAt(currentPromoPosition!),
+              onDismiss: () => _dismissPromoAt(promoResult.promoPosition!),
             );
           }
-          
-          final resultIndex = index - promosBefore;
-          if (resultIndex < nearestResults.length) {
-            return _ResultListItem(result: nearestResults[resultIndex]);
+
+          // Otherwise show result
+          if (promoResult.resultIndex < nearestResults.length) {
+            return _ResultListItem(result: nearestResults[promoResult.resultIndex]);
           }
           return const SizedBox.shrink();
         },
       );
     }
-    
-    // Vista mosaico
-    return _buildGridWithMultiplePromoCards(
-      context: context,
-      results: nearestResults,
-      promoPositions: promoPositions,
-      searchText: searchText,
-      onDismissPromo: _dismissPromoAt,
+
+    // Vista de mosaico (grid) con promo cards intercaladas
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isMobile = screenWidth < 600;
+
+        final spacing = isMobile ? 8.0 : 12.0;
+        final horizontalPadding = isMobile ? 12.0 : 16.0;
+
+        int actualColumns;
+        double aspectRatio;
+
+        if (isMobile) {
+          actualColumns = 2;
+          aspectRatio = 193 / 251;
+        } else {
+          final cardWidth = 200.0;
+          final availableWidth = constraints.maxWidth - (horizontalPadding * 2);
+          final columnsCount = (availableWidth / (cardWidth + spacing)).floor();
+          actualColumns = columnsCount > 0 ? columnsCount : 1;
+          aspectRatio = 0.75;
+        }
+
+        // Calculate number of rows and promo positions (in terms of rows)
+        final numRows = (nearestResults.length / actualColumns).ceil();
+        final promoRowPositions = promoPositions.map((p) => (p / actualColumns).floor()).toSet().toList()..sort();
+        final totalItems = numRows + promoRowPositions.length;
+
+        return ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          itemCount: totalItems,
+          itemBuilder: (context, index) {
+            // Calculate how many promos appear before this index
+            int promosBeforeIndex = 0;
+            for (final promoRow in promoRowPositions) {
+              if (promoRow + promosBeforeIndex < index) {
+                promosBeforeIndex++;
+              } else {
+                break;
+              }
+            }
+            
+            // Check if this index is a promo position
+            final isPromoIndex = promoRowPositions.contains(index - promosBeforeIndex) && 
+                promosBeforeIndex < promoRowPositions.length &&
+                promoRowPositions[promosBeforeIndex] + promosBeforeIndex == index;
+            
+            if (isPromoIndex) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: spacing),
+                child: _AdvancedSearchPromoCard(
+                  searchText: searchText,
+                  onDismiss: () => _dismissPromoAt(promoRowPositions[promosBeforeIndex]),
+                ),
+              );
+            }
+            
+            // Otherwise show a row of grid items
+            final rowIndex = index - promosBeforeIndex;
+            final startIndex = rowIndex * actualColumns;
+            final endIndex = (startIndex + actualColumns).clamp(0, nearestResults.length);
+            
+            if (startIndex >= nearestResults.length) {
+              return const SizedBox.shrink();
+            }
+            
+            final rowItems = nearestResults.sublist(startIndex, endIndex);
+            final cardHeight = (constraints.maxWidth - horizontalPadding * 2 - spacing * (actualColumns - 1)) / actualColumns / aspectRatio;
+            
+            return Padding(
+              padding: EdgeInsets.only(bottom: spacing),
+              child: SizedBox(
+                height: cardHeight,
+                child: Row(
+                  children: [
+                    for (int i = 0; i < rowItems.length; i++) ...[
+                      if (i > 0) SizedBox(width: spacing),
+                      Expanded(child: _ResultGridItem(result: rowItems[i])),
+                    ],
+                    // Fill remaining space if row is not complete
+                    for (int i = rowItems.length; i < actualColumns; i++) ...[
+                      SizedBox(width: spacing),
+                      const Expanded(child: SizedBox()),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -1489,7 +1304,7 @@ class _CheapestResultsSection extends StatefulWidget {
 
 class _CheapestResultsSectionState extends State<_CheapestResultsSection> {
   final Set<int> _dismissedPromoPositions = {};
-  
+
   void _dismissPromoAt(int position) {
     setState(() {
       _dismissedPromoPositions.add(position);
@@ -1502,18 +1317,19 @@ class _CheapestResultsSectionState extends State<_CheapestResultsSection> {
     final authProvider = context.watch<AuthProvider>();
     final viewMode = searchProvider.viewMode;
     final searchText = searchProvider.searchText ?? '';
-    
-    // Ordenar por precio
-    final cheapestResults = List<SearchResult>.from(searchProvider.filteredResults)
-      ..sort((a, b) => a.price.compareTo(b.price));
-    
-    final promoPositions = !authProvider.isAuthenticated 
-        ? _getPromoPositions(cheapestResults.length, _dismissedPromoPositions)
-        : <int>[];
+
+    // Use displayedResultsByPrice: filters applied, sorted by price, then limited
+    // This gives us the N cheapest results from ALL filtered results
+    final cheapestResults = searchProvider.displayedResultsByPrice;
 
     if (cheapestResults.isEmpty) {
       return const Center(child: Text('No hay resultados'));
     }
+
+    // Calculate promo positions for unauthenticated users
+    final promoPositions = !authProvider.isAuthenticated
+        ? _getPromoPositions(cheapestResults.length, _dismissedPromoPositions)
+        : <int>[];
 
     // Vista de mapa
     if (viewMode == ViewMode.map) {
@@ -1522,168 +1338,129 @@ class _CheapestResultsSectionState extends State<_CheapestResultsSection> {
         child: SearchResultsMapView(),
       );
     }
-    
+
     // Vista de lista con promo cards
     if (viewMode == ViewMode.list) {
       final totalItems = cheapestResults.length + promoPositions.length;
-      
+
       return ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: totalItems,
         itemBuilder: (context, index) {
-          int promosBefore = 0;
-          int? currentPromoPosition;
-          for (final pos in promoPositions) {
-            if (pos + promosBefore < index) {
-              promosBefore++;
-            } else if (pos + promosBefore == index) {
-              currentPromoPosition = pos;
-              break;
-            }
-          }
-          
-          if (currentPromoPosition != null) {
+          final promoResult = _calculatePromoIndex(index, promoPositions);
+
+          // If this index is a promo card
+          if (promoResult.promoPosition != null) {
             return _AdvancedSearchPromoCard(
               searchText: searchText,
-              onDismiss: () => _dismissPromoAt(currentPromoPosition!),
+              onDismiss: () => _dismissPromoAt(promoResult.promoPosition!),
             );
           }
-          
-          final resultIndex = index - promosBefore;
-          if (resultIndex < cheapestResults.length) {
-            return _ResultListItem(result: cheapestResults[resultIndex]);
+
+          // Otherwise show result
+          if (promoResult.resultIndex < cheapestResults.length) {
+            return _ResultListItem(result: cheapestResults[promoResult.resultIndex]);
           }
           return const SizedBox.shrink();
         },
       );
     }
-    
-    // Vista mosaico
-    return _buildGridWithMultiplePromoCards(
-      context: context,
-      results: cheapestResults,
-      promoPositions: promoPositions,
-      searchText: searchText,
-      onDismissPromo: _dismissPromoAt,
+
+    // Vista de mosaico (grid) con promo cards intercaladas
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isMobile = screenWidth < 600;
+
+        final spacing = isMobile ? 8.0 : 12.0;
+        final horizontalPadding = isMobile ? 12.0 : 16.0;
+
+        int actualColumns;
+        double aspectRatio;
+
+        if (isMobile) {
+          actualColumns = 2;
+          aspectRatio = 193 / 251;
+        } else {
+          final cardWidth = 200.0;
+          final availableWidth = constraints.maxWidth - (horizontalPadding * 2);
+          final columnsCount = (availableWidth / (cardWidth + spacing)).floor();
+          actualColumns = columnsCount > 0 ? columnsCount : 1;
+          aspectRatio = 0.75;
+        }
+
+        // Calculate number of rows and promo positions (in terms of rows)
+        final numRows = (cheapestResults.length / actualColumns).ceil();
+        final promoRowPositions = promoPositions.map((p) => (p / actualColumns).floor()).toSet().toList()..sort();
+        final totalItems = numRows + promoRowPositions.length;
+
+        return ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          itemCount: totalItems,
+          itemBuilder: (context, index) {
+            // Calculate how many promos appear before this index
+            int promosBeforeIndex = 0;
+            for (final promoRow in promoRowPositions) {
+              if (promoRow + promosBeforeIndex < index) {
+                promosBeforeIndex++;
+              } else {
+                break;
+              }
+            }
+            
+            // Check if this index is a promo position
+            final isPromoIndex = promoRowPositions.contains(index - promosBeforeIndex) && 
+                promosBeforeIndex < promoRowPositions.length &&
+                promoRowPositions[promosBeforeIndex] + promosBeforeIndex == index;
+            
+            if (isPromoIndex) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: spacing),
+                child: _AdvancedSearchPromoCard(
+                  searchText: searchText,
+                  onDismiss: () => _dismissPromoAt(promoRowPositions[promosBeforeIndex]),
+                ),
+              );
+            }
+            
+            // Otherwise show a row of grid items
+            final rowIndex = index - promosBeforeIndex;
+            final startIndex = rowIndex * actualColumns;
+            final endIndex = (startIndex + actualColumns).clamp(0, cheapestResults.length);
+            
+            if (startIndex >= cheapestResults.length) {
+              return const SizedBox.shrink();
+            }
+            
+            final rowItems = cheapestResults.sublist(startIndex, endIndex);
+            final cardHeight = (constraints.maxWidth - horizontalPadding * 2 - spacing * (actualColumns - 1)) / actualColumns / aspectRatio;
+            
+            return Padding(
+              padding: EdgeInsets.only(bottom: spacing),
+              child: SizedBox(
+                height: cardHeight,
+                child: Row(
+                  children: [
+                    for (int i = 0; i < rowItems.length; i++) ...[
+                      if (i > 0) SizedBox(width: spacing),
+                      Expanded(child: _ResultGridItem(result: rowItems[i])),
+                    ],
+                    // Fill remaining space if row is not complete
+                    for (int i = rowItems.length; i < actualColumns; i++) ...[
+                      SizedBox(width: spacing),
+                      const Expanded(child: SizedBox()),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
 
-/// Helper function para construir grid con múltiples promo cards insertadas
-Widget _buildGridWithMultiplePromoCards({
-  required BuildContext context,
-  required List<SearchResult> results,
-  required List<int> promoPositions,
-  required String searchText,
-  required void Function(int) onDismissPromo,
-}) {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      final screenWidth = MediaQuery.of(context).size.width;
-      final isMobile = screenWidth < 600;
-      
-      final spacing = isMobile ? 8.0 : 12.0;
-      final horizontalPadding = isMobile ? 12.0 : 16.0;
-      
-      int actualColumns;
-      double aspectRatio;
-      
-      if (isMobile) {
-        actualColumns = 2;
-        aspectRatio = 193 / 251;
-      } else {
-        final cardWidth = 200.0;
-        final availableWidth = constraints.maxWidth - (horizontalPadding * 2);
-        final columnsCount = (availableWidth / (cardWidth + spacing)).floor();
-        actualColumns = columnsCount > 0 ? columnsCount : 1;
-        aspectRatio = 0.75;
-      }
-      
-      if (promoPositions.isEmpty) {
-        return GridView.builder(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: actualColumns,
-            crossAxisSpacing: spacing,
-            mainAxisSpacing: spacing,
-            childAspectRatio: aspectRatio,
-          ),
-          itemCount: results.length,
-          itemBuilder: (context, index) => _ResultGridItem(result: results[index]),
-        );
-      }
-      
-      // Construir slivers con promo cards intercaladas
-      final slivers = <Widget>[];
-      int lastPosition = 0;
-      
-      for (final promoPos in promoPositions) {
-        // Añadir grid desde la última posición hasta esta promo
-        if (promoPos > lastPosition) {
-          final segment = results.sublist(lastPosition, promoPos.clamp(0, results.length));
-          if (segment.isNotEmpty) {
-            slivers.add(
-              SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                sliver: SliverGrid(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _ResultGridItem(result: segment[index]),
-                    childCount: segment.length,
-                  ),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: actualColumns,
-                    crossAxisSpacing: spacing,
-                    mainAxisSpacing: spacing,
-                    childAspectRatio: aspectRatio,
-                  ),
-                ),
-              ),
-            );
-          }
-        }
-        
-        // Añadir promo card
-        slivers.add(
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-            sliver: SliverToBoxAdapter(
-              child: _AdvancedSearchPromoCard(
-                searchText: searchText,
-                onDismiss: () => onDismissPromo(promoPos),
-              ),
-            ),
-          ),
-        );
-        
-        lastPosition = promoPos;
-      }
-      
-      // Añadir el resto de resultados después de la última promo
-      if (lastPosition < results.length) {
-        final remaining = results.sublist(lastPosition);
-        slivers.add(
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-            sliver: SliverGrid(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _ResultGridItem(result: remaining[index]),
-                childCount: remaining.length,
-              ),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: actualColumns,
-                crossAxisSpacing: spacing,
-                mainAxisSpacing: spacing,
-                childAspectRatio: aspectRatio,
-              ),
-            ),
-          ),
-        );
-      }
-      
-      return CustomScrollView(slivers: slivers);
-    },
-  );
-}
 
 /// Shipping indicator - always visible, crossed out when not shippable
 class _ShippingIndicator extends StatelessWidget {
@@ -1820,7 +1597,7 @@ class _ResultListItem extends StatelessWidget {
                             const SizedBox(width: 6),
                             PlatformIconWithFlag(
                               platform: result.platform,
-                              countryCode: result.countryCode,
+                              countryCode: result.marketplaceCountry ?? result.countryCode,
                               size: 24,
                             ),
                           ],
@@ -1957,7 +1734,7 @@ class _ResultGridItem extends StatelessWidget {
                         const SizedBox(width: 4),
                         PlatformIconWithFlag(
                           platform: result.platform,
-                          countryCode: result.countryCode,
+                          countryCode: result.marketplaceCountry ?? result.countryCode,
                           size: isMobile ? 20 : 24,
                         ),
                       ],
@@ -1991,6 +1768,135 @@ class _ResultGridItem extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// VIEW MODE SEGMENTED CONTROL
+// =============================================================================
+
+/// Position of a segment button within the control
+enum _SegPosition { left, middle, right }
+
+/// iOS-style segmented control for switching between view modes (list/grid/map)
+class _ResultsViewModeSegmentedControl extends StatelessWidget {
+  const _ResultsViewModeSegmentedControl();
+
+  @override
+  Widget build(BuildContext context) {
+    final searchProvider = context.watch<SearchProvider>();
+    final selected = searchProvider.viewMode;
+
+    const double height = 28;
+    const double segmentWidth = 32;
+    const double radius = 10;
+
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: AppTheme.primary50,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: AppTheme.primary200),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary600.withValues(alpha: 0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _SegButton(
+            width: segmentWidth,
+            icon: Remix.layout_grid_line,
+            isSelected: selected == ViewMode.cards,
+            position: _SegPosition.left,
+            onTap: () => searchProvider.setViewMode(ViewMode.cards),
+          ),
+          _SegButton(
+            width: segmentWidth,
+            icon: Remix.menu_2_line,
+            isSelected: selected == ViewMode.list,
+            position: _SegPosition.middle,
+            onTap: () => searchProvider.setViewMode(ViewMode.list),
+          ),
+          _SegButton(
+            width: segmentWidth,
+            icon: Remix.map_2_line,
+            isSelected: selected == ViewMode.map,
+            position: _SegPosition.right,
+            onTap: () => searchProvider.setViewMode(ViewMode.map),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Individual button segment within the segmented control
+class _SegButton extends StatelessWidget {
+  final double width;
+  final IconData icon;
+  final bool isSelected;
+  final _SegPosition position;
+  final VoidCallback onTap;
+
+  const _SegButton({
+    required this.width,
+    required this.icon,
+    required this.isSelected,
+    required this.position,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    BorderRadius? borderRadius;
+    if (position == _SegPosition.left) {
+      borderRadius = const BorderRadius.only(
+        topLeft: Radius.circular(8),
+        bottomLeft: Radius.circular(8),
+      );
+    } else if (position == _SegPosition.right) {
+      borderRadius = const BorderRadius.only(
+        topRight: Radius.circular(8),
+        bottomRight: Radius.circular(8),
+      );
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        width: width,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [AppTheme.primary500, Colors.purple.shade600],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected ? null : Colors.white,
+          borderRadius: borderRadius,
+          border: position != _SegPosition.left
+              ? Border(left: BorderSide(color: AppTheme.primary200))
+              : null,
+        ),
+        child: Center(
+          child: Icon(
+            icon,
+            size: 16,
+            color: isSelected ? Colors.white : AppTheme.primary600,
+          ),
         ),
       ),
     );

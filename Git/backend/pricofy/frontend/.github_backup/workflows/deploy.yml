@@ -1,0 +1,108 @@
+name: Deploy Frontend
+
+on:
+  workflow_dispatch:     # Manual deploy to dev or prod
+    inputs:
+      environment:
+        description: 'Environment to deploy (dev or prod)'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine environment
+        id: env
+        run: |
+          echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          if [ "${{ inputs.environment }}" == "prod" ]; then
+            echo "account_id=${{ secrets.AWS_ACCOUNT_ID_PROD }}" >> $GITHUB_OUTPUT
+            echo "role_arn=${{ secrets.AWS_ROLE_ARN_PROD }}" >> $GITHUB_OUTPUT
+          else
+            echo "account_id=${{ secrets.AWS_ACCOUNT_ID_DEV }}" >> $GITHUB_OUTPUT
+            echo "role_arn=${{ secrets.AWS_ROLE_ARN_DEV }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.1'  # Includes Dart 3.6.0 required by build_runner
+          channel: 'stable'
+
+      - name: Clean
+        run: flutter clean
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ steps.env.outputs.role_arn }}
+          aws-region: eu-west-1
+
+      - name: Load environment variables from SSM
+        id: ssm
+        run: |
+          API_GATEWAY_URL=$(aws ssm get-parameter --name "/pricofy/${{ steps.env.outputs.environment }}/api-gateway-url" --query 'Parameter.Value' --output text 2>/dev/null || echo "")
+          API_KEY=$(aws ssm get-parameter --name "/pricofy/${{ steps.env.outputs.environment }}/api-key-web" --with-decryption --query 'Parameter.Value' --output text 2>/dev/null || echo "")
+          COGNITO_POOL_ID=$(aws ssm get-parameter --name "/pricofy/${{ steps.env.outputs.environment }}/cognito-pool-id" --query 'Parameter.Value' --output text 2>/dev/null || echo "")
+          COGNITO_CLIENT_ID=$(aws ssm get-parameter --name "/pricofy/${{ steps.env.outputs.environment }}/cognito-client-id" --query 'Parameter.Value' --output text 2>/dev/null || echo "")
+          echo "::add-mask::$API_KEY"
+          echo "api_gateway_url=$API_GATEWAY_URL" >> $GITHUB_OUTPUT
+          echo "api_key=$API_KEY" >> $GITHUB_OUTPUT
+          echo "cognito_pool_id=$COGNITO_POOL_ID" >> $GITHUB_OUTPUT
+          echo "cognito_client_id=$COGNITO_CLIENT_ID" >> $GITHUB_OUTPUT
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Flutter Web
+        run: |
+          flutter build web --release \
+            --dart-define=API_BASE_URL=${{ steps.ssm.outputs.api_gateway_url }} \
+            --dart-define=API_KEY=${{ steps.ssm.outputs.api_key }} \
+            --dart-define=COGNITO_POOL_ID=${{ steps.ssm.outputs.cognito_pool_id }} \
+            --dart-define=COGNITO_CLIENT_ID=${{ steps.ssm.outputs.cognito_client_id }} \
+            --dart-define=ENVIRONMENT=${{ steps.env.outputs.environment }}
+
+      - name: Get CloudFront Distribution ID
+        id: cloudfront
+        run: |
+          DISTRIBUTION_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Comment=='Pricofy Frontend Distribution (${{ steps.env.outputs.environment }})'].Id | [0]" \
+            --output text)
+          echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync build/web/ s3://pricofy-${{ steps.env.outputs.environment }}-frontend-flutter/ --delete
+          echo "✅ Frontend uploaded to S3"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ steps.cloudfront.outputs.distribution_id }} \
+            --paths "/*"
+          echo "✅ CloudFront cache invalidated"
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Frontend deployed successfully to ${{ steps.env.outputs.environment }}"
+            echo "🌐 CloudFront Distribution: ${{ steps.cloudfront.outputs.distribution_id }}"
+          else
+            echo "❌ Frontend deployment failed"
+            exit 1
+          fi

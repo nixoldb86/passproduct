@@ -1,7 +1,7 @@
 // Search Result Detail Modal Widget
 //
 // Full-screen modal with detailed listing information for search results.
-// Shows: large image, full description, seller info, link to external listing.
+// Shows: large image, title, price, product info chips, description, metadata, link to external listing.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -93,44 +93,52 @@ class SearchResultDetailModal extends StatelessWidget {
                       ),
                     SizedBox(height: 16),
 
-                    // Platform icon with flag
-                    PlatformIconWithFlag(
-                      platform: result.platform,
-                      countryCode: result.countryCode,
-                      size: 48,
+                    // Title + Platform icon with flag (in same row)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            result.title,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        PlatformIconWithFlag(
+                          platform: result.platform,
+                          countryCode: result.marketplaceCountry ?? result.countryCode,
+                          size: 40,
+                        ),
+                      ],
                     ),
                     SizedBox(height: 12),
 
-                    // Title
+                    // Price label + Price
                     Text(
-                      result.title,
+                      l10n.sortPrice,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(height: 12),
-
-                    // Price
+                    SizedBox(height: 4),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: AppTheme.primary600.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.euro, color: AppTheme.primary600),
-                          SizedBox(width: 8),
-                          Text(
-                            '${result.price.round()}€',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primary600,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        '${result.price.toStringAsFixed(2)} €',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primary600,
+                        ),
                       ),
                     ),
                     SizedBox(height: 16),
@@ -139,55 +147,55 @@ class SearchResultDetailModal extends StatelessWidget {
                     if (result.hasCondition || result.hasBrand || result.hasSize || result.isShippable)
                       _buildProductInfoSection(context, l10n),
 
-                    // Metadata
-                    if (result.location != null && result.location!.isNotEmpty)
-                      _buildMetadataRow(
-                        icon: Icons.location_on_outlined,
-                        label: l10n.evaluationLocation,
-                        value: result.location!,
-                        countryCode: result.countryCode,
-                      ),
-                    if (result.hasDistance)
-                      _buildMetadataRow(
-                        icon: Icons.navigation_outlined,
-                        label: l10n.sortDistance,
-                        value: result.formattedDistance!,
-                      ),
-                    if (result.seller != null && result.seller!.isNotEmpty)
-                      _buildMetadataRow(
-                        icon: Icons.person_outline,
-                        label: l10n.searchSeller,
-                        value: result.seller!,
-                      ),
-                    if (result.publishedAt != null)
-                      _buildMetadataRow(
-                        icon: Icons.schedule_outlined,
-                        label: l10n.searchPublished,
-                        value: _formatDate(result.publishedAt!, l10n),
-                      ),
-
                     // Description
                     if (result.description != null && result.description!.isNotEmpty) ...[
-                      SizedBox(height: 16),
+                      SizedBox(height: 8),
                       Divider(),
                       SizedBox(height: 12),
                       Text(
                         l10n.evaluationDescription,
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       SizedBox(height: 8),
                       Text(
                         result.description!,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           color: Colors.grey[700],
                           height: 1.5,
                         ),
                       ),
                     ],
+
+                    // Metadata (location, distance, dates) - always show with "-" if no value
+                    SizedBox(height: 12),
+                    Divider(),
+                    SizedBox(height: 12),
+                    _buildMetadataRow(
+                      icon: Icons.location_on_outlined,
+                      label: l10n.evaluationLocation,
+                      value: (result.location != null && result.location!.isNotEmpty)
+                          ? result.location!
+                          : '-',
+                      countryCode: (result.location != null && result.location!.isNotEmpty)
+                          ? result.countryCode
+                          : null,
+                    ),
+                    _buildMetadataRow(
+                      icon: Icons.navigation_outlined,
+                      label: l10n.sortDistance,
+                      value: result.hasDistance ? result.formattedDistance! : '-',
+                    ),
+                    _buildMetadataRow(
+                      icon: Icons.schedule_outlined,
+                      label: l10n.searchPublished,
+                      value: result.publishedAt != null
+                          ? _formatDate(result.publishedAt!, l10n)
+                          : '-',
+                    ),
                   ],
                 ),
               ),
@@ -285,21 +293,21 @@ class SearchResultDetailModal extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color),
-          SizedBox(width: 6),
+          Icon(icon, size: 14, color: color),
+          SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
               color: color,
             ),

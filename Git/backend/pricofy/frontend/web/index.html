@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Block indexing on dev.pricofy.com -->
+  <script>
+    if (window.location.hostname === 'dev.pricofy.com') {
+      var meta = document.createElement('meta');
+      meta.name = 'robots';
+      meta.content = 'noindex, nofollow';
+      document.head.appendChild(meta);
+    }
+  </script>
+  
+  <!-- SEO Meta Tags (only for production pricofy.com) -->
+  <title>Pricofy - AI-Powered Price Intelligence for Second-Hand Markets</title>
+  <meta name="description" content="Pricofy uses artificial intelligence to analyze prices across multiple marketplaces. Find the best deals on second-hand products instantly.">
+  <meta name="keywords" content="price comparison, AI, second-hand, marketplace, wallapop, milanuncios, vinted, backmarket">
+  <meta name="author" content="Pricofy">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://pricofy.com/">
+  <meta property="og:title" content="Pricofy - AI-Powered Price Intelligence">
+  <meta property="og:description" content="Find the best deals on second-hand products using AI-powered price analysis across multiple marketplaces">
+  <meta property="og:image" content="https://pricofy.com/icons/Icon-512.png">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://pricofy.com/">
+  <meta property="twitter:title" content="Pricofy - AI-Powered Price Intelligence">
+  <meta property="twitter:description" content="Find the best deals on second-hand products using AI-powered price analysis">
+  <meta property="twitter:image" content="https://pricofy.com/icons/Icon-512.png">
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Pricofy",
+    "applicationCategory": "BusinessApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR"
+    },
+    "operatingSystem": "Web",
+    "description": "AI-powered price intelligence for second-hand markets"
+  }
+  </script>
+  
+  <!-- Google Analytics GA4 - Only loads if measurement ID is configured -->
+  <script>
+    (function() {
+      var gaMeasurementId = 'G-J3F1YMR3JN';
+      // Only load GA if measurement ID is set (starts with G-)
+      if (gaMeasurementId && gaMeasurementId.indexOf('G-') === 0) {
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + gaMeasurementId;
+        document.head.appendChild(script);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', gaMeasurementId, {
+          'send_page_view': true,
+          'anonymize_ip': true
+        });
+      }
+    })();
+  </script>
+
+  <!-- reCAPTCHA v3 -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6LcaChssAAAAAK5neR_ntGpHWvgd6ymlUfPhWZIg"></script>
+  <script>
+    // Store site key globally for Flutter to access
+    window.recaptchaSiteKey = '6LcaChssAAAAAK5neR_ntGpHWvgd6ymlUfPhWZIg';
+    
+    // Helper function callable from Flutter
+    window.executeRecaptcha = function(action) {
+      return new Promise(function(resolve, reject) {
+        if (!window.grecaptcha) {
+          reject('reCAPTCHA not loaded');
+          return;
+        }
+        
+        grecaptcha.ready(function() {
+          grecaptcha.execute(window.recaptchaSiteKey, { action: action })
+            .then(resolve)
+            .catch(reject);
+        });
+      });
+    };
+  </script>
+
+  <!-- Polyfills for modern JS features -->
+  <script>
+    // Promise.race polyfill (Flutter service worker uses this)
+    if (typeof Promise !== 'undefined' && !Promise.race) {
+      Promise.race = function(promises) {
+        return new Promise(function(resolve, reject) {
+          for (var i = 0; i < promises.length; i++) {
+            Promise.resolve(promises[i]).then(resolve, reject);
+          }
+        });
+      };
+    }
+
+    // Promise.finally polyfill (used by async/await cleanup)
+    if (typeof Promise !== 'undefined' && !Promise.prototype.finally) {
+      Promise.prototype.finally = function(callback) {
+        var P = this.constructor;
+        return this.then(
+          function(value) { return P.resolve(callback()).then(function() { return value; }); },
+          function(reason) { return P.resolve(callback()).then(function() { throw reason; }); }
+        );
+      };
+    }
+
+    // Object.entries polyfill (used in modern JS)
+    if (!Object.entries) {
+      Object.entries = function(obj) {
+        var ownProps = Object.keys(obj);
+        var i = ownProps.length;
+        var resArray = new Array(i);
+        while (i--) resArray[i] = [ownProps[i], obj[ownProps[i]]];
+        return resArray;
+      };
+    }
+
+    // Object.values polyfill
+    if (!Object.values) {
+      Object.values = function(obj) {
+        var vals = [];
+        for (var key in obj) {
+          if (obj.hasOwnProperty(key)) vals.push(obj[key]);
+        }
+        return vals;
+      };
+    }
+
+    // Array.prototype.includes polyfill
+    if (!Array.prototype.includes) {
+      Array.prototype.includes = function(searchElement, fromIndex) {
+        return this.indexOf(searchElement, fromIndex) !== -1;
+      };
+    }
+
+    // URL polyfill (Safari old versions)
+    if (typeof URL === 'undefined' && typeof webkitURL !== 'undefined') {
+      window.URL = window.webkitURL;
+    }
+
+    // Blob constructor polyfill (used in Flutter WASM worker)
+    if (typeof Blob !== 'undefined' && Blob.prototype && !Blob.prototype.arrayBuffer) {
+      Blob.prototype.arrayBuffer = function() {
+        return new Promise(function(resolve) {
+          var reader = new FileReader();
+          reader.onloadend = function() { resolve(reader.result); };
+          reader.readAsArrayBuffer(this);
+        }.bind(this));
+      };
+    }
+
+    // Console polyfill (very old browsers)
+    if (typeof console === 'undefined') {
+      window.console = {
+        log: function() {},
+        warn: function() {},
+        error: function() {},
+        info: function() {},
+        debug: function() {}
+      };
+    }
+  </script>
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Pricofy">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="manifest" href="manifest.json">
+  
+  <style>
+    /* Remove all borders from Flutter text inputs - AGGRESSIVE */
+    input,
+    input[type="text"],
+    input[type="search"],
+    textarea,
+    flt-text-editing-host,
+    .flt-text-editing,
+    flt-text-editing-host input,
+    .flt-text-editing input {
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+    }
+    
+    /* Remove focus outline */
+    input:focus,
+    textarea:focus,
+    input:active,
+    textarea:active {
+      outline: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+    }
+    
+    /* Target Flutter Web specific classes */
+    flt-glass-pane input,
+    flt-semantics input {
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+    }
+    
+    /* Hide reCAPTCHA badge (required to add legal text in footer) */
+    .grecaptcha-badge {
+      visibility: hidden !important;
+    }
+
+    /* Browser incompatibility message */
+    .browser-unsupported {
+      display: none;
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      max-width: 500px;
+      margin: 80px auto;
+      padding: 40px;
+      text-align: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      color: white;
+      box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    }
+    .browser-unsupported h1 {
+      font-size: 24px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .browser-unsupported p {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 12px;
+      opacity: 0.95;
+    }
+    .browser-unsupported .requirements {
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+      text-align: left;
+    }
+    .browser-unsupported .requirements ul {
+      margin: 10px 0 0 0;
+      padding-left: 20px;
+    }
+    .browser-unsupported .requirements li {
+      margin: 8px 0;
+    }
+    .browser-unsupported .detected {
+      font-size: 13px;
+      opacity: 0.7;
+      margin-top: 20px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading splash screen (shown while Flutter initializes) -->
+  <div id="loading-splash" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    color: white;
+  ">
+    <div style="text-align: center;">
+      <h1 style="font-size: 32px; margin-bottom: 20px; font-weight: 600;">Pricofy</h1>
+      <div style="
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+      "></div>
+      <p style="margin-top: 20px; font-size: 14px; opacity: 0.8;">Cargando...</p>
+    </div>
+  </div>
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- Browser incompatibility message (hidden by default) -->
+  <div id="unsupported-browser" class="browser-unsupported">
+    <h1>🚀 Actualiza tu navegador</h1>
+    <p>Pricofy utiliza tecnología de última generación que tu navegador actual no soporta.</p>
+
+    <div class="requirements">
+      <strong>Requisitos mínimos:</strong>
+      <ul>
+        <li>Navegador moderno con soporte ES6</li>
+        <li>JavaScript habilitado</li>
+        <li>No navegadores automatizados (bots)</li>
+      </ul>
+      <p style="margin-top:12px; font-size:14px; opacity:0.85;">
+        Compatible con: Chrome, Firefox, Safari, Edge, Samsung Internet, MIUI Browser, Opera, etc.
+      </p>
+    </div>
+
+    <p>Por favor, actualiza tu navegador a una versión moderna.</p>
+
+    <p class="detected" id="detected-browser"></p>
+  </div>
+
+  <!-- Browser compatibility check - SIMPLIFIED -->
+  <script>
+    (function() {
+      function checkBrowserSupport() {
+        var ua = navigator.userAgent;
+
+        // 1. Block headless browsers (Puppeteer, Selenium) - SECURITY
+        if (navigator.webdriver ||
+            /HeadlessChrome/.test(ua) ||
+            window.callPhantom ||
+            window._phantom) {
+          console.warn('[Security] Headless browser detected');
+          return {
+            supported: false,
+            reason: 'Navegador automatizado detectado. No se permiten bots.'
+          };
+        }
+
+        // 2. Check for basic ES6 support (blocks IE11, Android 4.x, very old iOS)
+        var hasES6 =
+          typeof Promise !== 'undefined' &&
+          typeof fetch !== 'undefined' &&
+          typeof Object.assign !== 'undefined';
+
+        if (!hasES6) {
+          return {
+            supported: false,
+            reason: 'Navegador demasiado antiguo. Requiere soporte para JavaScript moderno (ES6).'
+          };
+        }
+
+        // 3. Let Flutter decide WASM vs JS
+        // Flutter's flutter_bootstrap.js will:
+        //   - Check for WASM GC support → use main.dart.wasm
+        //   - No WASM GC → use main.dart.js fallback
+        //   - Too old for both → error
+        return { supported: true };
+      }
+
+      var result = checkBrowserSupport();
+
+      if (!result.supported) {
+        document.getElementById('unsupported-browser').style.display = 'block';
+        document.getElementById('detected-browser').textContent = result.reason;
+        window.stopFlutterLoad = true;
+      }
+    })();
+  </script>
+
+  <!-- Service Worker Cleanup (remove old service workers) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        if (registrations.length > 0) {
+          console.log('[Pricofy] Cleaning up obsolete service workers...');
+          registrations.forEach(function(registration) {
+            registration.unregister();
+          });
+        }
+      });
+    }
+  </script>
+
+  <!-- Load Flutter only if browser is compatible -->
+  <script>
+    if (!window.stopFlutterLoad) {
+      // Global error handlers for debugging
+      window.addEventListener('error', function(e) {
+        console.error('[Pricofy] Error:', e.message, e.filename, e.lineno);
+      });
+
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('[Pricofy] Unhandled promise:', e.reason);
+      });
+
+      // Fix Android background tab issue - prevent Service Worker from killing state
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          console.log('[Pricofy] Tab visible again - state should persist');
+        }
+      });
+
+      // Prevent page unload when going to background (mobile)
+      window.addEventListener('pagehide', function(e) {
+        // Don't do anything - just prevent default behavior
+        console.log('[Pricofy] Page hide event - preserving state');
+      });
+
+      var script = document.createElement('script');
+      script.src = 'flutter_bootstrap.js';
+      script.async = true;
+
+      // Handle script loading failures
+      script.onerror = function() {
+        console.error('[Pricofy] Failed to load Flutter');
+        console.error('[Pricofy] UA:', navigator.userAgent);
+        console.error('[Pricofy] Platform:', navigator.platform);
+        console.error('[Pricofy] WASM support:', typeof WebAssembly !== 'undefined');
+
+        document.getElementById('unsupported-browser').style.display = 'block';
+        document.getElementById('detected-browser').textContent =
+          'Error al cargar. Verifica tu conexión o actualiza tu navegador.';
+
+        // Hide splash on error
+        var splash = document.getElementById('loading-splash');
+        if (splash) splash.style.display = 'none';
+      };
+
+      document.body.appendChild(script);
+
+      // Hide splash screen when Flutter is ready
+      window.addEventListener('flutter-first-frame', function() {
+        console.log('[Pricofy] Flutter first frame rendered');
+        var splash = document.getElementById('loading-splash');
+        if (splash) {
+          splash.style.opacity = '0';
+          splash.style.transition = 'opacity 0.3s ease-out';
+          setTimeout(function() {
+            splash.style.display = 'none';
+          }, 300);
+        }
+      });
+
+      // Fallback: hide after 15 seconds if Flutter doesn't fire event
+      setTimeout(function() {
+        var splash = document.getElementById('loading-splash');
+        if (splash && splash.style.display !== 'none') {
+          console.warn('[Pricofy] Hiding splash after timeout');
+          splash.style.display = 'none';
+        }
+      }, 15000);
+    }
+  </script>
+</body>
+</html>

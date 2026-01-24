@@ -112,6 +112,12 @@ abstract class AppLocalizations {
   /// **'Features'**
   String get navbarFeatures;
 
+  /// No description provided for @navbarWhyItWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'Why it works'**
+  String get navbarWhyItWorks;
+
   /// No description provided for @navbarPricing.
   ///
   /// In en, this message translates to:
@@ -157,13 +163,13 @@ abstract class AppLocalizations {
   /// No description provided for @heroDescription.
   ///
   /// In en, this message translates to:
-  /// **'We automatically expand your search from your local environment to platforms worldwide, connecting buyers and sellers globally.'**
+  /// **'Dozens of second-hand platforms in one search. While you decide, we compare.'**
   String get heroDescription;
 
   /// No description provided for @heroSearchPlaceholder.
   ///
   /// In en, this message translates to:
-  /// **'Search second-hand products...'**
+  /// **'What do you want to find today?'**
   String get heroSearchPlaceholder;
 
   /// No description provided for @heroSearchButton.
@@ -175,7 +181,7 @@ abstract class AppLocalizations {
   /// No description provided for @heroStartFree.
   ///
   /// In en, this message translates to:
-  /// **'Create Free Account'**
+  /// **'Start free'**
   String get heroStartFree;
 
   /// No description provided for @heroViewDemo.
@@ -183,6 +189,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View Demo'**
   String get heroViewDemo;
+
+  /// No description provided for @heroBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'The search engine that should have existed years ago'**
+  String get heroBadge;
+
+  /// No description provided for @heroMicrocopy.
+  ///
+  /// In en, this message translates to:
+  /// **'No registration required. No card. No catch.'**
+  String get heroMicrocopy;
 
   /// No description provided for @useCasesTitle.
   ///
@@ -265,62 +283,452 @@ abstract class AppLocalizations {
   /// No description provided for @featuresTitle.
   ///
   /// In en, this message translates to:
-  /// **'Main Features'**
+  /// **'Stop Losing Money Selling Blind'**
   String get featuresTitle;
 
   /// No description provided for @featuresSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Everything you need to optimize your prices'**
+  /// **'73% of sellers undervalue or overvalue their products'**
   String get featuresSubtitle;
+
+  /// No description provided for @featuresHeroDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricofy tells you the exact price based on what users are ACTUALLY paying. No guesswork. No hours searching.'**
+  String get featuresHeroDescription;
 
   /// No description provided for @featuresAiTitle.
   ///
   /// In en, this message translates to:
-  /// **'Advanced AI'**
+  /// **'Fair Price in Real Time'**
   String get featuresAiTitle;
 
   /// No description provided for @featuresAiDescription.
   ///
   /// In en, this message translates to:
-  /// **'Machine learning algorithms that analyze thousands of data points to give you the optimal price.'**
+  /// **'No more hours comparing. Upload your product and we\'ll tell you what it\'s worth based on thousands of real listings.'**
   String get featuresAiDescription;
 
   /// No description provided for @featuresRealTimeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Real Time'**
+  /// **'TODAY\'s Data, Not 6 Months Ago'**
   String get featuresRealTimeTitle;
 
   /// No description provided for @featuresRealTimeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Constant market price updates to keep you always competitive.'**
+  /// **'The market changes daily. We analyze listings from the last 24-48 hours to give you the real price.'**
   String get featuresRealTimeDescription;
 
   /// No description provided for @featuresAnalyticsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Analytics'**
+  /// **'Find Your Perfect Customer'**
   String get featuresAnalyticsTitle;
 
   /// No description provided for @featuresAnalyticsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Detailed dashboards with key metrics to make better decisions.'**
+  /// **'If you can\'t sell ice at the North Pole, is the ice the problem? Find the perfect selling spot for your product.'**
   String get featuresAnalyticsDescription;
 
   /// No description provided for @featuresSecurityTitle.
   ///
   /// In en, this message translates to:
-  /// **'Secure'**
+  /// **'Your Data is YOURS'**
   String get featuresSecurityTitle;
 
   /// No description provided for @featuresSecurityDescription.
   ///
   /// In en, this message translates to:
-  /// **'Your data is protected with enterprise-level encryption.'**
+  /// **'No selling to third parties. No spam. No surprises. End-to-end encryption.'**
   String get featuresSecurityDescription;
+
+  /// No description provided for @featuresProblemTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why Has Your Listing Been Sitting for Weeks?'**
+  String get featuresProblemTitle;
+
+  /// No description provided for @featuresProblemSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The problem isn\'t you. It\'s that you don\'t have the information.'**
+  String get featuresProblemSubtitle;
+
+  /// No description provided for @featuresProblem1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Price too high'**
+  String get featuresProblem1Title;
+
+  /// No description provided for @featuresProblem1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'No one asks. Your product sits there collecting digital dust.'**
+  String get featuresProblem1Description;
+
+  /// No description provided for @featuresProblem2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Price too low'**
+  String get featuresProblem2Title;
+
+  /// No description provided for @featuresProblem2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'You sell fast but lose money. Someone resells it for more.'**
+  String get featuresProblem2Description;
+
+  /// No description provided for @featuresProblem3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Not knowing where to post'**
+  String get featuresProblem3Title;
+
+  /// No description provided for @featuresProblem3Description.
+  ///
+  /// In en, this message translates to:
+  /// **'With shipping? Should I check more websites? How much does it sell for in another country? Each platform has different buyers.'**
+  String get featuresProblem3Description;
+
+  /// No description provided for @featuresSolutionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'With Pricofy You Find the Sweet Spot'**
+  String get featuresSolutionTitle;
+
+  /// No description provided for @featuresSolutionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where you SELL fast and EARN what\'s fair'**
+  String get featuresSolutionSubtitle;
+
+  /// No description provided for @featuresSolution1.
+  ///
+  /// In en, this message translates to:
+  /// **'We analyze thousands of listings similar to yours'**
+  String get featuresSolution1;
+
+  /// No description provided for @featuresSolution2.
+  ///
+  /// In en, this message translates to:
+  /// **'We tell you the ideal, minimum, and quick-sale price'**
+  String get featuresSolution2;
+
+  /// No description provided for @featuresSolution3.
+  ///
+  /// In en, this message translates to:
+  /// **'We recommend which platforms to post on'**
+  String get featuresSolution3;
+
+  /// No description provided for @featuresCompareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before vs With Pricofy'**
+  String get featuresCompareTitle;
+
+  /// No description provided for @featuresCompareBefore1.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours searching across 5 platforms'**
+  String get featuresCompareBefore1;
+
+  /// No description provided for @featuresCompareAfter1.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant results, all platforms'**
+  String get featuresCompareAfter1;
+
+  /// No description provided for @featuresCompareBefore2.
+  ///
+  /// In en, this message translates to:
+  /// **'Price based on \'what I think\''**
+  String get featuresCompareBefore2;
+
+  /// No description provided for @featuresCompareAfter2.
+  ///
+  /// In en, this message translates to:
+  /// **'Price based on real data'**
+  String get featuresCompareAfter2;
+
+  /// No description provided for @featuresCompareBefore3.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold in 3 weeks (or never)'**
+  String get featuresCompareBefore3;
+
+  /// No description provided for @featuresCompareAfter3.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold in days at the right price'**
+  String get featuresCompareAfter3;
+
+  /// No description provided for @featuresCompareBefore4.
+  ///
+  /// In en, this message translates to:
+  /// **'Constant doubts: is this a good price?'**
+  String get featuresCompareBefore4;
+
+  /// No description provided for @featuresCompareAfter4.
+  ///
+  /// In en, this message translates to:
+  /// **'Certainty: you know it\'s the right price'**
+  String get featuresCompareAfter4;
+
+  /// No description provided for @featuresCtaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Next Product Already Has an Optimal Price Waiting'**
+  String get featuresCtaTitle;
+
+  /// No description provided for @featuresCtaSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No contracts. No commitment. No excuses.'**
+  String get featuresCtaSubtitle;
+
+  /// No description provided for @featuresCtaButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze My First Product'**
+  String get featuresCtaButton;
+
+  /// No description provided for @featuresBuyerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are You Overpaying Without Knowing It?'**
+  String get featuresBuyerTitle;
+
+  /// No description provided for @featuresBuyerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The same product can cost €200 less on another platform or country'**
+  String get featuresBuyerSubtitle;
+
+  /// No description provided for @featuresBuyerProblem1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours wasted comparing'**
+  String get featuresBuyerProblem1Title;
+
+  /// No description provided for @featuresBuyerProblem1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'You open 5 apps, 10 tabs, and still don\'t know which is the best price.'**
+  String get featuresBuyerProblem1Description;
+
+  /// No description provided for @featuresBuyerProblem2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices that vary randomly'**
+  String get featuresBuyerProblem2Title;
+
+  /// No description provided for @featuresBuyerProblem2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Same console for €400, €350, €380. Which do you pick? First you need to find all the listings to decide, we take care of that.'**
+  String get featuresBuyerProblem2Description;
+
+  /// No description provided for @featuresBuyerProblem3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Fear of getting ripped off'**
+  String get featuresBuyerProblem3Title;
+
+  /// No description provided for @featuresBuyerProblem3Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Is it a good price or are they fooling you? Without data, you don\'t know.'**
+  String get featuresBuyerProblem3Description;
+
+  /// No description provided for @featuresBuyerSolutionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'With Pricofy You Find the REAL Deal'**
+  String get featuresBuyerSolutionTitle;
+
+  /// No description provided for @featuresBuyerSolutionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The best price, on the right platform, without wasting hours'**
+  String get featuresBuyerSolutionSubtitle;
+
+  /// No description provided for @featuresBuyerSolution1.
+  ///
+  /// In en, this message translates to:
+  /// **'We search all platforms at once'**
+  String get featuresBuyerSolution1;
+
+  /// No description provided for @featuresBuyerSolution2.
+  ///
+  /// In en, this message translates to:
+  /// **'We filter the noise: only relevant results'**
+  String get featuresBuyerSolution2;
+
+  /// No description provided for @featuresBuyerSolution3.
+  ///
+  /// In en, this message translates to:
+  /// **'We tell you if it\'s a good price or to wait'**
+  String get featuresBuyerSolution3;
+
+  /// No description provided for @featuresBuyerCompareBefore1.
+  ///
+  /// In en, this message translates to:
+  /// **'5 apps open, 10 tabs'**
+  String get featuresBuyerCompareBefore1;
+
+  /// No description provided for @featuresBuyerCompareAfter1.
+  ///
+  /// In en, this message translates to:
+  /// **'1 search, all platforms'**
+  String get featuresBuyerCompareAfter1;
+
+  /// No description provided for @featuresBuyerCompareBefore2.
+  ///
+  /// In en, this message translates to:
+  /// **'Doubts: is this a good price?'**
+  String get featuresBuyerCompareBefore2;
+
+  /// No description provided for @featuresBuyerCompareAfter2.
+  ///
+  /// In en, this message translates to:
+  /// **'Certainty: you see the market price'**
+  String get featuresBuyerCompareAfter2;
+
+  /// No description provided for @featuresBuyerCompareBefore3.
+  ///
+  /// In en, this message translates to:
+  /// **'Only see offers from your country'**
+  String get featuresBuyerCompareBefore3;
+
+  /// No description provided for @featuresBuyerCompareAfter3.
+  ///
+  /// In en, this message translates to:
+  /// **'See offers from all of Europe'**
+  String get featuresBuyerCompareAfter3;
+
+  /// No description provided for @featuresBuyerCompareBefore4.
+  ///
+  /// In en, this message translates to:
+  /// **'Results full of accessories'**
+  String get featuresBuyerCompareBefore4;
+
+  /// No description provided for @featuresBuyerCompareAfter4.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the product you\'re looking for'**
+  String get featuresBuyerCompareAfter4;
+
+  /// No description provided for @featuresBuyerCtaButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Search My First Product'**
+  String get featuresBuyerCtaButton;
+
+  /// No description provided for @featuresToggleSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'I Want to Sell'**
+  String get featuresToggleSeller;
+
+  /// No description provided for @featuresToggleBuyer.
+  ///
+  /// In en, this message translates to:
+  /// **'I Want to Buy'**
+  String get featuresToggleBuyer;
+
+  /// No description provided for @featuresBadgeProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'The Problem'**
+  String get featuresBadgeProblem;
+
+  /// No description provided for @featuresBadgeSolution.
+  ///
+  /// In en, this message translates to:
+  /// **'The Solution'**
+  String get featuresBadgeSolution;
+
+  /// No description provided for @featuresBadgeCompare.
+  ///
+  /// In en, this message translates to:
+  /// **'Before vs After'**
+  String get featuresBadgeCompare;
+
+  /// No description provided for @featuresBadgeWhyItWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'Why it works'**
+  String get featuresBadgeWhyItWorks;
+
+  /// No description provided for @featuresTechTitleSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'Technology working for you'**
+  String get featuresTechTitleSeller;
+
+  /// No description provided for @featuresTechTitleBuyer.
+  ///
+  /// In en, this message translates to:
+  /// **'Technology on your side'**
+  String get featuresTechTitleBuyer;
+
+  /// No description provided for @featuresBuyerAiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Best price in seconds'**
+  String get featuresBuyerAiTitle;
+
+  /// No description provided for @featuresBuyerAiDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'We automatically compare across all platforms. Just tell us what you\'re looking for and we\'ll show you where it\'s cheapest.'**
+  String get featuresBuyerAiDescription;
+
+  /// No description provided for @featuresBuyerRealTimeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'TODAY\'s deals, not months old'**
+  String get featuresBuyerRealTimeTitle;
+
+  /// No description provided for @featuresBuyerRealTimeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'We analyze listings from the last few hours. No ghost deals that already sold.'**
+  String get featuresBuyerRealTimeDescription;
+
+  /// No description provided for @featuresBuyerAnalyticsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Know when to wait'**
+  String get featuresBuyerAnalyticsTitle;
+
+  /// No description provided for @featuresBuyerAnalyticsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy now or wait? We tell you if the current price is good or if it usually drops.'**
+  String get featuresBuyerAnalyticsDescription;
+
+  /// No description provided for @featuresBuyerSecurityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Only verified results'**
+  String get featuresBuyerSecurityTitle;
+
+  /// No description provided for @featuresBuyerSecurityDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'We filter duplicate listings, related but non-matching results, and cut through the noise of similar products. You only see what\'s worth it.'**
+  String get featuresBuyerSecurityDescription;
+
+  /// No description provided for @featuresBuyerTechTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Technology on your side'**
+  String get featuresBuyerTechTitle;
 
   /// No description provided for @pricingTitle.
   ///
@@ -601,7 +1009,7 @@ abstract class AppLocalizations {
   /// No description provided for @pricingFaqTitle.
   ///
   /// In en, this message translates to:
-  /// **'Frequently Asked Questions'**
+  /// **'How do credits work?'**
   String get pricingFaqTitle;
 
   /// No description provided for @pricingFaqQuestion1.
@@ -643,92 +1051,74 @@ abstract class AppLocalizations {
   /// No description provided for @marketProblemBadge.
   ///
   /// In en, this message translates to:
-  /// **'The Real Problem'**
+  /// **'Sound familiar?'**
   String get marketProblemBadge;
 
   /// No description provided for @marketProblemTitle.
   ///
   /// In en, this message translates to:
-  /// **'The second-hand market is geographically fragmented'**
+  /// **'The problem isn\'t you. It\'s the system.'**
   String get marketProblemTitle;
 
   /// No description provided for @marketProblemSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Even though you\'re willing to buy with shipping, you only search on platforms in your area. Why miss opportunities?'**
+  /// **'You\'ve been searching wrong for years because no one gave you a better tool.'**
   String get marketProblemSubtitle;
 
   /// No description provided for @marketProblem1Title.
   ///
   /// In en, this message translates to:
-  /// **'Geographically limited search'**
+  /// **'You waste hours searching'**
   String get marketProblem1Title;
 
   /// No description provided for @marketProblem1Description.
   ///
   /// In en, this message translates to:
-  /// **'Even though you\'re willing to buy with shipping, you only search on Vinted, eBay, and local platforms in your country. You miss opportunities worldwide where the same product could be cheaper or in better condition.'**
+  /// **'You open a website, search, filter, discard irrelevant listings, then go to another, repeat the process... and repeat the same search 3 more times and still can\'t find what you\'re looking for.'**
   String get marketProblem1Description;
 
   /// No description provided for @marketProblem1Stat.
   ///
   /// In en, this message translates to:
-  /// **'60% of buyers are willing to buy with shipping'**
+  /// **'3+ hours average per search'**
   String get marketProblem1Stat;
 
   /// No description provided for @marketProblem2Title.
   ///
   /// In en, this message translates to:
-  /// **'Sellers with limited reach'**
+  /// **'You pay more than you should'**
   String get marketProblem2Title;
 
   /// No description provided for @marketProblem2Description.
   ///
   /// In en, this message translates to:
-  /// **'80% of sellers are willing to ship their product, but only publish on local platforms. You close the barrier by limiting your reach to your city or country, when you could sell worldwide if you find the perfect buyer.'**
+  /// **'Without seeing all the listings in the market, you don\'t know if you\'re paying a fair price or getting ripped off.'**
   String get marketProblem2Description;
 
   /// No description provided for @marketProblem2Stat.
   ///
   /// In en, this message translates to:
-  /// **'80% of sellers are willing to ship'**
+  /// **'€127 average savings lost'**
   String get marketProblem2Stat;
 
   /// No description provided for @marketProblem3Title.
   ///
   /// In en, this message translates to:
-  /// **'Thousands of irrelevant results'**
+  /// **'You end up frustrated without buying'**
   String get marketProblem3Title;
 
   /// No description provided for @marketProblem3Description.
   ///
   /// In en, this message translates to:
-  /// **'It would be unmanageable to read hundreds and thousands of ads on platforms worldwide if half of them are irrelevant ads, accessories or related but different products.'**
+  /// **'67% of users abandon their search out of exhaustion before finding what they\'re looking for.'**
   String get marketProblem3Description;
 
   /// No description provided for @marketProblem3Stat.
   ///
   /// In en, this message translates to:
-  /// **'65% of results are irrelevant without filtering'**
+  /// **'67% abandon out of frustration'**
   String get marketProblem3Stat;
-
-  /// No description provided for @marketProblem4Title.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown real demand'**
-  String get marketProblem4Title;
-
-  /// No description provided for @marketProblem4Description.
-  ///
-  /// In en, this message translates to:
-  /// **'Sellers don\'t know the true demand for their product, nor the price they could set, nor if they\'re targeting the right audience on the ideal platform in the corresponding country. The price depends on the value the buyer wants to give, and therefore on the buyer\'s real need which depends on many unknowns for the seller.'**
-  String get marketProblem4Description;
-
-  /// No description provided for @marketProblem4Stat.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown global demand'**
-  String get marketProblem4Stat;
 
   /// No description provided for @marketProblemCtaTitle.
   ///
@@ -739,98 +1129,80 @@ abstract class AppLocalizations {
   /// No description provided for @marketProblemCtaDescription.
   ///
   /// In en, this message translates to:
-  /// **'PRICOFY eliminates these geographical barriers and connects buyers and sellers worldwide'**
+  /// **'PRICOFY eliminates these barriers and connects buyers and sellers globally'**
   String get marketProblemCtaDescription;
 
   /// No description provided for @globalSolutionBadge.
   ///
   /// In en, this message translates to:
-  /// **'The PRICOFY Solution'**
+  /// **'The game-changing solution'**
   String get globalSolutionBadge;
 
   /// No description provided for @globalSolutionTitle.
   ///
   /// In en, this message translates to:
-  /// **'We globalize and democratize the second-hand market'**
+  /// **'Imagine searching ONCE and finding EVERYTHING'**
   String get globalSolutionTitle;
 
   /// No description provided for @globalSolutionSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'One search. All markets. The smartest way to find exactly what you want.'**
+  /// **'That\'s exactly what Pricofy does.'**
   String get globalSolutionSubtitle;
 
   /// No description provided for @globalSolution1Title.
   ///
   /// In en, this message translates to:
-  /// **'Automatic Global Search'**
+  /// **'One search. All platforms.'**
   String get globalSolution1Title;
 
   /// No description provided for @globalSolution1Description.
   ///
   /// In en, this message translates to:
-  /// **'We automatically expand your reach from your limited and known environment to platforms worldwide. One search connects you with the true market supply.'**
+  /// **'Dozens of second-hand platforms. Thousands of listings. Instantly. No more opening 10 tabs.'**
   String get globalSolution1Description;
 
   /// No description provided for @globalSolution1Highlight.
   ///
   /// In en, this message translates to:
-  /// **'From local to global in one click'**
+  /// **'8 platforms in one click'**
   String get globalSolution1Highlight;
 
   /// No description provided for @globalSolution2Title.
   ///
   /// In en, this message translates to:
-  /// **'Intelligent AI Filtering'**
+  /// **'Only see what matters'**
   String get globalSolution2Title;
 
   /// No description provided for @globalSolution2Description.
   ///
   /// In en, this message translates to:
-  /// **'We automatically clean results using advanced AI, eliminating irrelevant ads, accessories and related products. It would be unmanageable to read thousands of ads without this filtering.'**
+  /// **'Our AI removes duplicates, accessories and junk. Only 100% relevant results for you.'**
   String get globalSolution2Description;
 
   /// No description provided for @globalSolution2Highlight.
   ///
   /// In en, this message translates to:
-  /// **'65% fewer irrelevant results'**
+  /// **'65% less noise'**
   String get globalSolution2Highlight;
 
   /// No description provided for @globalSolution3Title.
   ///
   /// In en, this message translates to:
-  /// **'Access Democratization'**
+  /// **'The whole world at your fingertips'**
   String get globalSolution3Title;
 
   /// No description provided for @globalSolution3Description.
   ///
   /// In en, this message translates to:
-  /// **'Before, only a few knew how to search well on multiple platforms and countries. Now anyone can access the global second-hand market with one click.'**
+  /// **'Same product cheaper in Italy? Found. Better seller in France? Also found. No barriers.'**
   String get globalSolution3Description;
 
   /// No description provided for @globalSolution3Highlight.
   ///
   /// In en, this message translates to:
-  /// **'Global access for everyone'**
+  /// **'Complete European market'**
   String get globalSolution3Highlight;
-
-  /// No description provided for @globalSolution4Title.
-  ///
-  /// In en, this message translates to:
-  /// **'Global Connection'**
-  String get globalSolution4Title;
-
-  /// No description provided for @globalSolution4Description.
-  ///
-  /// In en, this message translates to:
-  /// **'We connect buyers and sellers worldwide to unlock true supply and demand. Your product can find its ideal buyer in any country.'**
-  String get globalSolution4Description;
-
-  /// No description provided for @globalSolution4Highlight.
-  ///
-  /// In en, this message translates to:
-  /// **'Connected global market'**
-  String get globalSolution4Highlight;
 
   /// No description provided for @globalSolutionBuyersTitle.
   ///
@@ -841,25 +1213,25 @@ abstract class AppLocalizations {
   /// No description provided for @globalSolutionBuyersItem1.
   ///
   /// In en, this message translates to:
-  /// **'Automatic search on platforms worldwide'**
+  /// **'Find the best price in seconds, not hours'**
   String get globalSolutionBuyersItem1;
 
   /// No description provided for @globalSolutionBuyersItem2.
   ///
   /// In en, this message translates to:
-  /// **'Clean and relevant results, without accessories or related products'**
+  /// **'Only relevant results, no junk or accessories'**
   String get globalSolutionBuyersItem2;
 
   /// No description provided for @globalSolutionBuyersItem3.
   ///
   /// In en, this message translates to:
-  /// **'Access to true global supply, not just your area'**
+  /// **'Deals from all of Europe you\'d never have found'**
   String get globalSolutionBuyersItem3;
 
   /// No description provided for @globalSolutionBuyersItem4.
   ///
   /// In en, this message translates to:
-  /// **'Find the best price in any country'**
+  /// **'Know if it\'s a good price or better to wait'**
   String get globalSolutionBuyersItem4;
 
   /// No description provided for @globalSolutionSellersTitle.
@@ -871,116 +1243,140 @@ abstract class AppLocalizations {
   /// No description provided for @globalSolutionSellersItem1.
   ///
   /// In en, this message translates to:
-  /// **'Connect with buyers worldwide'**
+  /// **'Discover the exact price others are selling at'**
   String get globalSolutionSellersItem1;
 
   /// No description provided for @globalSolutionSellersItem2.
   ///
   /// In en, this message translates to:
-  /// **'Discover the true global demand for your product'**
+  /// **'Find buyers in any country'**
   String get globalSolutionSellersItem2;
 
   /// No description provided for @globalSolutionSellersItem3.
   ///
   /// In en, this message translates to:
-  /// **'Prices based on real worldwide demand'**
+  /// **'Know which platform to post on to sell fast'**
   String get globalSolutionSellersItem3;
 
   /// No description provided for @globalSolutionSellersItem4.
   ///
   /// In en, this message translates to:
-  /// **'Find the perfect buyer in any country'**
+  /// **'Sell at the right price, not too low, not too high'**
   String get globalSolutionSellersItem4;
 
   /// No description provided for @globalSolutionButtonText.
   ///
   /// In en, this message translates to:
-  /// **'Create Free Account'**
+  /// **'Start free'**
   String get globalSolutionButtonText;
+
+  /// No description provided for @statsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Results that speak for themselves'**
+  String get statsTitle;
 
   /// No description provided for @statsItem1Highlight.
   ///
   /// In en, this message translates to:
-  /// **'Worldwide market'**
+  /// **'2 seconds'**
   String get statsItem1Highlight;
 
   /// No description provided for @statsItem1Label.
   ///
   /// In en, this message translates to:
-  /// **'Global Search'**
+  /// **'Average search time'**
   String get statsItem1Label;
 
   /// No description provided for @statsItem1Description.
   ///
   /// In en, this message translates to:
-  /// **'Platforms from multiple countries in one search'**
+  /// **'What used to take hours, now blink and you\'ll miss it'**
   String get statsItem1Description;
 
   /// No description provided for @statsItem2Highlight.
   ///
   /// In en, this message translates to:
-  /// **'Clean results'**
+  /// **'€127 saved'**
   String get statsItem2Highlight;
 
   /// No description provided for @statsItem2Label.
   ///
   /// In en, this message translates to:
-  /// **'Intelligent Filtering'**
+  /// **'Average savings per search'**
   String get statsItem2Label;
 
   /// No description provided for @statsItem2Description.
   ///
   /// In en, this message translates to:
-  /// **'65% fewer irrelevant results thanks to our AI'**
+  /// **'Compared to choosing the first option you find'**
   String get statsItem2Description;
 
   /// No description provided for @statsItem3Highlight.
   ///
   /// In en, this message translates to:
-  /// **'For everyone'**
+  /// **'8 platforms'**
   String get statsItem3Highlight;
 
   /// No description provided for @statsItem3Label.
   ///
   /// In en, this message translates to:
-  /// **'Democratized Access'**
+  /// **'Simultaneous search'**
   String get statsItem3Label;
 
   /// No description provided for @statsItem3Description.
   ///
   /// In en, this message translates to:
-  /// **'Before only a few knew how to search well. Now anyone can.'**
+  /// **'Dozens of second-hand platforms in one click'**
   String get statsItem3Description;
 
   /// No description provided for @ctaTitle.
   ///
   /// In en, this message translates to:
-  /// **'Ready to connect with the second-hand market?'**
+  /// **'Your next search could be your last'**
   String get ctaTitle;
 
   /// No description provided for @ctaSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Join hundreds of users who are already maximizing their revenue with Pricofy'**
+  /// **'Stop wasting time. Start finding.'**
   String get ctaSubtitle;
 
   /// No description provided for @ctaDescription.
   ///
   /// In en, this message translates to:
-  /// **'Join hundreds of users who are already maximizing their revenue with Pricofy'**
+  /// **'Stop wasting time. Start finding.'**
   String get ctaDescription;
 
   /// No description provided for @ctaStartFree.
   ///
   /// In en, this message translates to:
-  /// **'Start Free Trial'**
+  /// **'Start free now'**
   String get ctaStartFree;
 
   /// No description provided for @ctaTalkSales.
   ///
   /// In en, this message translates to:
-  /// **'Talk to Sales'**
+  /// **'Contact'**
   String get ctaTalkSales;
+
+  /// No description provided for @ctaGuarantee1.
+  ///
+  /// In en, this message translates to:
+  /// **'Works without registration'**
+  String get ctaGuarantee1;
+
+  /// No description provided for @ctaGuarantee2.
+  ///
+  /// In en, this message translates to:
+  /// **'100% private data'**
+  String get ctaGuarantee2;
+
+  /// No description provided for @ctaGuarantee3.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel anytime'**
+  String get ctaGuarantee3;
 
   /// No description provided for @footerDescription.
   ///
@@ -1779,6 +2175,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid email address'**
   String get errorInvalidEmail;
+
+  /// No description provided for @errorDuplicateEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'This email is already registered'**
+  String get errorDuplicateEmail;
+
+  /// No description provided for @errorUserNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'User not found'**
+  String get errorUserNotFound;
+
+  /// No description provided for @errorMissingEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email is required'**
+  String get errorMissingEmail;
+
+  /// No description provided for @errorInvalidSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid steps format'**
+  String get errorInvalidSteps;
+
+  /// No description provided for @errorMaxPositionsReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum waitlist positions reached'**
+  String get errorMaxPositionsReached;
+
+  /// No description provided for @errorInvalidReferral.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid referral code'**
+  String get errorInvalidReferral;
 
   /// No description provided for @errorInternalError.
   ///
@@ -2914,6 +3346,12 @@ abstract class AppLocalizations {
   /// **'Published'**
   String get searchPublished;
 
+  /// No description provided for @searchModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get searchModified;
+
   /// No description provided for @sortPrice.
   ///
   /// In en, this message translates to:
@@ -3568,48 +4006,6 @@ abstract class AppLocalizations {
   /// **'Maybe later'**
   String get registrationModalLater;
 
-  /// No description provided for @registrationModalAdvancedSearch.
-  ///
-  /// In en, this message translates to:
-  /// **'Activate advanced search to better filter your results.'**
-  String get registrationModalAdvancedSearch;
-
-  /// No description provided for @advancedSearchPromoTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Improve these results with Advanced Search'**
-  String get advancedSearchPromoTitle;
-
-  /// No description provided for @advancedSearchPromoBenefit1.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove unexpected results related to your search for {searchTerm}'**
-  String advancedSearchPromoBenefit1(String searchTerm);
-
-  /// No description provided for @advancedSearchPromoBenefit2.
-  ///
-  /// In en, this message translates to:
-  /// **'Find advanced filters for your results'**
-  String get advancedSearchPromoBenefit2;
-
-  /// No description provided for @advancedSearchPromoBenefit3.
-  ///
-  /// In en, this message translates to:
-  /// **'Create alerts for new offers'**
-  String get advancedSearchPromoBenefit3;
-
-  /// No description provided for @advancedSearchPromoActivate.
-  ///
-  /// In en, this message translates to:
-  /// **'Activate advanced'**
-  String get advancedSearchPromoActivate;
-
-  /// No description provided for @advancedSearchPromoNotNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Not now'**
-  String get advancedSearchPromoNotNow;
-
   /// No description provided for @restrictedSell.
   ///
   /// In en, this message translates to:
@@ -3880,10 +4276,232 @@ abstract class AppLocalizations {
   /// **'Platforms with return guarantee'**
   String get filterExtrasBuyerProtectionDesc;
 
+  /// No description provided for @searchTypeCarouselTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your search type'**
+  String get searchTypeCarouselTitle;
+
+  /// No description provided for @searchTypeClassicBadge1.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast'**
+  String get searchTypeClassicBadge1;
+
+  /// No description provided for @searchTypeClassicBadge2.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-platform'**
+  String get searchTypeClassicBadge2;
+
+  /// No description provided for @searchTypeClassicBadge3.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-country'**
+  String get searchTypeClassicBadge3;
+
+  /// No description provided for @searchTypeClassicTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic Search'**
+  String get searchTypeClassicTitle;
+
+  /// No description provided for @searchTypeClassicBenefit1.
+  ///
+  /// In en, this message translates to:
+  /// **'We search like you'**
+  String get searchTypeClassicBenefit1;
+
+  /// No description provided for @searchTypeClassicBenefit1Expanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Search the same as you, but across the main second-hand marketplaces at once. So you don\'t miss anything.'**
+  String get searchTypeClassicBenefit1Expanded;
+
+  /// No description provided for @searchTypeClassicBenefit2.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-platform, multi-country'**
+  String get searchTypeClassicBenefit2;
+
+  /// No description provided for @searchTypeClassicBenefit2Expanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-everything. We search for your product across multiple platforms and countries in parallel.'**
+  String get searchTypeClassicBenefit2Expanded;
+
+  /// No description provided for @searchTypeClassicBenefit3.
+  ///
+  /// In en, this message translates to:
+  /// **'Results \"as if you did it manually\": you\'ll see ads equivalent to searching one by one on each site.'**
+  String get searchTypeClassicBenefit3;
+
+  /// No description provided for @searchTypeClassicBenefit4.
+  ///
+  /// In en, this message translates to:
+  /// **'Powerful filtering on found ads'**
+  String get searchTypeClassicBenefit4;
+
+  /// No description provided for @searchTypeClassicBenefit4Expanded.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll need help managing all the ads, that\'s why you can filter by keywords, country, price, shipping type, and distance.'**
+  String get searchTypeClassicBenefit4Expanded;
+
+  /// No description provided for @searchTypeClassicButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Start classic search'**
+  String get searchTypeClassicButton;
+
+  /// No description provided for @searchTypeAdvancedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart'**
+  String get searchTypeAdvancedBadge;
+
+  /// No description provided for @searchTypeAdvancedBadge2.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced filters'**
+  String get searchTypeAdvancedBadge2;
+
+  /// No description provided for @searchTypeAdvancedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Search'**
+  String get searchTypeAdvancedTitle;
+
+  /// No description provided for @searchTypeAdvancedBenefit1.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaner and more relevant results'**
+  String get searchTypeAdvancedBenefit1;
+
+  /// No description provided for @searchTypeAdvancedBenefit1Expanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Because if you search for a PS5, we show you PS5 (not controllers, games, stands or a PS4).'**
+  String get searchTypeAdvancedBenefit1Expanded;
+
+  /// No description provided for @searchTypeAdvancedBenefit2.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro filters'**
+  String get searchTypeAdvancedBenefit2;
+
+  /// No description provided for @searchTypeAdvancedBenefit2Expanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Refine results to shop safely: in addition to country/price/shipping/distance, you\'ll filter by brand, condition, platform, products with warranty and invoice…'**
+  String get searchTypeAdvancedBenefit2Expanded;
+
+  /// No description provided for @searchTypeAdvancedBenefit3.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart tracking'**
+  String get searchTypeAdvancedBenefit3;
+
+  /// No description provided for @searchTypeAdvancedBenefit3Expanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Saves your search history to see how the market changes (prices and availability), plus create market alerts.'**
+  String get searchTypeAdvancedBenefit3Expanded;
+
+  /// No description provided for @searchTypeAdvancedButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Start smart search'**
+  String get searchTypeAdvancedButton;
+
+  /// No description provided for @searchTypeMarketBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Market'**
+  String get searchTypeMarketBadge;
+
+  /// No description provided for @searchTypeMarketTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Market Analysis'**
+  String get searchTypeMarketTitle;
+
+  /// No description provided for @searchTypeMarketBenefit1.
+  ///
+  /// In en, this message translates to:
+  /// **'Ideal, fast and minimum selling prices'**
+  String get searchTypeMarketBenefit1;
+
+  /// No description provided for @searchTypeMarketBenefit2.
+  ///
+  /// In en, this message translates to:
+  /// **'Know which platforms sell best'**
+  String get searchTypeMarketBenefit2;
+
+  /// No description provided for @searchTypeMarketBenefit3.
+  ///
+  /// In en, this message translates to:
+  /// **'Demand and competition analysis'**
+  String get searchTypeMarketBenefit3;
+
+  /// No description provided for @searchTypeMarketButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze market'**
+  String get searchTypeMarketButton;
+
+  /// No description provided for @advancedSearchPromoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weird results? That\'s normal.'**
+  String get advancedSearchPromoTitle;
+
+  /// No description provided for @advancedSearchPromoMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We search 8 platforms across 5 countries. All at once.\n\nThe problem: they return junk. You search for \"{searchTerm}\" and they show you ads they somehow consider related.\n\nWe show you everything. Unfiltered. Free.\n\nWant only relevant results?\nOur AI knows what\'s junk and what\'s not.'**
+  String advancedSearchPromoMessage(String searchTerm);
+
+  /// No description provided for @advancedSearchPromoBenefit1.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove unexpected results related to your search for {searchTerm}'**
+  String advancedSearchPromoBenefit1(String searchTerm);
+
+  /// No description provided for @advancedSearchPromoBenefit2.
+  ///
+  /// In en, this message translates to:
+  /// **'Find advanced filters for your results'**
+  String get advancedSearchPromoBenefit2;
+
+  /// No description provided for @advancedSearchPromoBenefit3.
+  ///
+  /// In en, this message translates to:
+  /// **'Create alerts for new offers'**
+  String get advancedSearchPromoBenefit3;
+
+  /// No description provided for @advancedSearchPromoActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'I prefer filtered results'**
+  String get advancedSearchPromoActivate;
+
+  /// No description provided for @advancedSearchPromoNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it, show me everything'**
+  String get advancedSearchPromoNotNow;
+
+  /// No description provided for @registrationModalAdvancedSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up to access Advanced Search with AI filtering'**
+  String get registrationModalAdvancedSearch;
+
   /// No description provided for @mapLegendTitle.
   ///
   /// In en, this message translates to:
-  /// **'LEGEND'**
+  /// **'Legend'**
   String get mapLegendTitle;
 
   /// No description provided for @mapLegendExactLocation.
@@ -3895,14 +4513,800 @@ abstract class AppLocalizations {
   /// No description provided for @mapLegendCityLevel.
   ///
   /// In en, this message translates to:
-  /// **'City level'**
+  /// **'Approximate location'**
   String get mapLegendCityLevel;
 
   /// No description provided for @mapNoLocationTitle.
   ///
   /// In en, this message translates to:
-  /// **'No precise location'**
+  /// **'No location'**
   String get mapNoLocationTitle;
+
+  /// No description provided for @pricingBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans & Pricing'**
+  String get pricingBadge;
+
+  /// No description provided for @pricingHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the perfect plan for your needs'**
+  String get pricingHeroTitle;
+
+  /// No description provided for @pricingHeroSubtitle1.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricofy operates on a Freemium model where any user can analyze prices across national and international platforms unlimited, with a single click.'**
+  String get pricingHeroSubtitle1;
+
+  /// No description provided for @pricingHeroSubtitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'When you need to see opportunities in other countries —whether to buy or sell— you can activate an international plan or pay per use.'**
+  String get pricingHeroSubtitle2;
+
+  /// No description provided for @pricingFreemiumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Freemium Account'**
+  String get pricingFreemiumTitle;
+
+  /// No description provided for @pricingFreemiumSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'For all users'**
+  String get pricingFreemiumSubtitle;
+
+  /// No description provided for @pricingPriceUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'€/month'**
+  String get pricingPriceUnit;
+
+  /// No description provided for @pricingForBuying.
+  ///
+  /// In en, this message translates to:
+  /// **'For buying'**
+  String get pricingForBuying;
+
+  /// No description provided for @pricingForSelling.
+  ///
+  /// In en, this message translates to:
+  /// **'For selling'**
+  String get pricingForSelling;
+
+  /// No description provided for @pricingUnlimitedSearches.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited searches'**
+  String get pricingUnlimitedSearches;
+
+  /// No description provided for @pricingUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'unlimited'**
+  String get pricingUnlimited;
+
+  /// No description provided for @pricingFreeIntelligentSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'1 free intelligent search included'**
+  String get pricingFreeIntelligentSearch;
+
+  /// No description provided for @pricingIntelligent.
+  ///
+  /// In en, this message translates to:
+  /// **'intelligent'**
+  String get pricingIntelligent;
+
+  /// No description provided for @pricingFreeMarketAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'1 free market analysis'**
+  String get pricingFreeMarketAnalysis;
+
+  /// No description provided for @pricingFreemiumDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s probably higher demand in other countries for your product. Subscribe to an international plan or pay per use to see the international market.'**
+  String get pricingFreemiumDisclaimer;
+
+  /// No description provided for @pricingCreateFreeAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create free account'**
+  String get pricingCreateFreeAccount;
+
+  /// No description provided for @pricingFreemiumCompraItem1.
+  ///
+  /// In en, this message translates to:
+  /// **'Simultaneous search across national and international second-hand platforms'**
+  String get pricingFreemiumCompraItem1;
+
+  /// No description provided for @pricingFreemiumCompraItem2.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggregated results'**
+  String get pricingFreemiumCompraItem2;
+
+  /// No description provided for @pricingFreemiumCompraItem3.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters on found listings'**
+  String get pricingFreemiumCompraItem3;
+
+  /// No description provided for @pricingFreemiumCompraIntItem1.
+  ///
+  /// In en, this message translates to:
+  /// **'1 smart search across national and international second-hand platforms'**
+  String get pricingFreemiumCompraIntItem1;
+
+  /// No description provided for @pricingFreemiumCompraIntItem2.
+  ///
+  /// In en, this message translates to:
+  /// **'We apply intelligence to all listings to show only relevant ones, filtering out accessories or related but different products'**
+  String get pricingFreemiumCompraIntItem2;
+
+  /// No description provided for @pricingFreemiumVentaItem1.
+  ///
+  /// In en, this message translates to:
+  /// **'National and international market analysis'**
+  String get pricingFreemiumVentaItem1;
+
+  /// No description provided for @pricingFreemiumVentaItem2.
+  ///
+  /// In en, this message translates to:
+  /// **'Demand metrics by price, platform, country'**
+  String get pricingFreemiumVentaItem2;
+
+  /// No description provided for @pricingFreemiumVentaItem3.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimal selling price estimation'**
+  String get pricingFreemiumVentaItem3;
+
+  /// No description provided for @pricingForBuyingTab.
+  ///
+  /// In en, this message translates to:
+  /// **'For Buying'**
+  String get pricingForBuyingTab;
+
+  /// No description provided for @pricingForSellingTab.
+  ///
+  /// In en, this message translates to:
+  /// **'For Selling'**
+  String get pricingForSellingTab;
+
+  /// No description provided for @pricingNationalBuyingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans for Buying in Your Country'**
+  String get pricingNationalBuyingTitle;
+
+  /// No description provided for @pricingNationalBuyingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find the best prices in the national market'**
+  String get pricingNationalBuyingSubtitle;
+
+  /// No description provided for @pricingInternationalBuyingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans for International Buying'**
+  String get pricingInternationalBuyingTitle;
+
+  /// No description provided for @pricingInternationalBuyingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find cheaper products in other countries *'**
+  String get pricingInternationalBuyingSubtitle;
+
+  /// No description provided for @pricingNationalSellingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans for Selling in Your Country'**
+  String get pricingNationalSellingTitle;
+
+  /// No description provided for @pricingNationalSellingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimize your prices in the national market'**
+  String get pricingNationalSellingSubtitle;
+
+  /// No description provided for @pricingInternationalSellingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans for International Selling'**
+  String get pricingInternationalSellingTitle;
+
+  /// No description provided for @pricingInternationalSellingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand your market to other countries *'**
+  String get pricingInternationalSellingSubtitle;
+
+  /// No description provided for @pricingInternationalDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'* International plans limited to 3 countries of your choice. Currently supported: Spain, Portugal, France, Italy and Germany'**
+  String get pricingInternationalDisclaimer;
+
+  /// No description provided for @pricingMostPopular.
+  ///
+  /// In en, this message translates to:
+  /// **'Most Popular'**
+  String get pricingMostPopular;
+
+  /// No description provided for @pricingPayPerUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay per use'**
+  String get pricingPayPerUse;
+
+  /// No description provided for @pricingSubscribePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe'**
+  String get pricingSubscribePlan;
+
+  /// No description provided for @pricingContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get pricingContact;
+
+  /// No description provided for @pricingComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming Soon'**
+  String get pricingComingSoon;
+
+  /// No description provided for @pricingNational.
+  ///
+  /// In en, this message translates to:
+  /// **'National'**
+  String get pricingNational;
+
+  /// No description provided for @pricingInternational.
+  ///
+  /// In en, this message translates to:
+  /// **'International'**
+  String get pricingInternational;
+
+  /// No description provided for @pricingPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'€/month'**
+  String get pricingPerMonth;
+
+  /// No description provided for @pricingPerSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'€ per search'**
+  String get pricingPerSearch;
+
+  /// No description provided for @pricingPerQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'€ per query'**
+  String get pricingPerQuery;
+
+  /// No description provided for @pricingPlanPayPerUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay per use'**
+  String get pricingPlanPayPerUse;
+
+  /// No description provided for @pricingPlanNinjaLocalFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'20 credits for smart searches on national second-hand platforms.'**
+  String get pricingPlanNinjaLocalFeature1;
+
+  /// No description provided for @pricingPlanNinjaLocalFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'We apply intelligence to all listings to show only relevant ones, filtering out accessories or related but different products.'**
+  String get pricingPlanNinjaLocalFeature2;
+
+  /// No description provided for @pricingPlanRadarLocalFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'100 credits you can use as you like for:'**
+  String get pricingPlanRadarLocalFeature1;
+
+  /// No description provided for @pricingPlanRadarLocalFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart searches on national second-hand platforms.'**
+  String get pricingPlanRadarLocalFeature2;
+
+  /// No description provided for @pricingPlanRadarLocalFeature3.
+  ///
+  /// In en, this message translates to:
+  /// **'National alerts (price drops and new listings)'**
+  String get pricingPlanRadarLocalFeature3;
+
+  /// No description provided for @pricingPlanRadarLocalFeature4.
+  ///
+  /// In en, this message translates to:
+  /// **'We apply intelligence to all listings to show only relevant ones, filtering out accessories or related but different products.'**
+  String get pricingPlanRadarLocalFeature4;
+
+  /// No description provided for @pricingPlanPayPerUseCompraLocalFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Smart search on national second-hand platforms.'**
+  String get pricingPlanPayPerUseCompraLocalFeature1;
+
+  /// No description provided for @pricingPlanPayPerUseCompraLocalFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimized results'**
+  String get pricingPlanPayPerUseCompraLocalFeature2;
+
+  /// No description provided for @pricingPlanPayPerUseCompraLocalFeature3.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced filtering to remove irrelevant listings, accessories or related but different products'**
+  String get pricingPlanPayPerUseCompraLocalFeature3;
+
+  /// No description provided for @pricingPlanNinjaFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'20 credits for searches on international second-hand platforms.'**
+  String get pricingPlanNinjaFeature1;
+
+  /// No description provided for @pricingPlanNinjaFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'We apply intelligence to all listings to show only relevant ones, filtering out accessories or related but different products.'**
+  String get pricingPlanNinjaFeature2;
+
+  /// No description provided for @pricingPlanRadarFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'100 credits you can use as you like for:'**
+  String get pricingPlanRadarFeature1;
+
+  /// No description provided for @pricingPlanRadarFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'Searches on international second-hand platforms.'**
+  String get pricingPlanRadarFeature2;
+
+  /// No description provided for @pricingPlanRadarFeature3.
+  ///
+  /// In en, this message translates to:
+  /// **'International alerts (price drops and new listings)'**
+  String get pricingPlanRadarFeature3;
+
+  /// No description provided for @pricingPlanRadarFeature4.
+  ///
+  /// In en, this message translates to:
+  /// **'We apply intelligence to all listings to show only relevant ones, filtering out accessories or related but different products.'**
+  String get pricingPlanRadarFeature4;
+
+  /// No description provided for @pricingPlanPayPerUseCompraFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Smart search on international second-hand platforms.'**
+  String get pricingPlanPayPerUseCompraFeature1;
+
+  /// No description provided for @pricingPlanPayPerUseCompraFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimized results'**
+  String get pricingPlanPayPerUseCompraFeature2;
+
+  /// No description provided for @pricingPlanPayPerUseCompraFeature3.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced filtering to remove irrelevant listings, accessories or related but different products'**
+  String get pricingPlanPayPerUseCompraFeature3;
+
+  /// No description provided for @pricingVentaNacionalDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s probably higher demand in other countries for your product. Subscribe to an international plan or pay per use to see the international market.'**
+  String get pricingVentaNacionalDisclaimer;
+
+  /// No description provided for @pricingPlanExpressFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'20 credits to analyze the national market, intelligently searching for demand opportunities'**
+  String get pricingPlanExpressFeature1;
+
+  /// No description provided for @pricingPlanExpressFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'See real market prices, competition, supply and national demand'**
+  String get pricingPlanExpressFeature2;
+
+  /// No description provided for @pricingPlanTurboFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'100 credits you can use as you like for:'**
+  String get pricingPlanTurboFeature1;
+
+  /// No description provided for @pricingPlanTurboFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'Intelligent search for demand opportunities (optimal price estimation)'**
+  String get pricingPlanTurboFeature2;
+
+  /// No description provided for @pricingPlanTurboFeature3.
+  ///
+  /// In en, this message translates to:
+  /// **'National alerts (see if someone posts cheaper than you)'**
+  String get pricingPlanTurboFeature3;
+
+  /// No description provided for @pricingPlanPayPerUseVentaNacionalFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Analysis of your national market'**
+  String get pricingPlanPayPerUseVentaNacionalFeature1;
+
+  /// No description provided for @pricingPlanPayPerUseVentaNacionalFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'Intelligent search for demand opportunities'**
+  String get pricingPlanPayPerUseVentaNacionalFeature2;
+
+  /// No description provided for @pricingPlanPayPerUseVentaNacionalFeature3.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimal selling price estimation'**
+  String get pricingPlanPayPerUseVentaNacionalFeature3;
+
+  /// No description provided for @pricingPlanInterExpressFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'20 credits to analyze the international market, intelligently searching for demand opportunities'**
+  String get pricingPlanInterExpressFeature1;
+
+  /// No description provided for @pricingPlanInterExpressFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'See real prices in other countries'**
+  String get pricingPlanInterExpressFeature2;
+
+  /// No description provided for @pricingPlanInterTurboFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'100 credits you can use as you like for:'**
+  String get pricingPlanInterTurboFeature1;
+
+  /// No description provided for @pricingPlanInterTurboFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for demand opportunities in other countries (optimal price estimation)'**
+  String get pricingPlanInterTurboFeature2;
+
+  /// No description provided for @pricingPlanInterTurboFeature3.
+  ///
+  /// In en, this message translates to:
+  /// **'International alerts (see if someone posts cheaper than you in other countries)'**
+  String get pricingPlanInterTurboFeature3;
+
+  /// No description provided for @pricingPlanPayPerUseVentaFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Analysis of your international market'**
+  String get pricingPlanPayPerUseVentaFeature1;
+
+  /// No description provided for @pricingPlanPayPerUseVentaFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'Intelligent search for demand opportunities'**
+  String get pricingPlanPayPerUseVentaFeature2;
+
+  /// No description provided for @pricingPlanPayPerUseVentaFeature3.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimal selling price estimation'**
+  String get pricingPlanPayPerUseVentaFeature3;
+
+  /// No description provided for @pricingFaqBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'FAQ'**
+  String get pricingFaqBadge;
+
+  /// No description provided for @pricingFaqQ1.
+  ///
+  /// In en, this message translates to:
+  /// **'What are credits?'**
+  String get pricingFaqQ1;
+
+  /// No description provided for @pricingFaqA1.
+  ///
+  /// In en, this message translates to:
+  /// **'Each international search (buy or sell) uses 1 credit. Each international alert also uses credits during setup. National buy searches are always unlimited, even without a plan.'**
+  String get pricingFaqA1;
+
+  /// No description provided for @pricingFaqQ2.
+  ///
+  /// In en, this message translates to:
+  /// **'Can I change plans at any time?'**
+  String get pricingFaqQ2;
+
+  /// No description provided for @pricingFaqA2.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, you can upgrade or change your plan at any time from your account. Unused credits are kept until the end of the billing period.'**
+  String get pricingFaqA2;
+
+  /// No description provided for @pricingFaqQ3.
+  ///
+  /// In en, this message translates to:
+  /// **'What happens if I run out of credits?'**
+  String get pricingFaqQ3;
+
+  /// No description provided for @pricingFaqA3.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll notify you when you\'re close to the limit. You can upgrade your plan, use pay per use, or wait until next month when your credits renew.'**
+  String get pricingFaqA3;
+
+  /// No description provided for @pricingCtaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to get started?'**
+  String get pricingCtaTitle;
+
+  /// No description provided for @pricingCtaSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Join hundreds of users who are already optimizing their prices with Pricofy'**
+  String get pricingCtaSubtitle;
+
+  /// No description provided for @whyItWorksHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s not magic.'**
+  String get whyItWorksHeroTitle;
+
+  /// No description provided for @whyItWorksHeroSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s math.'**
+  String get whyItWorksHeroSubtitle;
+
+  /// No description provided for @whyItWorksHeroDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'While you search on 1 site, we search on 20. And we filter the junk before you see it.'**
+  String get whyItWorksHeroDescription;
+
+  /// No description provided for @whyItWorksHeroCta.
+  ///
+  /// In en, this message translates to:
+  /// **'See how it works'**
+  String get whyItWorksHeroCta;
+
+  /// No description provided for @whyItWorksProblemTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The problem isn\'t that you can\'t find.'**
+  String get whyItWorksProblemTitle;
+
+  /// No description provided for @whyItWorksProblemSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s that you find TOO MUCH.'**
+  String get whyItWorksProblemSubtitle;
+
+  /// No description provided for @whyItWorksProblem1.
+  ///
+  /// In en, this message translates to:
+  /// **'listings of the same product.'**
+  String get whyItWorksProblem1;
+
+  /// No description provided for @whyItWorksProblem2.
+  ///
+  /// In en, this message translates to:
+  /// **'are junk.'**
+  String get whyItWorksProblem2;
+
+  /// No description provided for @whyItWorksProblem3.
+  ///
+  /// In en, this message translates to:
+  /// **'are duplicates.'**
+  String get whyItWorksProblem3;
+
+  /// No description provided for @whyItWorksProblem4.
+  ///
+  /// In en, this message translates to:
+  /// **'are scams.'**
+  String get whyItWorksProblem4;
+
+  /// No description provided for @whyItWorksProblem5.
+  ///
+  /// In en, this message translates to:
+  /// **'is the good one.'**
+  String get whyItWorksProblem5;
+
+  /// No description provided for @whyItWorksProblemQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'How much time do you waste finding that 1?'**
+  String get whyItWorksProblemQuestion;
+
+  /// No description provided for @whyItWorksFunnelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We filter for you'**
+  String get whyItWorksFunnelTitle;
+
+  /// No description provided for @whyItWorksFunnelSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You only see what\'s worth it'**
+  String get whyItWorksFunnelSubtitle;
+
+  /// No description provided for @whyItWorksSolutionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This is what we do:'**
+  String get whyItWorksSolutionTitle;
+
+  /// No description provided for @whyItWorksSolution1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'WE SEARCH'**
+  String get whyItWorksSolution1Title;
+
+  /// No description provided for @whyItWorksSolution1Description.
+  ///
+  /// In en, this message translates to:
+  /// **'On 8+ platforms at once. While you type, we\'re already comparing.'**
+  String get whyItWorksSolution1Description;
+
+  /// No description provided for @whyItWorksSolution2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'WE CLEAN'**
+  String get whyItWorksSolution2Title;
+
+  /// No description provided for @whyItWorksSolution2Description.
+  ///
+  /// In en, this message translates to:
+  /// **'We remove duplicates, accessories, and noise. You only see what matters.'**
+  String get whyItWorksSolution2Description;
+
+  /// No description provided for @whyItWorksSolution3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'WE COMPARE'**
+  String get whyItWorksSolution3Title;
+
+  /// No description provided for @whyItWorksSolution3Description.
+  ///
+  /// In en, this message translates to:
+  /// **'Same product: €350, €280, €195. You decide. With real information.'**
+  String get whyItWorksSolution3Description;
+
+  /// No description provided for @whyItWorksStatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Data. Not promises.'**
+  String get whyItWorksStatsTitle;
+
+  /// No description provided for @whyItWorksStats1Label.
+  ///
+  /// In en, this message translates to:
+  /// **'complete search'**
+  String get whyItWorksStats1Label;
+
+  /// No description provided for @whyItWorksStats2Label.
+  ///
+  /// In en, this message translates to:
+  /// **'less noise'**
+  String get whyItWorksStats2Label;
+
+  /// No description provided for @whyItWorksStats3Label.
+  ///
+  /// In en, this message translates to:
+  /// **'average savings'**
+  String get whyItWorksStats3Label;
+
+  /// No description provided for @whyItWorksStatsFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'We don\'t say it. Users do.'**
+  String get whyItWorksStatsFooter;
+
+  /// No description provided for @whyItWorksQuestionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'THE QUESTION NO ONE ASKS:'**
+  String get whyItWorksQuestionTitle;
+
+  /// No description provided for @whyItWorksQuestionMain.
+  ///
+  /// In en, this message translates to:
+  /// **'When searching for a second-hand product, would you rather see 200 irrelevant results or 15 that ARE what you\'re looking for?'**
+  String get whyItWorksQuestionMain;
+
+  /// No description provided for @whyItWorksQuestionAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s what we thought.'**
+  String get whyItWorksQuestionAnswer;
+
+  /// No description provided for @whyItWorksQuestionCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Try for free'**
+  String get whyItWorksQuestionCta;
+
+  /// No description provided for @whyItWorksObjectionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What you\'re thinking:'**
+  String get whyItWorksObjectionsTitle;
+
+  /// No description provided for @whyItWorksObjection1Question.
+  ///
+  /// In en, this message translates to:
+  /// **'What if it\'s too complicated?'**
+  String get whyItWorksObjection1Question;
+
+  /// No description provided for @whyItWorksObjection1Answer.
+  ///
+  /// In en, this message translates to:
+  /// **'You type. You search. Done. Like Google.'**
+  String get whyItWorksObjection1Answer;
+
+  /// No description provided for @whyItWorksObjection2Question.
+  ///
+  /// In en, this message translates to:
+  /// **'Do I have to pay?'**
+  String get whyItWorksObjection2Question;
+
+  /// No description provided for @whyItWorksObjection2Answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Free trial. No card. No tricks.'**
+  String get whyItWorksObjection2Answer;
+
+  /// No description provided for @whyItWorksObjection3Question.
+  ///
+  /// In en, this message translates to:
+  /// **'What about my data?'**
+  String get whyItWorksObjection3Question;
+
+  /// No description provided for @whyItWorksObjection3Answer.
+  ///
+  /// In en, this message translates to:
+  /// **'We don\'t sell it or look at it. We\'re not Facebook.'**
+  String get whyItWorksObjection3Answer;
+
+  /// No description provided for @whyItWorksFinalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Now you know why it works.'**
+  String get whyItWorksFinalTitle;
+
+  /// No description provided for @whyItWorksFinalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try it.'**
+  String get whyItWorksFinalSubtitle;
+
+  /// No description provided for @whyItWorksFinalCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Start searching'**
+  String get whyItWorksFinalCta;
+
+  /// No description provided for @whyItWorksFinalMicrocopy.
+  ///
+  /// In en, this message translates to:
+  /// **'2 seconds. No registration required.'**
+  String get whyItWorksFinalMicrocopy;
 }
 
 class _AppLocalizationsDelegate

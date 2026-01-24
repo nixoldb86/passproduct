@@ -17,6 +17,9 @@ class AppAssets {
   static const String backmarket = 'assets/images/platforms/backmarket.png';
   static const String ebay = 'assets/images/platforms/ebay.png';
   static const String leboncoin = 'assets/images/platforms/leboncoin.png';
+  static const String olx = 'assets/images/platforms/olx.png';
+  static const String kleinanzeigen = 'assets/images/platforms/kleinanzeigen.png';
+  static const String subito = 'assets/images/platforms/subito.png';
 
   /// Get platform logo path by platform name
   static String platformLogo(String platform) {
@@ -27,13 +30,16 @@ class AppAssets {
       'backmarket' => backmarket,
       'ebay' => ebay,
       'leboncoin' => leboncoin,
+      'olx' => olx,
+      'kleinanzeigen' => kleinanzeigen,
+      'subito' => subito,
       _ => logoIcon,
     };
   }
 
   /// Check if platform has a logo asset
   static bool hasPlatformLogo(String platform) {
-    return ['wallapop', 'milanuncios', 'vinted', 'backmarket', 'ebay', 'leboncoin']
+    return ['wallapop', 'milanuncios', 'vinted', 'backmarket', 'ebay', 'leboncoin', 'olx', 'kleinanzeigen', 'subito']
         .contains(platform.toLowerCase());
   }
 }
