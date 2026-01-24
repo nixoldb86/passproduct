@@ -969,7 +969,14 @@ export const useNotificationStore = create<NotificationState>((set) => ({
       const response = await fetch("/api/db/notifications");
       
       if (response.status === 401) {
+        // Usuario no autenticado - silencioso
         set({ notifications: [], unreadCount: 0, isLoading: false });
+        return;
+      }
+      
+      if (!response.ok) {
+        // Error del servidor - silencioso
+        set({ isLoading: false });
         return;
       }
       
@@ -984,8 +991,8 @@ export const useNotificationStore = create<NotificationState>((set) => ({
       } else {
         set({ isLoading: false });
       }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
+    } catch {
+      // Error de red (silencioso para no spam en consola durante polling)
       set({ isLoading: false });
     }
   },

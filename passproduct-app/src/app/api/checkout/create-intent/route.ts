@@ -87,10 +87,14 @@ export async function POST(request: NextRequest) {
     const shippingCost = listing.shippingEnabled ? Number(listing.shippingCost || 0) : 0;
     const fees = calculateOrderFees(price, shippingCost, hasProtection);
 
+    console.log("📦 Checkout for listing:", listingId);
+    console.log("💰 Price:", price, "Shipping:", shippingCost, "Total:", fees.total);
+
     // Generate protection code
     const protectionCode = generateProtectionCode();
 
     // Create Stripe PaymentIntent
+    console.log("🔄 Creating Stripe PaymentIntent...");
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(fees.total * 100), // Stripe uses cents
       currency: "eur",
@@ -136,9 +140,30 @@ export async function POST(request: NextRequest) {
       fees,
     });
   } catch (error) {
-    console.error("Error creating checkout:", error);
+    console.error("❌ Error creating checkout:", error);
+    
+    // Provide more specific error messages
+    let errorMessage = "Error al crear el checkout";
+    
+    if (error instanceof Error) {
+      // Check for Stripe errors
+      if (error.message.includes("STRIPE_SECRET_KEY")) {
+        errorMessage = "Error de configuración de pagos. Contacta con soporte.";
+      } else if (error.message.includes("Invalid API Key")) {
+        errorMessage = "Error de autenticación con el procesador de pagos.";
+      } else if (error.message.includes("amount")) {
+        errorMessage = "El importe del pago no es válido.";
+      } else {
+        // In development, show full error
+        if (process.env.NODE_ENV === "development") {
+          errorMessage = error.message;
+        }
+      }
+      console.error("Error details:", error.message);
+    }
+    
     return NextResponse.json(
-      { success: false, error: "Error al crear el checkout" },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

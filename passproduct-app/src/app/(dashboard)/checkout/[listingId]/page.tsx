@@ -683,6 +683,24 @@ export default function CheckoutPage() {
                 </Card>
               )}
               
+              {/* Debug: mostrar qué falta */}
+              {process.env.NODE_ENV === "development" && (
+                <div className="text-xs text-muted mb-2 p-2 bg-surface-2 rounded">
+                  <p>🔧 Debug:</p>
+                  <p>- Teléfono verificado: {isPhoneVerified ? "✅" : "❌"}</p>
+                  <p>- Step: {phoneVerificationStep}</p>
+                  <p>- Envío habilitado: {listing.shippingEnabled ? "✅" : "❌"}</p>
+                  {listing.shippingEnabled && (
+                    <>
+                      <p>- Nombre: {shippingAddress.fullName ? "✅" : "❌"}</p>
+                      <p>- Calle: {shippingAddress.street ? "✅" : "❌"}</p>
+                      <p>- Ciudad: {shippingAddress.city ? "✅" : "❌"}</p>
+                      <p>- CP: {shippingAddress.postalCode ? "✅" : "❌"}</p>
+                    </>
+                  )}
+                </div>
+              )}
+              
               <Button
                 className="w-full"
                 size="lg"
