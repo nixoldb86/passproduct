@@ -430,7 +430,7 @@ export function SellerProfileModal({ isOpen, onClose, seller, onContact, current
               <div className="flex gap-2">
                 <Button
                   onClick={handleToggleFollow}
-                  variant={amFollowing ? "secondary" : "outline"}
+                  variant={amFollowing ? "secondary" : "primary"}
                   className={`flex-1 ${amFollowing ? "border-accent text-accent" : ""}`}
                   leftIcon={amFollowing ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
                 >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Globe, Check } from "lucide-react";
 import { useI18n, locales, localeNames, localeCodes, Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ interface LanguageSelectorProps {
 
 // Circular flag icons as SVG components
 function FlagIcon({ locale, size = 20 }: { locale: Locale; size?: number }) {
-  const flags: Record<Locale, JSX.Element> = {
+  const flags: Record<Locale, React.JSX.Element> = {
     es: (
       // Spain - Red/Yellow/Red horizontal stripes
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Shield, ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
@@ -16,7 +16,7 @@ import {
 
 type Step = "intro" | "id" | "selfie" | "result";
 
-export default function VerifyPage() {
+function VerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoaded } = useUser();
@@ -389,5 +389,13 @@ export default function VerifyPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+      <VerifyContent />
+    </Suspense>
   );
 }

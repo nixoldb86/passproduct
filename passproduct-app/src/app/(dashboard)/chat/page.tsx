@@ -600,7 +600,7 @@ function ChatPageContent() {
               
               <div className="flex gap-3">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   className="flex-1"
                   onClick={() => {
                     setShowDeleteConfirm(false);
@@ -610,7 +610,7 @@ function ChatPageContent() {
                   Cancelar
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant="danger"
                   className="flex-1 bg-red-500 hover:bg-red-600 text-white"
                   onClick={async () => {
                     const convIdToDelete = deleteConfirmConvId || activeConversation?.id;

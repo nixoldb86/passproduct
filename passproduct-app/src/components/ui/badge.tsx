@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Check, Shield, Clock, Tag, AlertCircle } from "lucide-react";
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  variant?: "verified" | "warranty" | "accessory" | "serial" | "info" | "warning" | "default";
+  variant?: "verified" | "warranty" | "accessory" | "serial" | "info" | "warning" | "error" | "default";
   size?: "sm" | "md";
   icon?: React.ReactNode;
 }
@@ -25,6 +25,7 @@ const Badge = ({
     serial: "bg-[#8B5CF6]/15 text-[#8B5CF6] border-[#8B5CF6]/20",
     info: "bg-surface-2 text-foreground-muted border-border",
     warning: "bg-warning/15 text-warning border-warning/20",
+    error: "bg-error/15 text-error border-error/20",
     default: "bg-surface-2 text-foreground-muted border-border",
   };
 
@@ -35,6 +36,7 @@ const Badge = ({
     serial: <Clock className="h-3 w-3" />,
     info: null,
     warning: <AlertCircle className="h-3 w-3" />,
+    error: <AlertCircle className="h-3 w-3" />,
     default: null,
   };
 

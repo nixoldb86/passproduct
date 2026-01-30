@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Search,
@@ -29,7 +29,7 @@ const sortOptions = [
   { value: "price_desc", label: "Precio: mayor a menor" },
 ];
 
-export default function MarketplacePage() {
+function MarketplaceContent() {
   const searchParams = useSearchParams();
   const urlSearchQuery = searchParams.get("search") || "";
   
@@ -535,5 +535,22 @@ export default function MarketplacePage() {
         }}
       />
     </div>
+  );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function MarketplacePage() {
+  return (
+    <Suspense fallback={
+      <div className="p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      </div>
+    }>
+      <MarketplaceContent />
+    </Suspense>
   );
 }

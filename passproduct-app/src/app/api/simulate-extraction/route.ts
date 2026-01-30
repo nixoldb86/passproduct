@@ -12,7 +12,22 @@ export async function POST(request: Request) {
     console.log("📸 PASO 1: Usuario sube foto de factura");
     console.log("🤖 IA analiza la imagen con GPT-4 Vision...");
     
-    const extractedData = {
+    const extractedData: {
+      imageType: string;
+      multipleProducts: boolean;
+      products: Array<{
+        brand: string | null;
+        model: string;
+        variant: string | null;
+        category: string;
+        purchasePrice: number;
+        lineDescription: string;
+        refCodes: string[];
+      }>;
+      purchaseDate: string;
+      purchaseStore: string;
+      confidence: string;
+    } = {
       imageType: "invoice",
       multipleProducts: false,
       products: [{
@@ -34,7 +49,7 @@ export async function POST(request: Request) {
     
     // PASO 2: Detectar que necesita búsqueda web
     console.log("\n🔍 PASO 2: Detectando necesidad de búsqueda web...");
-    const needsSearch = !extractedData.products[0].brand || 
+    const needsSearch = !extractedData.products[0].brand ||
                        extractedData.products[0].brand.length < 2;
     
     if (needsSearch) {

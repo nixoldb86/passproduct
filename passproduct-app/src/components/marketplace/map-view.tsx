@@ -89,7 +89,7 @@ export function MapView({ listings }: MapViewProps) {
 
   // Función para crear icono de cluster personalizado
   const createClusterCustomIcon = useCallback((cluster: { getChildCount: () => number; getAllChildMarkers: () => { options: { price: number } }[] }) => {
-    if (!L) return L?.divIcon({ html: "" });
+    if (!L) return undefined;
     
     const markers = cluster.getAllChildMarkers();
     const prices = markers.map((m: { options: { price: number } }) => m.options.price || 0);

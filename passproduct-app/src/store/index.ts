@@ -713,13 +713,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
             activeConversation: {
               ...state.activeConversation,
               messages: updatedMessages,
-              otherParticipant: {
+              otherParticipant: state.activeConversation.otherParticipant ? {
                 ...state.activeConversation.otherParticipant,
                 lastSeen: otherParticipant.lastSeen,
                 isOnline: otherParticipant.isOnline,
-              },
+              } : undefined,
             },
-          };
+          } as Partial<ChatState>;
         });
         
         // Si hay nuevos mensajes, recargar la conversación completa
@@ -1194,7 +1194,7 @@ export const useFollowStore = create(
     }),
     {
       name: "follow-storage",
-      partialize: (state) => ({ following: state.following }),
+      partialize: (state) => ({ following: state.following }) as FollowState,
     }
   )
 );

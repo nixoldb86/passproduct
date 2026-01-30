@@ -705,7 +705,7 @@ export function ProductCard({ product, onEdit, onDelete, onRefreshMarketPrices }
               <div className="p-4 border-t border-border bg-surface-2/50">
                 <div className="flex gap-2">
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="flex-1"
                     onClick={handleCloseDocuments}
                   >

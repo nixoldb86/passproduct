@@ -48,7 +48,7 @@ type EnrichedData = {
     percentage: number;
     minPrice: number;
     maxPrice: number;
-    marketTrend: string;
+    marketTrend: "stable" | "rising" | "falling";
     notes: string;
   } | null;
   warrantyContact: {

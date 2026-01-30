@@ -88,11 +88,11 @@ export interface Category {
 }
 
 export interface WarrantyContact {
-  phone?: string;
-  email?: string;
-  url?: string;
-  hours?: string;
-  notes?: string;
+  phone?: string | null;
+  email?: string | null;
+  url?: string | null;
+  hours?: string | null;
+  notes?: string | null;
 }
 
 export interface ResaleValue {
@@ -193,6 +193,7 @@ export interface Conversation {
   currentOffer?: number;
   offerStatus?: "pending" | "accepted" | "rejected";
   messages: Message[];
+  lastMessage?: Message;
   // Participante con el que se está chateando (calculado por la API)
   otherParticipant?: {
     id: string;
@@ -341,6 +342,7 @@ export interface FilterOptions {
   hasVerifiedPurchase?: boolean;
   hasWarranty?: boolean;
   sortBy?: "price_asc" | "price_desc" | "date_desc" | "date_asc";
+  search?: string;
 }
 
 export const CONDITION_LABELS: Record<ProductCondition, string> = {

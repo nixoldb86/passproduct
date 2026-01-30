@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -85,7 +85,7 @@ interface OrderData {
   isSeller: boolean;
 }
 
-export default function OrderDetailPage() {
+function OrderDetailContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1023,4 +1023,21 @@ function getTrackingUrl(carrierId: string, trackingNumber: string): string {
     return carrier.trackingUrl + trackingNumber;
   }
   return "#";
+}
+
+// Wrapper with Suspense for useSearchParams
+export default function OrderDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-3xl mx-auto animate-pulse space-y-6">
+          <div className="h-8 w-48 bg-surface-2 rounded-lg" />
+          <div className="h-64 bg-surface-2 rounded-2xl" />
+          <div className="h-48 bg-surface-2 rounded-2xl" />
+        </div>
+      }
+    >
+      <OrderDetailContent />
+    </Suspense>
+  );
 }
