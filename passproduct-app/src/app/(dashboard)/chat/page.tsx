@@ -256,7 +256,7 @@ function ChatPageContent() {
                       {(conv as any).otherParticipant?.lastName?.[0] ? `${(conv as any).otherParticipant.lastName[0]}.` : ""}
                     </p>
                     <p className="text-sm text-foreground-muted truncate">
-                      {conv.lastMessage?.text ||
+                      {(conv as any).lastMessage?.text ||
                         "Sin mensajes"}
                     </p>
                     {conv.currentOffer && (
