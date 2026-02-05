@@ -340,7 +340,8 @@ async function fetchAllWallapopListings(
       nextPage = result.nextPage;
       
       if (page < maxPages) {
-        const delayMs = 1000 + Math.random() * 2000;
+        // Delay reducido: 500-1500ms (antes 1000-3000ms)
+        const delayMs = 500 + Math.random() * 1000;
         logger.addPhase('RATE_LIMIT_DELAY', {
           message: `Esperando para evitar rate limiting`,
           delay_ms: Math.round(delayMs),

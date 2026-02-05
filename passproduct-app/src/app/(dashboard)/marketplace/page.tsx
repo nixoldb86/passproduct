@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   Search,
   SlidersHorizontal,
@@ -18,9 +19,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMarketplaceStore } from "@/store";
 import { Button, Card, SkeletonCard, Select } from "@/components/ui";
 import { ListingCard, SellerProfileModal } from "@/components/marketplace";
-import { MapView } from "@/components/marketplace/map-view";
 import { mockCategories, categoryGroups } from "@/lib/mock-data";
 import { FilterOptions, SellerProfile } from "@/types";
+
+// Lazy load MapView - solo se carga cuando el usuario selecciona vista mapa
+const MapView = dynamic(
+  () => import("@/components/marketplace/map-view").then((mod) => mod.MapView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[500px] bg-surface-1 rounded-2xl flex items-center justify-center animate-pulse">
+        <div className="text-foreground-muted text-sm">Cargando mapa...</div>
+      </div>
+    ),
+  }
+);
 
 const sortOptions = [
   { value: "date_desc", label: "Más recientes" },
