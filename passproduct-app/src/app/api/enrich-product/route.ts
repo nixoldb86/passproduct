@@ -218,14 +218,22 @@ async function searchProductInfo(productName: string): Promise<string | null> {
 }
 
 // Prompt optimizado para mínimo uso de tokens
-const SYSTEM_PROMPT = `Experto en electrónica. Responde JSON compacto para producto dado.
+const SYSTEM_PROMPT = `Experto en productos de consumo. Responde JSON compacto para producto dado.
 
 FORMATO (sin campos vacíos, valores cortos):
 {"accessories":[{"name":"str","typical":bool}],"manualUrl":"url","resaleValue":{"percentage":num,"minPrice":num,"maxPrice":num,"marketTrend":"stable|rising|falling"},"warrantyContact":{"phone":"str","url":"url","hours":"str"},"specs":[{"label":"str","value":"str"}]}
 
-REGLAS:
+REGLAS CRÍTICAS:
+- IMPORTANTE: Usa la variante/talla para identificar el tipo EXACTO de producto
+  - Tallas numéricas (36-50): CALZADO (botas, zapatillas)
+  - Tallas letra (XS, S, M, L, XL): ROPA (chaquetas, camisetas)
+  - Ejemplo: "SH500 X-WARM M BLACK 39" = BOTAS talla 39, NO chaqueta
 - accessories: máx 4, solo incluidos de serie (typical:true)
+  - CALZADO: cordones, plantillas, bolsa transporte (NO capucha, NO puños)
+  - ROPA: capucha, puños, bolsillos, cordón ajuste
 - specs: máx 4, valores breves (<30 chars)
+  - CALZADO: impermeabilidad, suela, aislamiento, peso
+  - ROPA: tejido, capas, transpirabilidad
 - warrantyContact: solo España, omitir email
 - Si no conoces el producto, specs:[]
 - NO inventar, mejor omitir
@@ -236,12 +244,16 @@ Solo JSON, sin markdown.`;
 async function enrichWithAI(
   productDescription: string,
   priceContext: string,
-  webContext: string = ""
+  webContext: string = "",
+  categoryId: string = ""
 ): Promise<Record<string, unknown>> {
-  // Prompt de usuario compacto
-  const userPrompt = webContext 
-    ? `${productDescription}${priceContext}\nINFO WEB:${webContext.substring(0, 500)}`
-    : `${productDescription}${priceContext}`;
+  // Añadir contexto de categoría si está disponible
+  const categoryContext = categoryId ? ` [Categoría: ${categoryId.replace("cat-", "")}]` : "";
+
+  // Prompt de usuario compacto con contexto de categoría
+  const userPrompt = webContext
+    ? `${productDescription}${categoryContext}${priceContext}\nINFO WEB:${webContext.substring(0, 500)}`
+    : `${productDescription}${categoryContext}${priceContext}`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o", // Más rápido y estable
@@ -318,9 +330,10 @@ export async function POST(request: Request) {
     let enrichedData;
     try {
       enrichedData = await enrichWithAI(
-        productDescription, 
-        priceContext, 
-        webInfoResult || ""
+        productDescription,
+        priceContext,
+        webInfoResult || "",
+        categoryId || ""
       );
     } catch (parseError) {
       console.error("Error parsing AI response:", parseError);

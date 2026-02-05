@@ -7,7 +7,7 @@ const openai = new OpenAI({
 });
 
 // Categorías disponibles (ampliadas para cualquier producto)
-const CATEGORIES = `smartphones,tablets,laptops,desktops,monitors,consoles,audio,wearables,cameras,tv,projectors,appliances-large,appliances-small,climate,ebikes,scooters,drones,gaming,networking,storage,peripherals,baby-strollers,baby-car-seats,baby-furniture,toys,furniture,garden,lighting,home-decor,fitness,bikes,sports,outdoor,fashion-luxury,watches-jewelry,bags,instruments,music-equipment,tools,power-tools,motorcycles,car-parts,collectibles,books-media,other`;
+const CATEGORIES = `smartphones,tablets,laptops,desktops,monitors,consoles,audio,wearables,cameras,tv,projectors,appliances-large,appliances-small,climate,ebikes,scooters,drones,gaming,networking,storage,peripherals,baby-strollers,baby-car-seats,baby-furniture,toys,furniture,garden,lighting,home-decor,fitness,bikes,sports,outdoor,footwear,clothing,fashion-luxury,watches-jewelry,bags,instruments,music-equipment,tools,power-tools,motorcycles,car-parts,collectibles,books-media,other`;
 
 // Prompt unificado para imágenes de facturas/tickets - detecta múltiples productos
 const SYSTEM_PROMPT_IMAGE = `Analiza la imagen de factura/ticket y extrae TODOS los productos. JSON sin markdown:
@@ -380,6 +380,21 @@ const CATEGORY_MAP: Record<string, string> = {
   deporte: "cat-sports",
   outdoor: "cat-outdoor",
   camping: "cat-outdoor",
+
+  // === CALZADO Y ROPA ===
+  footwear: "cat-footwear",
+  shoes: "cat-footwear",
+  calzado: "cat-footwear",
+  zapatillas: "cat-footwear",
+  botas: "cat-footwear",
+  sneakers: "cat-footwear",
+  running: "cat-footwear",
+  trail: "cat-footwear",
+  hiking: "cat-footwear",
+  clothing: "cat-clothing",
+  ropa: "cat-clothing",
+  chaqueta: "cat-clothing",
+  abrigo: "cat-clothing",
 
   // === MODA Y LUJO ===
   "fashion-luxury": "cat-fashion-luxury",

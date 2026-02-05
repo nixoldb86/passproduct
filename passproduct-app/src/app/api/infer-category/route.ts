@@ -44,6 +44,9 @@ const CATEGORIES = [
   { id: "cat-bikes", name: "Bicicletas", keywords: ["bicicleta", "mountain bike", "mtb", "bici carretera", "gravel", "specialized", "trek", "giant", "cannondale"] },
   { id: "cat-sports", name: "Deporte", keywords: ["golf", "tenis", "pádel", "esquí", "snowboard", "surf", "tabla", "raqueta"] },
   { id: "cat-outdoor", name: "Outdoor", keywords: ["tienda campaña", "saco dormir", "mochila", "trekking", "escalada", "kayak"] },
+  // Calzado y Ropa
+  { id: "cat-footwear", name: "Calzado", keywords: ["zapatillas", "botas", "bota", "zapatos", "sneakers", "running", "trail", "hiking", "senderismo", "quechua", "salomon", "merrell", "nike", "adidas", "new balance", "asics", "puma", "reebok", "converse", "vans", "timberland", "caterpillar", "geox", "clarks", "decathlon", "sh500", "sh100", "mh500"] },
+  { id: "cat-clothing", name: "Ropa", keywords: ["chaqueta", "abrigo", "cazadora", "jersey", "sudadera", "camiseta", "pantalón", "vaqueros", "jeans", "vestido", "falda", "camisa", "polo", "parka", "plumas", "anorak", "softshell", "gore-tex", "impermeable", "cortavientos", "forclaz", "evadict"] },
   // Moda y lujo
   { id: "cat-fashion-luxury", name: "Moda de Lujo", keywords: ["louis vuitton", "gucci", "prada", "chanel", "hermès", "dior", "balenciaga", "burberry"] },
   { id: "cat-watches-jewelry", name: "Relojes y Joyería", keywords: ["rolex", "omega", "tag heuer", "cartier", "tissot", "seiko", "casio g-shock", "joya", "anillo", "collar"] },
@@ -115,6 +118,10 @@ CATEGORÍAS DISPONIBLES:
 - cat-bikes: Bicicletas (MTB, carretera, gravel)
 - cat-sports: Equipamiento deportivo (golf, tenis, pádel, esquí)
 - cat-outdoor: Outdoor y camping
+
+👟 CALZADO Y ROPA:
+- cat-footwear: Calzado (zapatillas, botas, running, trail, hiking, Quechua, Salomon, Nike, Adidas)
+- cat-clothing: Ropa (chaquetas, abrigos, cazadoras, sudaderas, pantalones, Gore-Tex)
 
 👜 MODA Y LUJO:
 - cat-fashion-luxury: Moda de lujo (Louis Vuitton, Gucci, Chanel)

@@ -40,6 +40,9 @@ const categories = [
   { id: "cat-bikes", name: "Bicicletas", slug: "bikes", icon: "🚴", minPhotos: 3, requiresTicket: false, requiresSerial: true },
   { id: "cat-sports", name: "Deportes", slug: "sports", icon: "⚽", minPhotos: 2, requiresTicket: false, requiresSerial: false },
   { id: "cat-outdoor", name: "Outdoor", slug: "outdoor", icon: "🏕️", minPhotos: 2, requiresTicket: false, requiresSerial: false },
+  // === CALZADO Y ROPA ===
+  { id: "cat-footwear", name: "Calzado", slug: "footwear", icon: "👟", minPhotos: 2, requiresTicket: false, requiresSerial: false },
+  { id: "cat-clothing", name: "Ropa", slug: "clothing", icon: "🧥", minPhotos: 2, requiresTicket: false, requiresSerial: false },
   // === MODA Y LUJO ===
   { id: "cat-fashion-luxury", name: "Moda de Lujo", slug: "fashion-luxury", icon: "👔", minPhotos: 3, requiresTicket: true, requiresSerial: false },
   { id: "cat-watches-jewelry", name: "Relojes y Joyería", slug: "watches-jewelry", icon: "⌚", minPhotos: 4, requiresTicket: true, requiresSerial: true },
