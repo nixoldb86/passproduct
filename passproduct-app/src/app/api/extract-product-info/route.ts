@@ -24,10 +24,15 @@ REGLAS CRÍTICAS:
 - purchaseDate: OBLIGATORIO en facturas. Buscar "Fecha", "Date", día/mes/año. Formato YYYY-MM-DD
 - multipleProducts: true si hay MÁS DE 1 producto en la factura
 - products: array con CADA producto encontrado (puede ser 1 o varios)
-- brand/model: SOLO marcas/modelos REALES (Apple, Samsung, Dyson V15...). NO códigos numéricos.
+- brand/model: Intentar identificar la marca REAL incluso si está abreviada
+  - Abreviaturas comunes: K=Karrimor, NF/TNF=The North Face, SAL=Salomon, QUE=Quechua
+  - Si no reconoces la abreviatura, pon la abreviatura en brand (ej: brand="K")
+  - Gore/GTX = Gore-Tex (tecnología, no marca). JK/JKT = Jacket
+  - model: el nombre del producto (ej: "Powline", "SH500", "Speedcross")
+  - variant: color/talla (ej: "BLK RED", "42", "M")
 - Si dice "ASPIRADOR RECARGABLE" sin marca, brand=null, model=null
 - refCodes: TODOS los códigos de cada línea (Modelo:446986-01, Código:07746288500, SKU, EAN, Dpto, Ref)
-- lineDescription: copiar descripción EXACTA del ticket para cada producto
+- lineDescription: copiar descripción EXACTA del ticket (CRÍTICO para búsqueda posterior)
 - purchasePrice: precio de CADA producto individual
 - Ignora líneas de envío, seguros, descuentos, IVA - solo productos físicos >20€
 - Solo JSON`;
@@ -217,6 +222,66 @@ ${searchResults}
   }
 }
 
+// Mapeo de abreviaturas comunes en tickets de retail
+const BRAND_ABBREVIATIONS: Record<string, string> = {
+  // Marcas de outdoor/deportes
+  "k": "Karrimor",
+  "kar": "Karrimor",
+  "nf": "The North Face",
+  "tnf": "The North Face",
+  "col": "Columbia",
+  "sal": "Salomon",
+  "mer": "Merrell",
+  "mam": "Mammut",
+  "arc": "Arc'teryx",
+  "pat": "Patagonia",
+  "que": "Quechua",
+  "for": "Forclaz",
+  // Marcas de moda/calzado
+  "nik": "Nike",
+  "adi": "Adidas",
+  "pum": "Puma",
+  "nb": "New Balance",
+  "ree": "Reebok",
+  "con": "Converse",
+  "van": "Vans",
+  "tim": "Timberland",
+  // Tecnología
+  "sam": "Samsung",
+  "app": "Apple",
+  "son": "Sony",
+  "phi": "Philips",
+  "bos": "Bosch",
+  "dys": "Dyson",
+};
+
+// Expandir abreviaturas de marcas
+function expandBrandAbbreviation(abbrev: string): string | null {
+  const lower = abbrev.toLowerCase().trim();
+  return BRAND_ABBREVIATIONS[lower] || null;
+}
+
+// Detectar si la descripción tiene estructura de producto (palabras significativas)
+function hasMeaningfulProductDescription(description: string): boolean {
+  if (!description) return false;
+
+  // Limpiar y contar palabras significativas (>2 caracteres)
+  const words = description.split(/\s+/).filter(w => w.length > 2);
+
+  // Si tiene 3+ palabras, probablemente es un nombre de producto
+  if (words.length >= 3) return true;
+
+  // Palabras clave que indican producto de outdoor/ropa
+  const productKeywords = [
+    "gore", "tex", "goretex", "gtx", "waterproof", "warm", "pro", "ultra",
+    "jacket", "jk", "jkt", "boot", "shoe", "pant", "fleece", "shell",
+    "powline", "powerline", "hooded", "insulated", "down"
+  ];
+
+  const lowerDesc = description.toLowerCase();
+  return productKeywords.some(kw => lowerDesc.includes(kw));
+}
+
 // Detectar si la descripción es genérica
 function isGenericDescription(brand: string | null, model: string | null, description: string): boolean {
   const genericTerms = [
@@ -225,37 +290,39 @@ function isGenericDescription(brand: string | null, model: string | null, descri
     "recargable", "inalambrico", "smart", "electrodomestico", "lavadora", "secadora",
     "frigorifico", "nevera", "horno", "microondas", "cafetera", "robot"
   ];
-  
+
   const lowerBrand = (brand || "").toLowerCase().trim();
   const lowerModel = (model || "").toLowerCase().trim();
   const lowerDesc = (description || "").toLowerCase();
-  
+
   // Si no hay marca, es genérico
   if (!brand || brand.length < 2) {
     return true;
   }
-  
+
   // Si la marca es un término genérico, es genérico
   if (genericTerms.some(t => lowerBrand.includes(t))) {
     return true;
   }
-  
+
   // Si el modelo parece ser un código de referencia (solo números o formato XXX-XX)
   if (model && /^\d{5,}$|^\d+-\d+$|^[0-9-]+$/.test(model.trim())) {
     return true;
   }
-  
+
   // Si la descripción contiene términos genéricos sin marca conocida
-  const knownBrands = ["apple", "samsung", "sony", "lg", "dyson", "philips", "bosch", "siemens", 
+  const knownBrands = ["apple", "samsung", "sony", "lg", "dyson", "philips", "bosch", "siemens",
     "xiaomi", "huawei", "dell", "hp", "lenovo", "asus", "acer", "microsoft", "google", "bose",
-    "jbl", "marshall", "bang", "olufsen", "miele", "electrolux", "rowenta", "tefal", "moulinex"];
-  
+    "jbl", "marshall", "bang", "olufsen", "miele", "electrolux", "rowenta", "tefal", "moulinex",
+    "karrimor", "the north face", "columbia", "salomon", "merrell", "mammut", "patagonia",
+    "nike", "adidas", "puma", "new balance", "reebok", "quechua", "forclaz"];
+
   if (!knownBrands.some(b => lowerBrand.includes(b))) {
     if (genericTerms.some(t => lowerDesc.includes(t))) {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -565,25 +632,38 @@ export async function POST(request: Request) {
           let model = p.model || "";
           let variant = p.variant || "";
           let category = p.category || "";
-          
+          const lineDesc = p.lineDescription || "";
+
+          // Intentar expandir abreviaturas de marca (ej: "K" → "Karrimor")
+          if (brand && brand.length <= 3) {
+            const expandedBrand = expandBrandAbbreviation(brand);
+            if (expandedBrand) {
+              console.log(`📦 Marca expandida: "${brand}" → "${expandedBrand}"`);
+              brand = expandedBrand;
+            }
+          }
+
           // Si la descripción es genérica, buscar el producto real
           const hasRefCodes = (p.refCodes && p.refCodes.length > 0) || (model && /^\d{5,}$|^\d+-\d+$/.test(model));
-          if (isGenericDescription(brand, model, p.lineDescription || "") && hasRefCodes) {
-            console.log(`Buscando producto por referencias: ${(p.refCodes || []).join(", ")} + modelo: ${model}`);
+          const needsSearch = isGenericDescription(brand, model, lineDesc) &&
+            (hasRefCodes || hasMeaningfulProductDescription(lineDesc));
+
+          if (needsSearch) {
+            console.log(`🔍 Buscando producto: refs=[${(p.refCodes || []).join(", ")}] desc="${lineDesc.substring(0, 50)}..."`);
             const searchResult = await searchProductByRef(
               p.refCodes || [],
-              p.lineDescription || "",
+              lineDesc,
               extractedData.purchaseStore || "",
               model,
               p.purchasePrice
             );
-            
+
             if (searchResult) {
               brand = searchResult.brand || brand;
               model = searchResult.model || model;
               variant = searchResult.variant || variant;
               category = searchResult.category || category;
-              console.log(`Producto identificado: ${brand} ${model}`);
+              console.log(`✅ Producto identificado: ${brand} ${model}`);
             }
           }
           
@@ -670,16 +750,30 @@ export async function POST(request: Request) {
     
     // Para imágenes: verificar si necesitamos buscar por referencia
     if (extractedData.imageType !== "invoice" || !extractedData.multipleProducts) {
-      const brand = extractedData.brand || "";
-      const model = extractedData.model || "";
+      let brand = extractedData.brand || "";
+      let model = extractedData.model || "";
       const rawDesc = extractedData.rawDescription || extractedData.lineDescription || "";
       const refCodes = extractedData.refCodes || [];
-      
+
+      // Intentar expandir abreviaturas de marca (ej: "K" → "Karrimor")
+      if (brand && brand.length <= 3) {
+        const expandedBrand = expandBrandAbbreviation(brand);
+        if (expandedBrand) {
+          console.log(`📦 Marca expandida: "${brand}" → "${expandedBrand}"`);
+          brand = expandedBrand;
+          extractedData.brand = expandedBrand;
+        }
+      }
+
       // Verificar si hay códigos de referencia o si el modelo parece ser un código
       const hasRefCodes = refCodes.length > 0 || (model && /^\d{5,}$|^\d+-\d+$/.test(model));
-      
-      if (isGenericDescription(brand, model, rawDesc) && hasRefCodes) {
-        console.log(`Buscando producto por referencias: ${refCodes.join(", ")} + modelo: ${model}`);
+
+      // También buscar si la descripción tiene estructura de producto pero no se identificó marca
+      const needsWebSearch = isGenericDescription(brand, model, rawDesc) &&
+        (hasRefCodes || hasMeaningfulProductDescription(rawDesc));
+
+      if (needsWebSearch) {
+        console.log(`🔍 Buscando producto: refs=[${refCodes.join(", ")}] desc="${rawDesc.substring(0, 50)}..."`);
         const searchResult = await searchProductByRef(
           refCodes,
           rawDesc,
@@ -687,13 +781,13 @@ export async function POST(request: Request) {
           model,
           extractedData.purchasePrice
         );
-        
+
         if (searchResult) {
           extractedData.brand = searchResult.brand || extractedData.brand;
           extractedData.model = searchResult.model || extractedData.model;
           extractedData.variant = searchResult.variant || extractedData.variant;
           extractedData.category = searchResult.category || extractedData.category;
-          console.log(`Producto identificado: ${extractedData.brand} ${extractedData.model}`);
+          console.log(`✅ Producto identificado: ${extractedData.brand} ${extractedData.model}`);
         }
       }
     }
