@@ -87,17 +87,90 @@ async function searchProductImages(brand: string, model: string, variant?: strin
   return [];
 }
 
+// Mapeo de marcas a sus dominios oficiales
+const BRAND_DOMAINS: Record<string, string[]> = {
+  // Marcas Decathlon
+  quechua: ["decathlon.es", "decathlon.com", "quechua.com"],
+  forclaz: ["decathlon.es", "decathlon.com"],
+  evadict: ["decathlon.es", "decathlon.com"],
+  kalenji: ["decathlon.es", "decathlon.com"],
+  domyos: ["decathlon.es", "decathlon.com"],
+  btwin: ["decathlon.es", "decathlon.com"],
+  tribord: ["decathlon.es", "decathlon.com"],
+  kipsta: ["decathlon.es", "decathlon.com"],
+  // Tecnología
+  apple: ["apple.com", "support.apple.com"],
+  samsung: ["samsung.com"],
+  sony: ["sony.es", "sony.com"],
+  lg: ["lg.com"],
+  xiaomi: ["mi.com", "xiaomi.com"],
+  huawei: ["consumer.huawei.com", "huawei.com"],
+  // Electrodomésticos
+  dyson: ["dyson.es", "dyson.com"],
+  philips: ["philips.es", "philips.com"],
+  bosch: ["bosch-home.es", "bosch.com"],
+  siemens: ["siemens-home.bsh-group.com"],
+  miele: ["miele.es", "miele.com"],
+  // Deportes
+  nike: ["nike.com"],
+  adidas: ["adidas.es", "adidas.com"],
+  salomon: ["salomon.com"],
+  // Genéricos de confianza
+  _trusted: ["support.", "manual.", "docs.", "help.", "download."],
+};
+
+// Verificar si un dominio es válido para una marca
+function isValidDomainForBrand(url: string, brand: string): boolean {
+  const lowerBrand = brand.toLowerCase();
+  const lowerUrl = url.toLowerCase();
+
+  // Obtener dominios oficiales de la marca
+  const officialDomains = BRAND_DOMAINS[lowerBrand] || [];
+
+  // Verificar si el URL es de un dominio oficial de la marca
+  for (const domain of officialDomains) {
+    if (lowerUrl.includes(domain)) {
+      return true;
+    }
+  }
+
+  // Verificar si contiene el nombre de la marca en el dominio
+  if (lowerUrl.includes(lowerBrand + ".")) {
+    return true;
+  }
+
+  // Verificar subdominios de confianza (support.*, manual.*, etc.)
+  for (const trusted of BRAND_DOMAINS._trusted) {
+    if (lowerUrl.includes(trusted) && lowerUrl.includes(lowerBrand)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // Buscar URL del manual de usuario
 async function searchManualUrl(brand: string, model: string): Promise<string | null> {
   console.log(`🔍 Buscando manual: ${brand} ${model}`);
-  
-  const results = await searchWithSerper(`${brand} ${model} manual usuario PDF site:${brand.toLowerCase()}.com OR filetype:pdf`);
-  
-  // Buscar resultado que parezca un manual
+
+  // Determinar dominio de búsqueda
+  const lowerBrand = brand.toLowerCase();
+  const officialDomains = BRAND_DOMAINS[lowerBrand];
+  const siteDomain = officialDomains?.[0] || `${lowerBrand}.com`;
+
+  const results = await searchWithSerper(`${brand} ${model} manual usuario PDF site:${siteDomain}`);
+
+  // Buscar resultado que parezca un manual Y sea de dominio válido
   for (const result of results) {
     const lowerTitle = result.title.toLowerCase();
     const lowerLink = result.link.toLowerCase();
-    
+
+    // Verificar que el dominio sea válido para la marca
+    if (!isValidDomainForBrand(result.link, brand)) {
+      console.log(`⚠️ Dominio no válido para ${brand}: ${result.link}`);
+      continue;
+    }
+
     if (
       lowerTitle.includes("manual") ||
       lowerTitle.includes("instrucciones") ||
@@ -107,21 +180,26 @@ async function searchManualUrl(brand: string, model: string): Promise<string | n
       lowerLink.includes("support") ||
       lowerLink.includes("download")
     ) {
-      console.log(`✅ Manual encontrado: ${result.link}`);
+      console.log(`✅ Manual encontrado (dominio verificado): ${result.link}`);
       return result.link;
     }
   }
 
-  // Segunda búsqueda más general
-  const results2 = await searchWithSerper(`"${brand}" "${model}" manual PDF download`);
+  // Segunda búsqueda más general pero con validación de dominio
+  const results2 = await searchWithSerper(`"${brand}" "${model}" manual PDF`);
   for (const result of results2) {
+    // Verificar dominio válido
+    if (!isValidDomainForBrand(result.link, brand)) {
+      continue;
+    }
+
     if (result.link.includes(".pdf") || result.title.toLowerCase().includes("manual")) {
-      console.log(`✅ Manual encontrado (2da búsqueda): ${result.link}`);
+      console.log(`✅ Manual encontrado (2da búsqueda, dominio verificado): ${result.link}`);
       return result.link;
     }
   }
 
-  console.log("❌ Manual no encontrado");
+  console.log("❌ Manual no encontrado en dominios oficiales");
   return null;
 }
 
