@@ -54,6 +54,21 @@ async function searchProductImages(brand: string, model: string, variant?: strin
   const query = [brand, model, variant].filter(Boolean).join(" ");
   console.log(`🖼️ Buscando imágenes: ${query}`);
 
+  // Extraer palabras clave del modelo para filtrar resultados
+  const modelLower = model.toLowerCase();
+  const productTypeKeywords: string[] = [];
+
+  // Detectar tipo de producto por palabras clave en el modelo
+  if (modelLower.includes("bib") || modelLower.includes("pant")) {
+    productTypeKeywords.push("bib", "pant", "pantalon", "pantalón");
+  }
+  if (modelLower.includes("jk") || modelLower.includes("jacket") || modelLower.includes("chaqueta")) {
+    productTypeKeywords.push("jk", "jacket", "chaqueta", "jkt");
+  }
+  if (modelLower.includes("boot") || modelLower.includes("bota") || modelLower.includes("shoe")) {
+    productTypeKeywords.push("boot", "bota", "shoe", "zapato");
+  }
+
   try {
     const response = await fetch("https://google.serper.dev/images", {
       method: "POST",
@@ -61,24 +76,40 @@ async function searchProductImages(brand: string, model: string, variant?: strin
         "X-API-KEY": serperKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ q: query, gl: "es", hl: "es", num: 5 }),
+      body: JSON.stringify({ q: query, gl: "es", hl: "es", num: 10 }), // Pedir más para filtrar
     });
 
     if (response.ok) {
       const data = await response.json();
-      const images = (data.images || [])
-        .filter((img: { imageUrl: string }) => {
+      let images = (data.images || [])
+        .filter((img: { imageUrl: string; title?: string }) => {
           const url = img.imageUrl.toLowerCase();
           return !url.includes("icon") && !url.includes("logo") && !url.includes("favicon") &&
                  (url.endsWith(".jpg") || url.endsWith(".jpeg") || url.endsWith(".png") || url.endsWith(".webp") ||
                   url.includes(".jpg") || url.includes(".jpeg") || url.includes(".png") || url.includes(".webp"));
-        })
+        });
+
+      // Si tenemos palabras clave del tipo de producto, priorizar imágenes que las contengan
+      if (productTypeKeywords.length > 0) {
+        const matchingImages = images.filter((img: { title?: string }) => {
+          const title = (img.title || "").toLowerCase();
+          return productTypeKeywords.some(kw => title.includes(kw));
+        });
+
+        // Si encontramos imágenes que coinciden, usarlas; si no, usar todas
+        if (matchingImages.length > 0) {
+          console.log(`🎯 Filtradas ${matchingImages.length} imágenes por tipo: ${productTypeKeywords.join(", ")}`);
+          images = matchingImages;
+        }
+      }
+
+      const finalImages = images
         .slice(0, 3)
         .map((img: { imageUrl: string }) => img.imageUrl);
 
-      if (images.length > 0) {
-        console.log(`✅ Encontradas ${images.length} imágenes`);
-        return images;
+      if (finalImages.length > 0) {
+        console.log(`✅ Encontradas ${finalImages.length} imágenes`);
+        return finalImages;
       }
     }
   } catch (error) {
