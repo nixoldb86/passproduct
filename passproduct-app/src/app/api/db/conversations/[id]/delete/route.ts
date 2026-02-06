@@ -18,9 +18,17 @@ export async function POST(
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId },
-    });
+    // OPTIMIZACIÓN: Queries en paralelo
+    const [user, conversation] = await Promise.all([
+      prisma.user.findUnique({
+        where: { clerkId },
+        select: { id: true }, // Solo necesitamos el id
+      }),
+      prisma.conversation.findUnique({
+        where: { id: conversationId },
+        select: { buyerId: true, sellerId: true }, // Solo lo necesario
+      }),
+    ]);
 
     if (!user) {
       return NextResponse.json(
@@ -28,11 +36,6 @@ export async function POST(
         { status: 404 }
       );
     }
-
-    // Verificar que la conversación existe
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-    });
 
     if (!conversation) {
       return NextResponse.json(
@@ -55,7 +58,7 @@ export async function POST(
     // Marcar como borrada para este usuario
     await prisma.conversation.update({
       where: { id: conversationId },
-      data: isBuyer 
+      data: isBuyer
         ? { deletedByBuyer: true }
         : { deletedBySeller: true },
     });

@@ -8,9 +8,331 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ==========================================
-// ENUMS
-// ==========================================
+model User {
+  id                      String                 @id @default(cuid())
+  clerkId                 String                 @unique
+  email                   String                 @unique
+  firstName               String?
+  lastName                String?
+  avatarUrl               String?
+  country                 String                 @default("ES")
+  language                String                 @default("es")
+  lastSeen                DateTime               @default(now())
+  showLastSeen            Boolean                @default(true)
+  showReadReceipts        Boolean                @default(true)
+  phone                   String?
+  phoneVerified           Boolean                @default(false)
+  phoneVerificationCode   String?
+  phoneVerificationExpiry DateTime?
+  isIdentityVerified      Boolean                @default(false)
+  identityVerifiedAt      DateTime?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  buyerConversations      Conversation[]         @relation("BuyerConversations")
+  sellerConversations     Conversation[]         @relation("SellerConversations")
+  disputes                Dispute[]
+  identityVerifications   IdentityVerification[]
+  listings                Listing[]
+  messages                Message[]
+  buyerOrders             Order[]                @relation("BuyerOrders")
+  sellerOrders            Order[]                @relation("SellerOrders")
+  products                Product[]
+
+  @@index([clerkId])
+  @@index([email])
+}
+
+model IdentityVerification {
+  id                 String                     @id @default(cuid())
+  userId             String
+  documentType       String
+  documentNumberHash String
+  documentCountry    String                     @default("ES")
+  firstNameExtracted String?
+  lastNameExtracted  String?
+  dateOfBirth        DateTime?
+  expirationDate     DateTime?
+  status             IdentityVerificationStatus @default(PENDING)
+  faceMatchScore     Float?
+  livenessScore      Float?
+  ocrConfidence      Float?
+  rejectionReason    String?
+  ipAddress          String?
+  userAgent          String?
+  startedAt          DateTime                   @default(now())
+  completedAt        DateTime?
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  user               User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([documentNumberHash])
+  @@index([status])
+}
+
+model Category {
+  id              String     @id @default(cuid())
+  name            String
+  slug            String     @unique
+  icon            String?
+  parentId        String?
+  attributeSchema Json?
+  minPhotos       Int        @default(2)
+  requiresTicket  Boolean    @default(false)
+  requiresSerial  Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  parent          Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children        Category[] @relation("CategoryChildren")
+  listings        Listing[]
+  products        Product[]
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+model Product {
+  id                      String           @id @default(cuid())
+  userId                  String
+  categoryId              String
+  brand                   String
+  model                   String
+  variant                 String?
+  condition               ProductCondition
+  purchaseDate            DateTime?
+  purchasePrice           Decimal?         @db.Decimal(10, 2)
+  purchaseStore           String?
+  proofOfPurchaseUrl      String?
+  warrantyEndDate         DateTime?
+  imeiHash                String?
+  imeiLast4               String?
+  serialHash              String?
+  serialLast4             String?
+  photos                  String[]
+  accessories             Json?
+  attributes              Json?
+  estimatedValue          Decimal?         @db.Decimal(10, 2)
+  estimatedValueUpdatedAt DateTime?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  listings                Listing[]
+  category                Category         @relation(fields: [categoryId], references: [id])
+  user                    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([brand, model])
+}
+
+model Listing {
+  id                     String            @id @default(cuid())
+  productId              String?
+  sellerId               String
+  categoryId             String
+  title                  String
+  description            String
+  price                  Decimal           @db.Decimal(10, 2)
+  location               String?
+  latitude               Decimal?          @db.Decimal(10, 8)
+  longitude              Decimal?          @db.Decimal(11, 8)
+  shippingEnabled        Boolean           @default(false)
+  shippingCost           Decimal?          @db.Decimal(10, 2)
+  verificationLevel      VerificationLevel @default(LEVEL_0)
+  hasVerifiedPurchase    Boolean           @default(false)
+  hasValidWarranty       Boolean           @default(false)
+  hasVerifiedAccessories Boolean           @default(false)
+  hasVerifiedIdentifier  Boolean           @default(false)
+  status                 ListingStatus     @default(DRAFT)
+  photos                 String[]
+  isBoosted              Boolean           @default(false)
+  boostedUntil           DateTime?
+  viewCount              Int               @default(0)
+  favoriteCount          Int               @default(0)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  publishedAt            DateTime?
+  soldAt                 DateTime?
+  conversations          Conversation[]
+  category               Category          @relation(fields: [categoryId], references: [id])
+  product                Product?          @relation(fields: [productId], references: [id])
+  seller                 User              @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  orders                 Order[]
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([price])
+  @@index([location])
+  @@index([createdAt])
+  @@index([productId]) // Optimiza búsquedas por producto
+}
+
+model Conversation {
+  id              String    @id @default(cuid())
+  listingId       String
+  buyerId         String
+  sellerId        String
+  currentOffer    Decimal?  @db.Decimal(10, 2)
+  offerStatus     String?
+  deletedByBuyer  Boolean   @default(false)
+  deletedBySeller Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  buyer           User      @relation("BuyerConversations", fields: [buyerId], references: [id], onDelete: Cascade)
+  listing         Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  seller          User      @relation("SellerConversations", fields: [sellerId], references: [id], onDelete: Cascade)
+  messages        Message[]
+
+  @@unique([listingId, buyerId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([buyerId, deletedByBuyer])  // Optimiza filtrado de conversaciones del comprador
+  @@index([sellerId, deletedBySeller]) // Optimiza filtrado de conversaciones del vendedor
+}
+
+model Message {
+  id              String       @id @default(cuid())
+  conversationId  String
+  senderId        String
+  text            String
+  isOffer         Boolean      @default(false)
+  offerAmount     Decimal?     @db.Decimal(10, 2)
+  isSystemMessage Boolean      @default(false)
+  readAt          DateTime?
+  createdAt       DateTime     @default(now())
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([conversationId, senderId, readAt]) // Optimiza marcado de mensajes como leídos
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  listingId             String
+  buyerId               String
+  sellerId              String
+  amount                Decimal     @db.Decimal(10, 2)
+  shippingAmount        Decimal     @default(0) @db.Decimal(10, 2)
+  feeMarketplace        Decimal     @db.Decimal(10, 2)
+  feeProtection         Decimal     @db.Decimal(10, 2)
+  total                 Decimal     @db.Decimal(10, 2)
+  sellerPayout          Decimal     @db.Decimal(10, 2)
+  status                OrderStatus @default(CREATED)
+  stripePaymentIntentId String?     @unique
+  stripePaymentStatus   String?
+  protectionCode        String?
+  protectionCodeUsed    Boolean     @default(false)
+  codeVerifiedAt        DateTime?
+  shippingAddress       Json?
+  trackingNumber        String?
+  carrier               String?
+  isLocalPickup         Boolean     @default(false)
+  unboxingVideoUrl      String?
+  paidAt                DateTime?
+  escrowAt              DateTime?
+  shippedAt             DateTime?
+  deliveredAt           DateTime?
+  acceptedAt            DateTime?
+  releasedAt            DateTime?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  disputes              Dispute[]
+  buyer                 User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  listing               Listing     @relation(fields: [listingId], references: [id])
+  seller                User        @relation("SellerOrders", fields: [sellerId], references: [id])
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([listingId])
+  @@index([status])
+  @@index([stripePaymentIntentId])
+}
+
+model Dispute {
+  id           String          @id @default(cuid())
+  orderId      String
+  openedById   String
+  reason       DisputeReason
+  description  String
+  evidenceUrls String[]
+  status       DisputeStatus   @default(OPENED)
+  outcome      DisputeOutcome?
+  adminNotes   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  openedBy     User            @relation(fields: [openedById], references: [id])
+  order        Order           @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([openedById])
+  @@index([status])
+}
+
+model PriceHistory {
+  id         String           @id @default(cuid())
+  brand      String
+  model      String
+  variant    String?
+  condition  ProductCondition
+  minPrice   Decimal          @db.Decimal(10, 2)
+  avgPrice   Decimal          @db.Decimal(10, 2)
+  maxPrice   Decimal          @db.Decimal(10, 2)
+  source     String?
+  recordedAt DateTime         @default(now())
+
+  @@index([brand, model, variant])
+  @@index([recordedAt])
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String?
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model Notification {
+  id             String           @id @default(cuid())
+  userId         String
+  type           NotificationType
+  title          String
+  message        String
+  fromUserId     String?
+  listingId      String?
+  conversationId String?
+  orderId        String?
+  imageUrl       String?
+  actionUrl      String?
+  isRead         Boolean          @default(false)
+  readAt         DateTime?
+  createdAt      DateTime         @default(now())
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
 
 enum ProductCondition {
   NEW
@@ -29,9 +351,9 @@ enum ListingStatus {
 }
 
 enum VerificationLevel {
-  LEVEL_0  // photos + condition
-  LEVEL_1  // + ticket/proof of purchase
-  LEVEL_2  // + identifier (IMEI/serial) + extra checks
+  LEVEL_0
+  LEVEL_1
+  LEVEL_2
 }
 
 enum OrderStatus {
@@ -73,441 +395,6 @@ enum IdentityVerificationStatus {
   EXPIRED
 }
 
-// ==========================================
-// CORE ENTITIES
-// ==========================================
-
-model User {
-  id              String    @id @default(cuid())
-  clerkId         String    @unique
-  email           String    @unique
-  firstName       String?
-  lastName        String?
-  avatarUrl       String?
-  country         String    @default("ES")
-  language        String    @default("es")
-  
-  // Activity & Presence
-  lastSeen        DateTime  @default(now())
-  
-  // Privacy settings
-  showLastSeen    Boolean   @default(true)  // Mostrar última conexión a otros
-  showReadReceipts Boolean  @default(true)  // Mostrar checks de lectura a otros
-  
-  // Phone verification
-  phone                   String?
-  phoneVerified           Boolean   @default(false)
-  phoneVerificationCode   String?
-  phoneVerificationExpiry DateTime?
-  
-  // Identity verification
-  isIdentityVerified    Boolean   @default(false)
-  identityVerifiedAt    DateTime?
-  
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  // Relations
-  products        Product[]
-  listings        Listing[]
-  buyerOrders     Order[]   @relation("BuyerOrders")
-  sellerOrders    Order[]   @relation("SellerOrders")
-  buyerConversations   Conversation[] @relation("BuyerConversations")
-  sellerConversations  Conversation[] @relation("SellerConversations")
-  messages        Message[]
-  disputes        Dispute[]
-  identityVerifications IdentityVerification[]
-
-  @@index([clerkId])
-  @@index([email])
-}
-
-model IdentityVerification {
-  id                    String    @id @default(cuid())
-  
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Document info (hashed for privacy)
-  documentType          String    // "DNI", "NIE", "PASSPORT"
-  documentNumberHash    String    // Hashed document number to detect duplicates
-  documentCountry       String    @default("ES")
-  
-  // Extracted data (encrypted or hashed)
-  firstNameExtracted    String?
-  lastNameExtracted     String?
-  dateOfBirth           DateTime?
-  expirationDate        DateTime?
-  
-  // Verification result
-  status                IdentityVerificationStatus @default(PENDING)
-  faceMatchScore        Float?    // 0.0 - 1.0 similarity score
-  livenessScore         Float?    // 0.0 - 1.0 liveness confidence
-  ocrConfidence         Float?    // 0.0 - 1.0 OCR confidence
-  
-  // Rejection reason if failed
-  rejectionReason       String?
-  
-  // Metadata
-  ipAddress             String?
-  userAgent             String?
-  
-  // Timestamps
-  startedAt             DateTime  @default(now())
-  completedAt           DateTime?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  @@index([userId])
-  @@index([documentNumberHash])
-  @@index([status])
-}
-
-model Category {
-  id              String    @id @default(cuid())
-  name            String
-  slug            String    @unique
-  icon            String?
-  parentId        String?
-  parent          Category? @relation("CategoryChildren", fields: [parentId], references: [id])
-  children        Category[] @relation("CategoryChildren")
-  
-  // Dynamic attributes schema (JSON)
-  attributeSchema Json?     // Defines required/optional attributes per category
-  
-  // Verification policies
-  minPhotos       Int       @default(2)
-  requiresTicket  Boolean   @default(false)
-  requiresSerial  Boolean   @default(false)
-  
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  products        Product[]
-  listings        Listing[]
-
-  @@index([slug])
-  @@index([parentId])
-}
-
-model Product {
-  id                    String            @id @default(cuid())
-  userId                String
-  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  categoryId            String
-  category              Category          @relation(fields: [categoryId], references: [id])
-  
-  // Basic info
-  brand                 String
-  model                 String
-  variant               String?           // e.g., "256GB Space Gray"
-  condition             ProductCondition
-  
-  // Purchase info (optional)
-  purchaseDate          DateTime?
-  purchasePrice         Decimal?          @db.Decimal(10, 2)
-  purchaseStore         String?
-  
-  // Proof & warranty
-  proofOfPurchaseUrl    String?           // Ticket/invoice image
-  warrantyEndDate       DateTime?
-  
-  // Identifiers (NEVER store in plain text)
-  imeiHash              String?           // Hashed IMEI
-  imeiLast4             String?           // Last 4 digits for display
-  serialHash            String?           // Hashed serial
-  serialLast4           String?           // Last 4 digits for display
-  
-  // Media
-  photos                String[]          // Array of URLs
-  
-  // Accessories & extras (JSON)
-  accessories           Json?             // { "charger": true, "box": true, "earphones": false }
-  
-  // Dynamic attributes (JSON) - varies by category
-  attributes            Json?             // e.g., { "storage": "256GB", "color": "Black" }
-  
-  // Value estimation (cached)
-  estimatedValue        Decimal?          @db.Decimal(10, 2)
-  estimatedValueUpdatedAt DateTime?
-  
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
-
-  // Relations
-  listings              Listing[]
-
-  @@index([userId])
-  @@index([categoryId])
-  @@index([brand, model])
-}
-
-model Listing {
-  id                    String            @id @default(cuid())
-  
-  // Can be linked to a wallet product (or standalone for future)
-  productId             String?
-  product               Product?          @relation(fields: [productId], references: [id])
-  
-  sellerId              String
-  seller                User              @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  
-  categoryId            String
-  category              Category          @relation(fields: [categoryId], references: [id])
-  
-  // Listing info
-  title                 String
-  description           String            @db.Text
-  price                 Decimal           @db.Decimal(10, 2)
-  
-  // Location & shipping
-  location              String?           // City/region
-  latitude              Decimal?          @db.Decimal(10, 8)
-  longitude             Decimal?          @db.Decimal(11, 8)
-  shippingEnabled       Boolean           @default(false)
-  shippingCost          Decimal?          @db.Decimal(10, 2)
-  
-  // Verification
-  verificationLevel     VerificationLevel @default(LEVEL_0)
-  
-  // Badges (computed but cached for performance)
-  hasVerifiedPurchase   Boolean           @default(false)
-  hasValidWarranty      Boolean           @default(false)
-  hasVerifiedAccessories Boolean          @default(false)
-  hasVerifiedIdentifier Boolean           @default(false)
-  
-  // Status
-  status                ListingStatus     @default(DRAFT)
-  
-  // Media (can be different from product photos)
-  photos                String[]
-  
-  // Boost/promotion
-  isBoosted             Boolean           @default(false)
-  boostedUntil          DateTime?
-  
-  // Stats
-  viewCount             Int               @default(0)
-  favoriteCount         Int               @default(0)
-  
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
-  publishedAt           DateTime?
-  soldAt                DateTime?
-
-  // Relations
-  conversations         Conversation[]
-  orders                Order[]
-
-  @@index([sellerId])
-  @@index([categoryId])
-  @@index([status])
-  @@index([price])
-  @@index([location])
-  @@index([createdAt])
-}
-
-model Conversation {
-  id              String    @id @default(cuid())
-  
-  listingId       String
-  listing         Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  
-  buyerId         String
-  buyer           User      @relation("BuyerConversations", fields: [buyerId], references: [id], onDelete: Cascade)
-  
-  sellerId        String
-  seller          User      @relation("SellerConversations", fields: [sellerId], references: [id], onDelete: Cascade)
-  
-  // Offer tracking
-  currentOffer    Decimal?  @db.Decimal(10, 2)
-  offerStatus     String?   // "pending", "accepted", "rejected"
-  
-  // Soft delete per user (each user can delete their view of the conversation)
-  deletedByBuyer  Boolean   @default(false)
-  deletedBySeller Boolean   @default(false)
-  
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  messages        Message[]
-
-  @@unique([listingId, buyerId])
-  @@index([buyerId])
-  @@index([sellerId])
-}
-
-model Message {
-  id              String    @id @default(cuid())
-  
-  conversationId  String
-  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  
-  senderId        String
-  sender          User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  
-  text            String    @db.Text
-  
-  // Special message types
-  isOffer         Boolean   @default(false)
-  offerAmount     Decimal?  @db.Decimal(10, 2)
-  
-  isSystemMessage Boolean   @default(false)
-  
-  readAt          DateTime?
-  
-  createdAt       DateTime  @default(now())
-
-  @@index([conversationId])
-  @@index([senderId])
-  @@index([createdAt])
-}
-
-model Order {
-  id              String      @id @default(cuid())
-  
-  listingId       String
-  listing         Listing     @relation(fields: [listingId], references: [id])
-  
-  buyerId         String
-  buyer           User        @relation("BuyerOrders", fields: [buyerId], references: [id])
-  
-  sellerId        String
-  seller          User        @relation("SellerOrders", fields: [sellerId], references: [id])
-  
-  // Pricing
-  amount          Decimal     @db.Decimal(10, 2)  // Item price
-  shippingAmount  Decimal     @db.Decimal(10, 2)  @default(0)
-  feeMarketplace  Decimal     @db.Decimal(10, 2)  // 6-8%
-  feeProtection   Decimal     @db.Decimal(10, 2)  // 1-2.5% with cap
-  total           Decimal     @db.Decimal(10, 2)  // Total buyer pays
-  
-  // Seller receives (after fees)
-  sellerPayout    Decimal     @db.Decimal(10, 2)
-  
-  // Status
-  status          OrderStatus @default(CREATED)
-  
-  // Stripe Payment
-  stripePaymentIntentId   String?   @unique
-  stripePaymentStatus     String?   // "requires_payment_method", "succeeded", etc.
-  
-  // Protection Code System (anti-fraud)
-  protectionCode          String?   // Generated unique code, e.g. "PP-A7X9K2"
-  protectionCodeUsed      Boolean   @default(false)
-  codeVerifiedAt          DateTime?
-  
-  // Shipping address (JSON: street, city, postalCode, country, phone, name)
-  shippingAddress         Json?
-  
-  // Shipping/handover info
-  trackingNumber  String?
-  carrier         String?     // SEUR, MRW, Correos, GLS, UPS, DHL, etc.
-  isLocalPickup   Boolean     @default(false)
-  
-  // Video unboxing (proof for disputes)
-  unboxingVideoUrl        String?
-  
-  // Timestamps for timeline
-  paidAt          DateTime?
-  escrowAt        DateTime?   // When payment was put in escrow
-  shippedAt       DateTime?
-  deliveredAt     DateTime?
-  acceptedAt      DateTime?
-  releasedAt      DateTime?
-  
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  // Relations
-  disputes        Dispute[]
-
-  @@index([buyerId])
-  @@index([sellerId])
-  @@index([listingId])
-  @@index([status])
-  @@index([stripePaymentIntentId])
-}
-
-model Dispute {
-  id              String          @id @default(cuid())
-  
-  orderId         String
-  order           Order           @relation(fields: [orderId], references: [id])
-  
-  openedById      String
-  openedBy        User            @relation(fields: [openedById], references: [id])
-  
-  reason          DisputeReason
-  description     String          @db.Text
-  evidenceUrls    String[]
-  
-  status          DisputeStatus   @default(OPENED)
-  outcome         DisputeOutcome?
-  
-  // Admin notes (internal)
-  adminNotes      String?         @db.Text
-  resolvedAt      DateTime?
-  
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-
-  @@index([orderId])
-  @@index([openedById])
-  @@index([status])
-}
-
-// ==========================================
-// PRICING & VALUATION
-// ==========================================
-
-model PriceHistory {
-  id              String    @id @default(cuid())
-  
-  brand           String
-  model           String
-  variant         String?
-  condition       ProductCondition
-  
-  // Price data
-  minPrice        Decimal   @db.Decimal(10, 2)
-  avgPrice        Decimal   @db.Decimal(10, 2)
-  maxPrice        Decimal   @db.Decimal(10, 2)
-  
-  // Source & date
-  source          String?   // e.g., "internal", "scraper", etc.
-  recordedAt      DateTime  @default(now())
-
-  @@index([brand, model, variant])
-  @@index([recordedAt])
-}
-
-// ==========================================
-// ALERTS & NOTIFICATIONS
-// ==========================================
-
-model Alert {
-  id              String    @id @default(cuid())
-  userId          String
-  productId       String?
-  
-  type            String    // "price_drop", "sell_now", "warranty_expiring"
-  title           String
-  message         String
-  
-  isRead          Boolean   @default(false)
-  
-  createdAt       DateTime  @default(now())
-
-  @@index([userId])
-  @@index([isRead])
-}
-
-// ==========================================
-// NOTIFICATIONS (Real-time)
-// ==========================================
-
 enum NotificationType {
   NEW_LISTING
   PRICE_DROP
@@ -515,51 +402,4 @@ enum NotificationType {
   ORDER_UPDATE
   MESSAGE
   SYSTEM
-}
-
-model Notification {
-  id              String            @id @default(cuid())
-  
-  userId          String            // Usuario que recibe la notificación
-  
-  type            NotificationType
-  title           String
-  message         String
-  
-  // Referencias opcionales
-  fromUserId      String?           // Usuario que originó la acción
-  listingId       String?
-  conversationId  String?
-  orderId         String?
-  
-  // Metadatos
-  imageUrl        String?           // Imagen a mostrar (avatar, producto, etc)
-  actionUrl       String?           // URL al hacer clic
-  
-  // Estado
-  isRead          Boolean           @default(false)
-  readAt          DateTime?
-  
-  createdAt       DateTime          @default(now())
-
-  @@index([userId])
-  @@index([userId, isRead])
-  @@index([createdAt])
-}
-
-// ==========================================
-// FOLLOWS
-// ==========================================
-
-model Follow {
-  id              String    @id @default(cuid())
-  
-  followerId      String    // Usuario que sigue
-  followingId     String    // Usuario seguido
-  
-  createdAt       DateTime  @default(now())
-
-  @@unique([followerId, followingId])
-  @@index([followerId])
-  @@index([followingId])
 }

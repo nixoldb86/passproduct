@@ -27,9 +27,24 @@ export async function POST(
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { clerkId },
-    });
+    // OPTIMIZACIÓN: Queries en paralelo en lugar de secuenciales
+    const [user, conversation] = await Promise.all([
+      prisma.user.findUnique({
+        where: { clerkId },
+      }),
+      prisma.conversation.findUnique({
+        where: { id: conversationId },
+        include: {
+          listing: {
+            select: {
+              id: true,
+              title: true,
+              photos: true,
+            },
+          },
+        },
+      }),
+    ]);
 
     if (!user) {
       return NextResponse.json(
@@ -37,20 +52,6 @@ export async function POST(
         { status: 404 }
       );
     }
-
-    // Verificar que la conversación existe y el usuario es participante
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            photos: true,
-          },
-        },
-      },
-    });
 
     if (!conversation) {
       return NextResponse.json(
@@ -71,59 +72,48 @@ export async function POST(
       ? conversation.sellerId 
       : conversation.buyerId;
 
-    // Crear mensaje
-    const message = await prisma.message.create({
-      data: {
-        conversationId,
-        senderId: user.id,
-        text: text || (isOffer ? `Oferta: ${offerAmount}€` : ""),
-        isOffer: isOffer || false,
-        offerAmount: isOffer && offerAmount ? offerAmount : null,
-      },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    });
-
-    // Si es una oferta, actualizar la conversación
-    if (isOffer && offerAmount) {
-      await prisma.conversation.update({
-        where: { id: conversationId },
-        data: {
-          currentOffer: offerAmount,
-          offerStatus: "pending",
-          updatedAt: new Date(),
-        },
-      });
-    } else {
-      // Solo actualizar updatedAt
-      await prisma.conversation.update({
-        where: { id: conversationId },
-        data: { updatedAt: new Date() },
-      });
-    }
-
-    // Crear notificación para el receptor
+    // OPTIMIZACIÓN: Transacción para crear mensaje + actualizar conversación
     const senderName = user.firstName || "Alguien";
     const productTitle = conversation.listing?.title || "un producto";
     const truncatedMessage = text && text.length > 50 ? text.substring(0, 50) + "..." : text;
-    
-    try {
-      await prisma.notification.create({
+
+    const [message] = await prisma.$transaction([
+      // Crear mensaje
+      prisma.message.create({
+        data: {
+          conversationId,
+          senderId: user.id,
+          text: text || (isOffer ? `Oferta: ${offerAmount}€` : ""),
+          isOffer: isOffer || false,
+          offerAmount: isOffer && offerAmount ? offerAmount : null,
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      }),
+      // Actualizar conversación
+      prisma.conversation.update({
+        where: { id: conversationId },
+        data: isOffer && offerAmount
+          ? { currentOffer: offerAmount, offerStatus: "pending", updatedAt: new Date() }
+          : { updatedAt: new Date() },
+      }),
+      // Crear notificación (no crítico si falla)
+      prisma.notification.create({
         data: {
           userId: recipientId,
           type: "MESSAGE",
-          title: isOffer 
+          title: isOffer
             ? `${senderName} te ha hecho una oferta`
             : `${senderName} te ha escrito`,
-          message: isOffer 
+          message: isOffer
             ? `Oferta de ${offerAmount}€ por ${productTitle}`
             : truncatedMessage || "Nuevo mensaje",
           fromUserId: user.id,
@@ -132,11 +122,8 @@ export async function POST(
           imageUrl: user.avatarUrl || conversation.listing?.photos?.[0],
           actionUrl: `/chat?conversation=${conversationId}`,
         },
-      });
-    } catch (notifError) {
-      console.error("Error creating notification:", notifError);
-      // No fallar la petición por error en notificación
-    }
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,

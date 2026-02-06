@@ -22,8 +22,7 @@ export async function GET() {
       return NextResponse.json({ success: true, conversations: [] });
     }
 
-    // Buscar conversaciones donde el usuario es comprador o vendedor
-    // y que no hayan sido borradas por este usuario
+    // OPTIMIZACIÓN: Buscar conversaciones con campos mínimos necesarios
     const conversations = await prisma.conversation.findMany({
       where: {
         OR: [
@@ -31,10 +30,21 @@ export async function GET() {
           { sellerId: user.id, deletedBySeller: false },
         ],
       },
+      take: 50, // Limitar a 50 conversaciones más recientes
       include: {
         listing: {
-          include: {
-            product: true,
+          select: {
+            id: true,
+            title: true,
+            price: true,
+            photos: true,
+            // Solo campos esenciales del producto
+            product: {
+              select: {
+                brand: true,
+                model: true,
+              },
+            },
           },
         },
         buyer: {
@@ -56,6 +66,14 @@ export async function GET() {
         messages: {
           orderBy: { createdAt: "desc" },
           take: 1,
+          select: {
+            id: true,
+            text: true,
+            senderId: true,
+            createdAt: true,
+            isOffer: true,
+            offerAmount: true,
+          },
         },
       },
       orderBy: { updatedAt: "desc" },
@@ -123,10 +141,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar usuario actual
-    const user = await prisma.user.findUnique({
-      where: { clerkId },
-    });
+    // OPTIMIZACIÓN: Queries en paralelo
+    const [user, listing] = await Promise.all([
+      prisma.user.findUnique({
+        where: { clerkId },
+        select: { id: true },
+      }),
+      prisma.listing.findUnique({
+        where: { id: listingId },
+        select: { id: true, sellerId: true },
+      }),
+    ]);
 
     if (!user) {
       return NextResponse.json(
@@ -134,12 +159,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    // Buscar el listing
-    const listing = await prisma.listing.findUnique({
-      where: { id: listingId },
-      include: { seller: true },
-    });
 
     if (!listing) {
       return NextResponse.json(

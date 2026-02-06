@@ -602,40 +602,88 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
   
   sendMessage: async (conversationId, text, isOffer = false, offerAmount) => {
+    // OPTIMISTIC UPDATE: Mostrar mensaje inmediatamente
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage = {
+      id: tempId,
+      conversationId,
+      senderId: "current-user", // Se actualizará con el real
+      text: text || (isOffer ? `Oferta: ${offerAmount}€` : ""),
+      isOffer,
+      offerAmount: offerAmount || null,
+      isSystemMessage: false,
+      readAt: null,
+      createdAt: new Date(),
+      isOwn: true,
+      isPending: true, // Flag para indicar que está enviando
+    };
+
+    // Añadir mensaje optimista a la UI
+    set((state) => ({
+      activeConversation: state.activeConversation?.id === conversationId
+        ? {
+            ...state.activeConversation,
+            messages: [...(state.activeConversation.messages || []), optimisticMessage],
+          }
+        : state.activeConversation,
+    }));
+
     try {
       const response = await fetch(`/api/db/conversations/${conversationId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, isOffer, offerAmount }),
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success && data.message) {
-        // Actualizar estado local - añadir mensaje al chat activo
-    set((state) => ({
-      conversations: state.conversations.map((conv) =>
-        conv.id === conversationId
-              ? { 
-                  ...conv, 
+        // Reemplazar mensaje optimista con el real
+        set((state) => ({
+          conversations: state.conversations.map((conv) =>
+            conv.id === conversationId
+              ? {
+                  ...conv,
                   lastMessage: data.message,
                   updatedAt: new Date(),
                   ...(isOffer && { currentOffer: offerAmount, offerStatus: "pending" }),
                 }
-          : conv
-      ),
-      activeConversation:
-        state.activeConversation?.id === conversationId
-          ? {
-              ...state.activeConversation,
-                  messages: [...(state.activeConversation.messages || []), data.message],
-            }
-          : state.activeConversation,
-    }));
-        
-        // Las notificaciones de mensajes se crean en el servidor (ver API de mensajes)
+              : conv
+          ),
+          activeConversation: state.activeConversation?.id === conversationId
+            ? {
+                ...state.activeConversation,
+                messages: state.activeConversation.messages.map((m) =>
+                  m.id === tempId ? { ...data.message, isOwn: true } : m
+                ),
+              }
+            : state.activeConversation,
+        }));
+      } else {
+        // Marcar mensaje como fallido
+        set((state) => ({
+          activeConversation: state.activeConversation?.id === conversationId
+            ? {
+                ...state.activeConversation,
+                messages: state.activeConversation.messages.map((m) =>
+                  m.id === tempId ? { ...m, isFailed: true, isPending: false } : m
+                ),
+              }
+            : state.activeConversation,
+        }));
       }
     } catch (error) {
+      // Marcar mensaje como fallido
+      set((state) => ({
+        activeConversation: state.activeConversation?.id === conversationId
+          ? {
+              ...state.activeConversation,
+              messages: state.activeConversation.messages.map((m) =>
+                m.id === tempId ? { ...m, isFailed: true, isPending: false } : m
+              ),
+            }
+          : state.activeConversation,
+      }));
       console.error("Error sending message:", error);
       throw error;
     }
@@ -733,24 +781,32 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
   
   deleteConversation: async (conversationId) => {
+    // OPTIMISTIC UPDATE: Actualizar UI inmediatamente
+    const previousConversations = get().conversations;
+    const previousActive = get().activeConversation;
+
+    set((state) => ({
+      conversations: state.conversations.filter((c) => c.id !== conversationId),
+      activeConversation: state.activeConversation?.id === conversationId
+        ? null
+        : state.activeConversation,
+    }));
+
     try {
       const response = await fetch(`/api/db/conversations/${conversationId}/delete`, {
         method: "POST",
       });
       const data = await response.json();
-      
-      if (data.success) {
-        // Eliminar de la lista local
-        set((state) => ({
-          conversations: state.conversations.filter((c) => c.id !== conversationId),
-          activeConversation: state.activeConversation?.id === conversationId 
-            ? null 
-            : state.activeConversation,
-        }));
-        return true;
+
+      if (!data.success) {
+        // Revertir si falla
+        set({ conversations: previousConversations, activeConversation: previousActive });
+        return false;
       }
-      return false;
+      return true;
     } catch (error) {
+      // Revertir en caso de error
+      set({ conversations: previousConversations, activeConversation: previousActive });
       console.error("Error deleting conversation:", error);
       return false;
     }

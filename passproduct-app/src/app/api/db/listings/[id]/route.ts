@@ -9,29 +9,45 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const listing = await prisma.listing.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        seller: {
-          select: {
-            id: true,
-            clerkId: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-            email: true,
-            phone: true,
-            phoneVerified: true,
-            isIdentityVerified: true,
-            createdAt: true,
+    // OPTIMIZACIÓN: Fetch listing y actualizar vistas en paralelo
+    const [listing] = await Promise.all([
+      prisma.listing.findUnique({
+        where: { id },
+        include: {
+          category: true,
+          seller: {
+            select: {
+              id: true,
+              clerkId: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+              email: true,
+              phone: true,
+              phoneVerified: true,
+              isIdentityVerified: true,
+              createdAt: true,
+            },
+          },
+          product: {
+            select: { // Solo campos necesarios del producto
+              id: true,
+              brand: true,
+              model: true,
+              variant: true,
+              condition: true,
+              photos: true,
+              accessories: true,
+            },
           },
         },
-        product: {
-          include: { category: true },
-        },
-      },
-    });
+      }),
+      // Incrementar vistas en paralelo (fire and forget)
+      prisma.listing.update({
+        where: { id },
+        data: { viewCount: { increment: 1 } },
+      }).catch(() => {}), // Ignorar errores de actualización de vistas
+    ]);
 
     if (!listing) {
       return NextResponse.json(
@@ -39,12 +55,6 @@ export async function GET(
         { status: 404 }
       );
     }
-
-    // Incrementar contador de vistas
-    await prisma.listing.update({
-      where: { id },
-      data: { viewCount: { increment: 1 } },
-    });
 
     // Transformar para incluir datos del seller en formato SellerProfile
     const transformedListing = {
@@ -99,7 +109,15 @@ export async function GET(
       soldAt: listing.soldAt,
     };
 
-    return NextResponse.json({ success: true, listing: transformedListing });
+    // Respuesta con headers de caché para CDN/navegador
+    return NextResponse.json(
+      { success: true, listing: transformedListing },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching listing:", error);
     return NextResponse.json(
