@@ -52,6 +52,7 @@ function MarketplaceContent() {
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
 
   // Seller profile modal state
   const [selectedSeller, setSelectedSeller] = useState<SellerProfile | null>(null);
@@ -156,10 +157,64 @@ function MarketplaceContent() {
       </div>
 
       {/* Search & Filters Bar */}
-      <div className="flex items-center gap-3">
-        {/* Search */}
-        <form 
-          className="relative flex-1 max-w-xl"
+      <div className="relative flex items-center gap-2 sm:gap-3">
+        {/* Mobile Search - Collapsed (circle button) */}
+        {!isSearchExpanded && (
+          <button
+            type="button"
+            onClick={() => setIsSearchExpanded(true)}
+            className="md:hidden h-10 w-10 flex-shrink-0 rounded-full bg-surface-1 border border-border flex items-center justify-center hover:bg-surface-2 transition-colors"
+            aria-label="Buscar"
+          >
+            <Search className="h-4 w-4 text-foreground-subtle" />
+          </button>
+        )}
+
+        {/* Mobile Search - Expanded (animated overlay) */}
+        <AnimatePresence>
+          {isSearchExpanded && (
+            <motion.form
+              initial={{ width: 40, opacity: 0.5 }}
+              animate={{ width: "100%", opacity: 1 }}
+              exit={{ width: 40, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="md:hidden absolute inset-0 z-10 flex items-center bg-background"
+              onSubmit={(e) => {
+                e.preventDefault();
+                fetchListings({ ...localFilters, search: searchQuery });
+                setIsSearchExpanded(false);
+              }}
+            >
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-subtle" />
+                <input
+                  type="text"
+                  placeholder="Buscar productos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                  className="w-full h-10 pl-10 pr-10 bg-surface-1 border border-border rounded-xl text-sm text-foreground placeholder:text-foreground-subtle focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSearchExpanded(false);
+                    if (!searchQuery) {
+                      fetchListings({ ...localFilters, search: undefined });
+                    }
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-surface-2 rounded-full transition-colors"
+                >
+                  <X className="h-4 w-4 text-foreground-muted" />
+                </button>
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
+
+        {/* Desktop Search - Always visible */}
+        <form
+          className="hidden md:flex relative flex-1 max-w-xl"
           onSubmit={(e) => {
             e.preventDefault();
             fetchListings({ ...localFilters, search: searchQuery });
@@ -188,15 +243,16 @@ function MarketplaceContent() {
         </form>
 
         {/* Filter & Sort & View Mode - Aligned Right */}
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
           <Button
             variant="secondary"
             leftIcon={<SlidersHorizontal className="h-4 w-4" />}
             onClick={() => setShowFilters(!showFilters)}
+            className="!px-2.5 sm:!px-4"
           >
-            Filtros
+            <span className="hidden sm:inline">Filtros</span>
             {activeFilterCount > 0 && (
-              <span className="ml-1.5 h-5 w-5 rounded-full bg-accent text-[10px] text-[#0C0C0E] flex items-center justify-center font-medium">
+              <span className="sm:ml-1.5 h-5 w-5 rounded-full bg-accent text-[10px] text-[#0C0C0E] flex items-center justify-center font-medium">
                 {activeFilterCount}
               </span>
             )}
@@ -208,14 +264,14 @@ function MarketplaceContent() {
             onChange={(e) =>
               handleFilterChange("sortBy", e.target.value as FilterOptions["sortBy"])
             }
-            className="w-44"
+            className="w-28 sm:w-44"
           />
 
           {/* View mode toggle */}
-          <div className="flex items-center gap-1 p-1 bg-surface-1 border border-border rounded-lg">
+          <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-surface-1 border border-border rounded-lg">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
                 viewMode === "grid"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
@@ -226,7 +282,7 @@ function MarketplaceContent() {
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
                 viewMode === "list"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
@@ -237,7 +293,7 @@ function MarketplaceContent() {
             </button>
             <button
               onClick={() => setViewMode("map")}
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
                 viewMode === "map"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
