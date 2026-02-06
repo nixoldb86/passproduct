@@ -73,43 +73,43 @@ export default function WalletPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card padding="md" className="bg-gradient-to-br from-surface-1 to-surface-2">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-accent" />
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <Card padding="sm" className="bg-gradient-to-br from-surface-1 to-surface-2">
+          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 text-center sm:text-left">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
             </div>
-            <div>
-              <p className="text-sm text-foreground-muted">Valor total estimado</p>
-              <p className="text-xl font-semibold text-foreground tabular-nums">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-sm text-foreground-muted leading-tight">Valor total</p>
+              <p className="text-sm sm:text-xl font-semibold text-foreground tabular-nums truncate">
                 {formatPrice(walletValue)}
               </p>
             </div>
           </div>
         </Card>
 
-        <Card padding="md">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-jade/10 flex items-center justify-center">
-              <Package className="h-5 w-5 text-jade" />
+        <Card padding="sm">
+          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 text-center sm:text-left">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-jade/10 flex items-center justify-center flex-shrink-0">
+              <Package className="h-4 w-4 sm:h-5 sm:w-5 text-jade" />
             </div>
-            <div>
-              <p className="text-sm text-foreground-muted">Productos</p>
-              <p className="text-xl font-semibold text-foreground">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-sm text-foreground-muted leading-tight">Productos</p>
+              <p className="text-sm sm:text-xl font-semibold text-foreground">
                 {products.length}
               </p>
             </div>
           </div>
         </Card>
 
-        <Card padding="md">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-info/10 flex items-center justify-center">
-              <SlidersHorizontal className="h-5 w-5 text-info" />
+        <Card padding="sm">
+          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 text-center sm:text-left">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-info/10 flex items-center justify-center flex-shrink-0">
+              <SlidersHorizontal className="h-4 w-4 sm:h-5 sm:w-5 text-info" />
             </div>
-            <div>
-              <p className="text-sm text-foreground-muted">Con garantía activa</p>
-              <p className="text-xl font-semibold text-foreground">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-sm text-foreground-muted leading-tight">Garantía</p>
+              <p className="text-sm sm:text-xl font-semibold text-foreground">
                 {products.filter((p) => p.warrantyEndDate && new Date(p.warrantyEndDate) > new Date()).length}
               </p>
             </div>
