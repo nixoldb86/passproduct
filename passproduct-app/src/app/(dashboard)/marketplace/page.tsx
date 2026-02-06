@@ -429,7 +429,7 @@ function MarketplaceContent() {
       {/* Categories Groups Quick Filter */}
       <div className="space-y-2">
         {/* Grupos principales */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto overflow-y-hidden touch-pan-x pb-2 scrollbar-hide">
           <button
             onClick={() => {
               setExpandedGroup(null);
@@ -479,7 +479,7 @@ function MarketplaceContent() {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="flex gap-2 overflow-x-auto pb-2 pl-4 scrollbar-hide">
+              <div className="flex gap-2 overflow-x-auto overflow-y-hidden touch-pan-x pb-2 pl-4 scrollbar-hide">
                 <button
                   onClick={() => handleFilterChange("categoryId", undefined)}
                   className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
