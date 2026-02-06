@@ -221,6 +221,8 @@ export interface Message {
   readAt?: Date;
   createdAt: Date;
   isOwn?: boolean; // Calculado por la API - true si el mensaje es del usuario actual
+  isPending?: boolean; // Para optimistic updates - mensaje enviándose
+  isFailed?: boolean; // Para optimistic updates - mensaje falló
 }
 
 export interface Order {

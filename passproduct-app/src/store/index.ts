@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Product, Listing, Conversation, Order, Alert, FilterOptions, Notification, Follow, SellerProfile } from "@/types";
+import { Product, Listing, Conversation, Order, Alert, FilterOptions, Notification, Follow, SellerProfile, Message } from "@/types";
 import {
   mockConversations,
   mockOrders,
@@ -604,18 +604,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
   sendMessage: async (conversationId, text, isOffer = false, offerAmount) => {
     // OPTIMISTIC UPDATE: Mostrar mensaje inmediatamente
     const tempId = `temp-${Date.now()}`;
-    const optimisticMessage = {
+    const optimisticMessage: Message = {
       id: tempId,
       conversationId,
       senderId: "current-user", // Se actualizará con el real
       text: text || (isOffer ? `Oferta: ${offerAmount}€` : ""),
       isOffer,
-      offerAmount: offerAmount || null,
+      offerAmount: offerAmount || undefined,
       isSystemMessage: false,
-      readAt: null,
+      readAt: undefined,
       createdAt: new Date(),
       isOwn: true,
-      isPending: true, // Flag para indicar que está enviando
+      isPending: true,
     };
 
     // Añadir mensaje optimista a la UI
