@@ -65,7 +65,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="text-xl font-semibold text-foreground">
-            Pass<span className="text-accent">Product</span>
+            Second<span className="text-accent">Wallet</span>
           </Link>
           
           {/* Desktop menu */}
@@ -475,7 +475,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <Link href="/" className="text-xl font-semibold text-foreground">
-              Pass<span className="text-accent">Product</span>
+              Second<span className="text-accent">Wallet</span>
             </Link>
             <div className="flex items-center gap-6 text-sm text-foreground-muted">
               <Link href="/why-it-works" className="hover:text-foreground transition-colors">

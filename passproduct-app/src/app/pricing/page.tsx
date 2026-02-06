@@ -92,7 +92,7 @@ export default function PricingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="text-xl font-semibold text-foreground">
-            Pass<span className="text-accent">Product</span>
+            Second<span className="text-accent">Wallet</span>
           </Link>
           
           {/* Desktop menu */}
@@ -508,7 +508,7 @@ export default function PricingPage() {
       <footer className="py-8 px-4 border-t border-border">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <Link href="/" className="text-lg font-semibold text-foreground">
-            Pass<span className="text-accent">Product</span>
+            Second<span className="text-accent">Wallet</span>
           </Link>
           <p className="text-sm text-foreground-subtle">
             © 2025 SecondWallet

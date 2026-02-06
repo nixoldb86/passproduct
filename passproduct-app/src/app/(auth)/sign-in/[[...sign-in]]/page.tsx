@@ -15,7 +15,7 @@ export default function SignInPage() {
         {/* Logo */}
         <div className="text-center mb-8 animate-fadeInUp">
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">
-            Pass<span className="text-accent">Product</span>
+            Second<span className="text-accent">Wallet</span>
           </h1>
           <p className="mt-2 text-foreground-muted text-sm">
             Tu wallet de productos premium

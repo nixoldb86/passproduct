@@ -38,7 +38,7 @@ export function Header() {
           
           <Link href="/" className="flex items-center gap-2">
             <span className="text-xl font-semibold text-foreground tracking-tight">
-              Pass<span className="text-accent">Product</span>
+              Second<span className="text-accent">Wallet</span>
             </span>
           </Link>
         </div>
