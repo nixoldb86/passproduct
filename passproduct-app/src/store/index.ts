@@ -390,7 +390,12 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
     try {
       // Construir query params
       const params = new URLSearchParams();
-      if (filters?.categoryId) params.set("category", filters.categoryId);
+      // Soportar múltiples categorías (para filtrar por grupo)
+      if (filters?.categories && filters.categories.length > 0) {
+        params.set("category", filters.categories.join(","));
+      } else if (filters?.categoryId) {
+        params.set("category", filters.categoryId);
+      }
       if (filters?.minPrice) params.set("minPrice", filters.minPrice.toString());
       if (filters?.maxPrice) params.set("maxPrice", filters.maxPrice.toString());
       if (filters?.hasWarranty) params.set("hasWarranty", "true");

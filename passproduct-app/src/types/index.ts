@@ -336,6 +336,7 @@ export interface PriceRecommendation {
 export interface FilterOptions {
   categoryId?: string;
   categoryGroupId?: string;
+  categories?: string[]; // Múltiples slugs para filtrar por grupo
   minPrice?: number;
   maxPrice?: number;
   condition?: ProductCondition[];

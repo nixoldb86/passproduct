@@ -176,13 +176,27 @@ export async function GET(request: NextRequest) {
       where.status = "PUBLISHED";
     }
 
-    // Filtro por categoría
+    // Filtro por categoría (soporta múltiples slugs separados por coma)
     if (categorySlug && categorySlug !== "all") {
-      const category = await prisma.category.findUnique({
-        where: { slug: categorySlug },
-      });
-      if (category) {
-        where.categoryId = category.id;
+      const slugs = categorySlug.split(",").map(s => s.trim()).filter(Boolean);
+
+      if (slugs.length === 1) {
+        // Una sola categoría
+        const category = await prisma.category.findUnique({
+          where: { slug: slugs[0] },
+        });
+        if (category) {
+          where.categoryId = category.id;
+        }
+      } else if (slugs.length > 1) {
+        // Múltiples categorías (para filtrar por grupo)
+        const categories = await prisma.category.findMany({
+          where: { slug: { in: slugs } },
+          select: { id: true },
+        });
+        if (categories.length > 0) {
+          where.categoryId = { in: categories.map(c => c.id) };
+        }
       }
     }
 

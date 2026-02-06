@@ -106,16 +106,28 @@ function MarketplaceContent() {
   // Seleccionar grupo de categorías
   const handleGroupSelect = (groupId: string) => {
     if (expandedGroup === groupId) {
+      // Deseleccionar grupo
       setExpandedGroup(null);
-      handleFilterChange("categoryId", undefined);
+      const newFilters = { ...localFilters };
+      delete newFilters.categoryId;
+      delete newFilters.categoryGroupId;
+      delete newFilters.categories;
+      setLocalFilters(newFilters);
+      fetchListings(newFilters);
     } else {
+      // Seleccionar grupo - obtener slugs de todas sus categorías
       setExpandedGroup(groupId);
-      // Seleccionar todas las categorías del grupo
-      const group = categoryGroups.find((g) => g.id === groupId);
-      if (group) {
-        handleFilterChange("categoryGroupId", groupId);
-        handleFilterChange("categoryId", undefined);
-      }
+      const categoriesInGroup = getCategoriesForGroup(groupId);
+      const categorySlugs = categoriesInGroup.map(cat => cat.slug);
+
+      const newFilters = {
+        ...localFilters,
+        categoryGroupId: groupId,
+        categories: categorySlugs,
+        categoryId: undefined,
+      };
+      setLocalFilters(newFilters);
+      fetchListings(newFilters);
     }
   };
 
@@ -433,11 +445,15 @@ function MarketplaceContent() {
           <button
             onClick={() => {
               setExpandedGroup(null);
-              handleFilterChange("categoryId", undefined);
-              handleFilterChange("categoryGroupId", undefined);
+              const newFilters = { ...localFilters };
+              delete newFilters.categoryId;
+              delete newFilters.categoryGroupId;
+              delete newFilters.categories;
+              setLocalFilters(newFilters);
+              fetchListings(newFilters);
             }}
             className={`flex-shrink-0 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
-              !localFilters.categoryId && !expandedGroup
+              !localFilters.categoryId && !expandedGroup && !localFilters.categories?.length
                 ? "bg-accent text-[#0C0C0E]"
                 : "bg-surface-2 text-foreground-muted hover:bg-surface-1 hover:text-foreground"
             }`}
@@ -477,9 +493,20 @@ function MarketplaceContent() {
             >
               <div className="flex gap-2 overflow-x-auto overflow-y-hidden touch-pan-x pb-2 pl-4 scrollbar-hide">
                 <button
-                  onClick={() => handleFilterChange("categoryId", undefined)}
+                  onClick={() => {
+                    // "Todas" dentro del grupo = usar todas las categorías del grupo
+                    const categoriesInGroup = getCategoriesForGroup(expandedGroup);
+                    const categorySlugs = categoriesInGroup.map(c => c.slug);
+                    const newFilters = {
+                      ...localFilters,
+                      categoryId: undefined,
+                      categories: categorySlugs,
+                    };
+                    setLocalFilters(newFilters);
+                    fetchListings(newFilters);
+                  }}
                   className={`flex-shrink-0 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
-                    !localFilters.categoryId
+                    !localFilters.categoryId && localFilters.categories?.length
                       ? "bg-accent/20 text-accent border border-accent/30"
                       : "bg-surface-2 text-foreground-muted hover:bg-surface-1 hover:text-foreground"
                   }`}
@@ -489,12 +516,31 @@ function MarketplaceContent() {
                 {getCategoriesForGroup(expandedGroup).map((cat) => (
                   <button
                     key={cat.id}
-                    onClick={() =>
-                      handleFilterChange(
-                        "categoryId",
-                        localFilters.categoryId === cat.slug ? undefined : cat.slug
-                      )
-                    }
+                    onClick={() => {
+                      // Seleccionar subcategoría individual
+                      const isSelected = localFilters.categoryId === cat.slug;
+                      if (isSelected) {
+                        // Deseleccionar = volver a todas del grupo
+                        const categoriesInGroup = getCategoriesForGroup(expandedGroup);
+                        const categorySlugs = categoriesInGroup.map(c => c.slug);
+                        const newFilters = {
+                          ...localFilters,
+                          categoryId: undefined,
+                          categories: categorySlugs,
+                        };
+                        setLocalFilters(newFilters);
+                        fetchListings(newFilters);
+                      } else {
+                        // Seleccionar esta categoría específica
+                        const newFilters = {
+                          ...localFilters,
+                          categoryId: cat.slug,
+                          categories: undefined,
+                        };
+                        setLocalFilters(newFilters);
+                        fetchListings(newFilters);
+                      }
+                    }}
                     title={cat.name}
                     className={`group/subcat relative flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                       localFilters.categoryId === cat.slug
