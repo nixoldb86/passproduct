@@ -75,7 +75,7 @@ export default function RootLayout({
           socialButtonsBlockButton:
             "!bg-white hover:!bg-gray-50 !border !border-gray-300 !text-gray-700",
           socialButtonsBlockButtonText: "!text-gray-700 !font-medium",
-          footer: "!hidden",
+          footerPages: "!hidden",
           formFieldLabel: "text-[#A1A1AA]",
           formFieldInput: 
             "bg-[#1F1F24] border-[rgba(255,255,255,0.08)] text-[#FAFAFA]",
