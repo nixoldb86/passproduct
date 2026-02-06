@@ -436,7 +436,7 @@ function MarketplaceContent() {
               handleFilterChange("categoryId", undefined);
               handleFilterChange("categoryGroupId", undefined);
             }}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+            className={`flex-shrink-0 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
               !localFilters.categoryId && !expandedGroup
                 ? "bg-accent text-[#0C0C0E]"
                 : "bg-surface-2 text-foreground-muted hover:bg-surface-1 hover:text-foreground"
@@ -449,7 +449,7 @@ function MarketplaceContent() {
               key={group.id}
               onClick={() => handleGroupSelect(group.id)}
               title={group.name}
-              className={`group/cat relative flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+              className={`group/cat relative flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                 expandedGroup === group.id
                   ? "bg-accent text-[#0C0C0E]"
                   : "bg-surface-2 text-foreground-muted hover:bg-surface-1 hover:text-foreground"
@@ -482,7 +482,7 @@ function MarketplaceContent() {
               <div className="flex gap-2 overflow-x-auto overflow-y-hidden touch-pan-x pb-2 pl-4 scrollbar-hide">
                 <button
                   onClick={() => handleFilterChange("categoryId", undefined)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  className={`flex-shrink-0 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                     !localFilters.categoryId
                       ? "bg-accent/20 text-accent border border-accent/30"
                       : "bg-surface-2 text-foreground-muted hover:bg-surface-1 hover:text-foreground"
@@ -500,7 +500,7 @@ function MarketplaceContent() {
                       )
                     }
                     title={cat.name}
-                    className={`group/subcat relative flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    className={`group/subcat relative flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                       localFilters.categoryId === cat.id
                         ? "bg-accent/20 text-accent border border-accent/30"
                         : "bg-surface-2 text-foreground-muted hover:bg-surface-1 hover:text-foreground"
