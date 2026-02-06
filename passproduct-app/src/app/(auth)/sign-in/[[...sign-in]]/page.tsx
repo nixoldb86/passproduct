@@ -29,8 +29,8 @@ export default function SignInPage() {
                 rootBox: "mx-auto",
                 card: "shadow-lg",
                 socialButtonsBlockButton:
-                  "bg-white hover:bg-gray-50 border border-gray-300 text-gray-700",
-                socialButtonsBlockButtonText: "text-gray-700 font-medium",
+                  "!bg-white hover:!bg-gray-50 !border !border-gray-300 !text-gray-700",
+                socialButtonsBlockButtonText: "!text-gray-700 !font-medium",
               },
             }}
           />
