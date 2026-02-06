@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { esES } from "@clerk/localizations";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
@@ -53,6 +54,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
+      localization={esES}
       appearance={{
         baseTheme: undefined,
         variables: {
@@ -70,8 +72,10 @@ export default function RootLayout({
           card: "bg-[#18181C] border border-[rgba(255,255,255,0.08)]",
           headerTitle: "text-[#FAFAFA]",
           headerSubtitle: "text-[#A1A1AA]",
-          socialButtonsBlockButton: 
-            "bg-[#1F1F24] border border-[rgba(255,255,255,0.08)] text-[#FAFAFA] hover:bg-[#26262C]",
+          socialButtonsBlockButton:
+            "!bg-white hover:!bg-gray-50 !border !border-gray-300 !text-gray-700",
+          socialButtonsBlockButtonText: "!text-gray-700 !font-medium",
+          footer: "!hidden",
           formFieldLabel: "text-[#A1A1AA]",
           formFieldInput: 
             "bg-[#1F1F24] border-[rgba(255,255,255,0.08)] text-[#FAFAFA]",

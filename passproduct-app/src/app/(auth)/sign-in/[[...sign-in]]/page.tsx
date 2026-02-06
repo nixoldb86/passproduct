@@ -1,7 +1,6 @@
 "use client";
 
 import { SignIn } from "@clerk/nextjs";
-import { esES } from "@clerk/localizations";
 
 export default function SignInPage() {
   return (
@@ -25,15 +24,10 @@ export default function SignInPage() {
 
         <div className="animate-fadeInUp stagger-1">
           <SignIn
-            localization={esES}
             appearance={{
               elements: {
                 rootBox: "mx-auto",
                 card: "shadow-lg",
-                socialButtonsBlockButton:
-                  "!bg-white hover:!bg-gray-50 !border !border-gray-300 !text-gray-700",
-                socialButtonsBlockButtonText: "!text-gray-700 !font-medium",
-                footer: "!hidden",
               },
             }}
           />
