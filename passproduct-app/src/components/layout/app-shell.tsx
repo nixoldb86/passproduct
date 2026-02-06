@@ -11,17 +11,22 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const { fetchProducts } = useWalletStore();
-  const { fetchAlerts } = useAlertStore();
-  
+  const { products, fetchProducts } = useWalletStore();
+  const { alerts, fetchAlerts } = useAlertStore();
+
   // Actualizar presencia del usuario periódicamente
   usePresence();
 
   useEffect(() => {
-    // Initialize data on mount
-    fetchProducts();
-    fetchAlerts();
-  }, [fetchProducts, fetchAlerts]);
+    // Solo cargar si no hay datos (evita re-fetch en navegación)
+    if (products.length === 0) {
+      fetchProducts();
+    }
+    if (alerts.length === 0) {
+      fetchAlerts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
