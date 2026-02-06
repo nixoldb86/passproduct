@@ -491,7 +491,7 @@ function MarketplaceContent() {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="flex gap-2 overflow-x-auto overflow-y-hidden touch-pan-x pb-2 pl-4 scrollbar-hide">
+              <div className="flex gap-1.5 overflow-x-auto overflow-y-hidden touch-pan-x pb-1 pl-4 scrollbar-hide">
                 <button
                   onClick={() => {
                     // "Todas" dentro del grupo = usar todas las categorías del grupo
@@ -505,7 +505,7 @@ function MarketplaceContent() {
                     setLocalFilters(newFilters);
                     fetchListings(newFilters);
                   }}
-                  className={`flex-shrink-0 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                     !localFilters.categoryId && localFilters.categories?.length
                       ? "bg-accent/20 text-accent border border-accent/30"
                       : "bg-surface-2 text-foreground-muted hover:bg-surface-1 hover:text-foreground"
@@ -542,13 +542,13 @@ function MarketplaceContent() {
                       }
                     }}
                     title={cat.name}
-                    className={`group/subcat relative flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                    className={`group/subcat relative flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                       localFilters.categoryId === cat.slug
                         ? "bg-accent/20 text-accent border border-accent/30"
                         : "bg-surface-2 text-foreground-muted hover:bg-surface-1 hover:text-foreground"
                     }`}
                   >
-                    <span className="text-base">{cat.icon}</span>
+                    <span className="text-sm">{cat.icon}</span>
                     <span className="max-w-[100px] truncate">{cat.name}</span>
                   </button>
                 ))}
