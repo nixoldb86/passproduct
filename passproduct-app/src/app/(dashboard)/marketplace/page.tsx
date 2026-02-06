@@ -242,8 +242,8 @@ function MarketplaceContent() {
           )}
         </form>
 
-        {/* Filter & Sort & View Mode - Aligned Right */}
-        <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
+        {/* Filter & Sort & View Mode - Fill available space on mobile */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-1 md:flex-none md:ml-auto">
           <Button
             variant="secondary"
             leftIcon={<SlidersHorizontal className="h-4 w-4" />}
@@ -264,14 +264,14 @@ function MarketplaceContent() {
             onChange={(e) =>
               handleFilterChange("sortBy", e.target.value as FilterOptions["sortBy"])
             }
-            className="w-28 sm:w-44"
+            className="flex-1 min-w-0 md:flex-none md:w-44"
           />
 
           {/* View mode toggle */}
-          <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-surface-1 border border-border rounded-lg">
+          <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 h-10 bg-surface-1 border border-border rounded-lg">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
+              className={`h-full px-2 sm:px-2.5 rounded-md transition-colors flex items-center justify-center ${
                 viewMode === "grid"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
@@ -282,7 +282,7 @@ function MarketplaceContent() {
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
+              className={`h-full px-2 sm:px-2.5 rounded-md transition-colors flex items-center justify-center ${
                 viewMode === "list"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
@@ -293,7 +293,7 @@ function MarketplaceContent() {
             </button>
             <button
               onClick={() => setViewMode("map")}
-              className={`p-1.5 sm:p-2 rounded-md transition-colors ${
+              className={`h-full px-2 sm:px-2.5 rounded-md transition-colors flex items-center justify-center ${
                 viewMode === "map"
                   ? "bg-surface-2 text-foreground"
                   : "text-foreground-subtle hover:text-foreground"
