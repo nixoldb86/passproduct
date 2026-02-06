@@ -80,8 +80,8 @@ export default function WalletPage() {
               <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] sm:text-sm text-foreground-muted leading-tight">Valor total</p>
-              <p className="text-sm sm:text-xl font-semibold text-foreground tabular-nums truncate">
+              <p className="text-xs sm:text-sm text-foreground-muted leading-tight">Valor total</p>
+              <p className="text-base sm:text-xl font-semibold text-foreground tabular-nums truncate">
                 {formatPrice(walletValue)}
               </p>
             </div>
@@ -94,8 +94,8 @@ export default function WalletPage() {
               <Package className="h-4 w-4 sm:h-5 sm:w-5 text-jade" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] sm:text-sm text-foreground-muted leading-tight">Productos</p>
-              <p className="text-sm sm:text-xl font-semibold text-foreground">
+              <p className="text-xs sm:text-sm text-foreground-muted leading-tight">Productos</p>
+              <p className="text-base sm:text-xl font-semibold text-foreground">
                 {products.length}
               </p>
             </div>
@@ -108,8 +108,8 @@ export default function WalletPage() {
               <SlidersHorizontal className="h-4 w-4 sm:h-5 sm:w-5 text-info" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] sm:text-sm text-foreground-muted leading-tight">Garantía</p>
-              <p className="text-sm sm:text-xl font-semibold text-foreground">
+              <p className="text-xs sm:text-sm text-foreground-muted leading-tight">Garantía</p>
+              <p className="text-base sm:text-xl font-semibold text-foreground">
                 {products.filter((p) => p.warrantyEndDate && new Date(p.warrantyEndDate) > new Date()).length}
               </p>
             </div>
