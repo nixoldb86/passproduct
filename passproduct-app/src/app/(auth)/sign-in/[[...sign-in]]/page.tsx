@@ -1,16 +1,17 @@
 "use client";
 
 import { SignIn } from "@clerk/nextjs";
+import { esES } from "@clerk/localizations";
 
 export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       {/* Background gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-surface-1 pointer-events-none" />
-      
+
       {/* Subtle accent glow */}
       <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
-      
+
       <div className="relative z-10 w-full max-w-md px-4">
         {/* Logo */}
         <div className="text-center mb-8 animate-fadeInUp">
@@ -21,9 +22,10 @@ export default function SignInPage() {
             Tu wallet de productos premium
           </p>
         </div>
-        
+
         <div className="animate-fadeInUp stagger-1">
           <SignIn
+            localization={esES}
             appearance={{
               elements: {
                 rootBox: "mx-auto",
@@ -31,6 +33,7 @@ export default function SignInPage() {
                 socialButtonsBlockButton:
                   "!bg-white hover:!bg-gray-50 !border !border-gray-300 !text-gray-700",
                 socialButtonsBlockButtonText: "!text-gray-700 !font-medium",
+                footer: "!hidden",
               },
             }}
           />
