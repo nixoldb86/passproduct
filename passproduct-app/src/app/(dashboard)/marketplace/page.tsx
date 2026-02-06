@@ -456,16 +456,12 @@ function MarketplaceContent() {
               }`}
             >
               <span className="text-base">{group.icon}</span>
-              <span className="hidden sm:inline max-w-[80px] truncate">{group.name}</span>
+              <span className="max-w-[80px] truncate">{group.name}</span>
               <ChevronDown
                 className={`h-3 w-3 transition-transform ${
                   expandedGroup === group.id ? "rotate-180" : ""
                 }`}
               />
-              {/* Tooltip en móvil */}
-              <span className="sm:hidden absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-surface-1 border border-border rounded text-xs whitespace-nowrap opacity-0 group-hover/cat:opacity-100 pointer-events-none transition-opacity z-50">
-                {group.name}
-              </span>
             </button>
           ))}
         </div>
@@ -507,11 +503,7 @@ function MarketplaceContent() {
                     }`}
                   >
                     <span className="text-base">{cat.icon}</span>
-                    <span className="hidden sm:inline max-w-[100px] truncate">{cat.name}</span>
-                    {/* Tooltip en móvil */}
-                    <span className="sm:hidden absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-surface-1 border border-border rounded text-xs whitespace-nowrap opacity-0 group-hover/subcat:opacity-100 pointer-events-none transition-opacity z-50">
-                      {cat.name}
-                    </span>
+                    <span className="max-w-[100px] truncate">{cat.name}</span>
                   </button>
                 ))}
               </div>
