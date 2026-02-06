@@ -13,24 +13,24 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "PassProduct",
-    template: "%s | PassProduct",
+    default: "SecondWallet",
+    template: "%s | SecondWallet",
   },
   description: "Tu wallet de productos + marketplace premium. Guarda tus compras, conoce su valor y vende con confianza.",
   keywords: ["wallet", "marketplace", "segunda mano", "electrónica", "garantía", "reventa"],
-  authors: [{ name: "PassProduct" }],
-  creator: "PassProduct",
+  authors: [{ name: "SecondWallet" }],
+  creator: "SecondWallet",
   openGraph: {
     type: "website",
     locale: "es_ES",
-    url: "https://passproduct.app",
-    siteName: "PassProduct",
-    title: "PassProduct - Tu wallet de productos premium",
+    url: "https://secondwallet.app",
+    siteName: "SecondWallet",
+    title: "SecondWallet - Tu wallet de productos premium",
     description: "Guarda tus compras, conoce su valor de reventa y vende con confianza en nuestro marketplace verificado.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PassProduct",
+    title: "SecondWallet",
     description: "Tu wallet de productos + marketplace premium",
   },
   robots: {

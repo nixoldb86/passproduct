@@ -1,8 +1,8 @@
-# PassProduct - Brand Brief para Naming y Logo
+# SecondWallet - Brand Brief para Naming y Logo
 
 ## 📋 Resumen Ejecutivo
 
-**PassProduct** es una aplicación móvil/web que combina dos funcionalidades principales:
+**SecondWallet** es una aplicación móvil/web que combina dos funcionalidades principales:
 
 1. **Wallet Digital de Productos**: Un lugar donde los usuarios registran y gestionan todos sus productos con valor (electrónica, electrodomésticos, lujo, etc.), guardando facturas, garantías y seguimiento de valor.
 
@@ -193,9 +193,9 @@
 
 ## 🎨 Identidad de Marca Actual
 
-### Nombre actual: PassProduct
-- **Pass**: Sugiere "pase" o "pasaporte" - como un pasaporte digital de tus productos
-- **Product**: Productos, pertenencias
+### Nombre: SecondWallet
+- **Second**: Sugiere "segunda vida", "segunda mano" - el valor de dar una segunda oportunidad a los productos
+- **Wallet**: Cartera digital de tus productos con valor
 
 ### Paleta de colores actual:
 - **Primario**: Verde lima/amarillo (#C8FF00) - Energía, modernidad

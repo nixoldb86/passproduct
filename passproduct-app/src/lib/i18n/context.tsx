@@ -11,7 +11,7 @@ interface I18nContextType {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-const STORAGE_KEY = "passproduct-locale";
+const STORAGE_KEY = "secondwallet-locale";
 
 // Detectar idioma del navegador
 function detectBrowserLocale(): Locale {

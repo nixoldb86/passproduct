@@ -19,7 +19,7 @@ export default function WhyItWorksPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="text-xl font-semibold text-foreground">
-            Pass<span className="text-accent">Product</span>
+            Second<span className="text-accent">Wallet</span>
           </Link>
           
           {/* Desktop menu */}
@@ -209,7 +209,7 @@ export default function WhyItWorksPage() {
 
             <div className="bg-surface-1 border border-accent/30 rounded-2xl p-8 mt-8">
               <p className="text-2xl font-bold text-foreground mb-4">
-                PassProduct es simple:
+                SecondWallet es simple:
               </p>
               <p className="text-lg text-foreground-muted mb-6">
                 Solo puedes vender productos que tengan factura.
@@ -299,7 +299,7 @@ export default function WhyItWorksPage() {
             </h2>
             
             <div className="space-y-4 text-lg text-foreground-muted">
-              <p>PassProduct empieza con un wallet.</p>
+              <p>SecondWallet empieza con un wallet.</p>
               <p>Un sitio donde guardas tus productos con su factura.</p>
               <p>Y pasan cosas interesantes:</p>
             </div>
@@ -399,10 +399,10 @@ export default function WhyItWorksPage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <Link href="/" className="text-xl font-semibold text-foreground">
-              Pass<span className="text-accent">Product</span>
+              Second<span className="text-accent">Wallet</span>
             </Link>
             <p className="text-sm text-foreground-subtle">
-              © 2025 PassProduct
+              © 2025 SecondWallet
             </p>
           </div>
         </div>

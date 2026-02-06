@@ -3,21 +3,21 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: passproduct-db
+    container_name: secondwallet-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: passproduct
-      POSTGRES_PASSWORD: passproduct_secret_2024
-      POSTGRES_DB: passproduct
+      POSTGRES_USER: secondwallet
+      POSTGRES_PASSWORD: secondwallet_secret_2024
+      POSTGRES_DB: secondwallet
     ports:
       - "5434:5432"
     volumes:
-      - passproduct_data:/var/lib/postgresql/data
+      - secondwallet_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U passproduct -d passproduct"]
+      test: ["CMD-SHELL", "pg_isready -U secondwallet -d secondwallet"]
       interval: 5s
       timeout: 5s
       retries: 5
 
 volumes:
-  passproduct_data:
+  secondwallet_data:

@@ -1,8 +1,8 @@
-# PassProduct - Especificación Técnica del MVP
+# SecondWallet - Especificación Técnica del MVP
 
 ## 1. Visión General
 
-**PassProduct** es una aplicación "wallet + marketplace" que permite a los usuarios:
+**SecondWallet** es una aplicación "wallet + marketplace" que permite a los usuarios:
 1. Guardar sus productos (con ticket, garantía, fotos, IMEI/serial)
 2. Conocer el valor de reventa estimado
 3. Vender con confianza en un marketplace interno verificado
@@ -34,7 +34,7 @@
    - Valor estimado actual
    - 3 precios recomendados (Rápido/Justo/Máximo)
    - Badges de verificación
-   - CTA "Vender en PassProduct"
+   - CTA "Vender en SecondWallet"
 ```
 
 ### 2.3 Marketplace Flow (Comprador)
@@ -53,7 +53,7 @@
 
 ### 2.4 Venta Flow (Vendedor)
 ```
-1. Desde wallet, click "Vender en PassProduct"
+1. Desde wallet, click "Vender en SecondWallet"
 2. Crear anuncio en 4 pasos:
    - Paso 1: Seleccionar producto (pre-rellenado desde wallet)
    - Paso 2: Fotos + estado + verificaciones heredadas

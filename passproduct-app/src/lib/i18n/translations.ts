@@ -616,9 +616,9 @@ const es: TranslationKeys = {
   },
   verification: {
     title: "Verificación de identidad",
-    subtitle: "Para vender en PassProduct necesitamos verificar tu identidad",
+    subtitle: "Para vender en SecondWallet necesitamos verificar tu identidad",
     requiredTitle: "Verificación requerida",
-    requiredSubtitle: "Para vender en PassProduct necesitas verificar tu identidad primero. Es un proceso rápido y seguro.",
+    requiredSubtitle: "Para vender en SecondWallet necesitas verificar tu identidad primero. Es un proceso rápido y seguro.",
     verifyButton: "Verificar mi identidad",
     whyNeeded: "¿Por qué necesito verificarme?",
     reasons: [
@@ -947,9 +947,9 @@ const en: TranslationKeys = {
   },
   verification: {
     title: "Identity verification",
-    subtitle: "To sell on PassProduct we need to verify your identity",
+    subtitle: "To sell on SecondWallet we need to verify your identity",
     requiredTitle: "Verification required",
-    requiredSubtitle: "To sell on PassProduct you need to verify your identity first. It's a quick and secure process.",
+    requiredSubtitle: "To sell on SecondWallet you need to verify your identity first. It's a quick and secure process.",
     verifyButton: "Verify my identity",
     whyNeeded: "Why do I need to verify?",
     reasons: [
@@ -1278,9 +1278,9 @@ const fr: TranslationKeys = {
   },
   verification: {
     title: "Vérification d'identité",
-    subtitle: "Pour vendre sur PassProduct, nous devons vérifier votre identité",
+    subtitle: "Pour vendre sur SecondWallet, nous devons vérifier votre identité",
     requiredTitle: "Vérification requise",
-    requiredSubtitle: "Pour vendre sur PassProduct, vous devez d'abord vérifier votre identité. C'est un processus rapide et sécurisé.",
+    requiredSubtitle: "Pour vendre sur SecondWallet, vous devez d'abord vérifier votre identité. C'est un processus rapide et sécurisé.",
     verifyButton: "Vérifier mon identité",
     whyNeeded: "Pourquoi dois-je me vérifier ?",
     reasons: [
@@ -1609,9 +1609,9 @@ const it: TranslationKeys = {
   },
   verification: {
     title: "Verifica dell'identità",
-    subtitle: "Per vendere su PassProduct dobbiamo verificare la tua identità",
+    subtitle: "Per vendere su SecondWallet dobbiamo verificare la tua identità",
     requiredTitle: "Verifica richiesta",
-    requiredSubtitle: "Per vendere su PassProduct devi prima verificare la tua identità. È un processo rapido e sicuro.",
+    requiredSubtitle: "Per vendere su SecondWallet devi prima verificare la tua identità. È un processo rapido e sicuro.",
     verifyButton: "Verifica la mia identità",
     whyNeeded: "Perché devo verificarmi?",
     reasons: [
@@ -1940,9 +1940,9 @@ const pt: TranslationKeys = {
   },
   verification: {
     title: "Verificação de identidade",
-    subtitle: "Para vender no PassProduct precisamos verificar a tua identidade",
+    subtitle: "Para vender no SecondWallet precisamos verificar a tua identidade",
     requiredTitle: "Verificação necessária",
-    requiredSubtitle: "Para vender no PassProduct precisas de verificar a tua identidade primeiro. É um processo rápido e seguro.",
+    requiredSubtitle: "Para vender no SecondWallet precisas de verificar a tua identidade primeiro. É um processo rápido e seguro.",
     verifyButton: "Verificar a minha identidade",
     whyNeeded: "Porque preciso de me verificar?",
     reasons: [

@@ -259,7 +259,7 @@ export default function PricingPage() {
 
             <div className="bg-surface-1 border border-border rounded-2xl p-6 mt-8">
               <p className="text-foreground font-medium text-lg">
-                PassProduct soluciona esto con una idea simple:
+                SecondWallet soluciona esto con una idea simple:
               </p>
               <p className="text-accent text-xl font-bold mt-2">
                 Sin factura, no entras.
@@ -420,7 +420,7 @@ export default function PricingPage() {
 
             <div className="pt-4">
               <p className="text-foreground font-medium">
-                PassProduct no es para todos.
+                SecondWallet no es para todos.
               </p>
               <p className="text-foreground-muted mt-2">
                 Es para los que prefieren pagar un poco más y dormir tranquilos.
@@ -511,7 +511,7 @@ export default function PricingPage() {
             Pass<span className="text-accent">Product</span>
           </Link>
           <p className="text-sm text-foreground-subtle">
-            © 2025 PassProduct
+            © 2025 SecondWallet
           </p>
         </div>
       </footer>

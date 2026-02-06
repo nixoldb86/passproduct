@@ -489,7 +489,7 @@ export default function LandingPage() {
               </Link>
             </div>
             <p className="text-sm text-foreground-subtle">
-              © 2025 PassProduct
+              © 2025 SecondWallet
             </p>
           </div>
         </div>

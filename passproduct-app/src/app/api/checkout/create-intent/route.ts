@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         sellerId: listing.sellerId,
         protectionCode,
       },
-      description: `PassProduct: ${listing.title}`,
+      description: `SecondWallet: ${listing.title}`,
     });
 
     // Create Order in database

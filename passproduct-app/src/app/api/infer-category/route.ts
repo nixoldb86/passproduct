@@ -5,7 +5,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Categorías disponibles en PassProduct - ampliadas para cualquier producto
+// Categorías disponibles en SecondWallet - ampliadas para cualquier producto
 const CATEGORIES = [
   // Electrónica
   { id: "cat-smartphones", name: "Smartphones", keywords: ["iphone", "galaxy", "pixel", "xiaomi", "oneplus", "móvil", "teléfono", "smartphone"] },

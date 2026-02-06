@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       user = await prisma.user.create({
         data: {
           clerkId,
-          email: `${clerkId}@temp.passproduct.com`,
+          email: `${clerkId}@temp.secondwallet.com`,
         },
       });
     }

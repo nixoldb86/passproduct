@@ -834,7 +834,7 @@ export default function ProductDetailPage() {
                 size="lg"
                 leftIcon={needsRealPhotos ? <Camera className="h-4 w-4" /> : undefined}
               >
-                {needsRealPhotos ? "Añadir fotos y vender" : "Vender en PassProduct"}
+                {needsRealPhotos ? "Añadir fotos y vender" : "Vender en SecondWallet"}
               </Button>
             </Link>
             <Button variant="secondary" size="lg" leftIcon={<Bell className="h-4 w-4" />}>

@@ -486,7 +486,7 @@ export default function SettingsPage() {
                   <div>
                     <p className="font-medium text-amber-400">Verificación pendiente</p>
                     <p className="text-sm text-amber-400/80 mt-1">
-                      Necesitas verificar tu identidad para poder vender productos en PassProduct. 
+                      Necesitas verificar tu identidad para poder vender productos en SecondWallet. 
                       El proceso es rápido y seguro.
                     </p>
                   </div>

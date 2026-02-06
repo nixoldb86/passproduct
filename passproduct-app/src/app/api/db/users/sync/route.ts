@@ -28,14 +28,14 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.upsert({
       where: { clerkId },
       update: {
-        email: clerkUser.emailAddresses[0]?.emailAddress || `${clerkId}@passproduct.com`,
+        email: clerkUser.emailAddresses[0]?.emailAddress || `${clerkId}@secondwallet.com`,
         firstName: clerkUser.firstName,
         lastName: clerkUser.lastName,
         avatarUrl: clerkUser.imageUrl,
       },
       create: {
         clerkId,
-        email: clerkUser.emailAddresses[0]?.emailAddress || `${clerkId}@passproduct.com`,
+        email: clerkUser.emailAddresses[0]?.emailAddress || `${clerkId}@secondwallet.com`,
         firstName: clerkUser.firstName,
         lastName: clerkUser.lastName,
         avatarUrl: clerkUser.imageUrl,

@@ -1,8 +1,8 @@
-# PassProduct 🎫
+# SecondWallet 🎫
 
 > Tu wallet de productos + marketplace premium
 
-PassProduct es una aplicación que te permite:
+SecondWallet es una aplicación que te permite:
 - 📦 **Guardar** tus productos con ticket, garantía y fotos
 - 📈 **Conocer** el valor de reventa actualizado
 - 🛒 **Vender** con confianza en un marketplace verificado
@@ -20,7 +20,7 @@ PassProduct es una aplicación que te permite:
 ```bash
 # 1. Clonar el repositorio
 git clone <repo-url>
-cd passproduct-app
+cd secondwallet-app
 
 # 2. Instalar dependencias
 npm install
@@ -48,7 +48,7 @@ La app estará disponible en [http://localhost:3000](http://localhost:3000)
 ## 📁 Estructura del Proyecto
 
 ```
-passproduct-app/
+secondwallet-app/
 ├── prisma/                # Schema y migraciones de BD
 │   ├── schema.prisma
 │   └── seed.ts

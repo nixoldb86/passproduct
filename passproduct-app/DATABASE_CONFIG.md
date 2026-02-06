@@ -11,16 +11,16 @@ La aplicación está configurada para usar **Supabase** como base de datos.
 
 ```bash
 # Database - Local Docker
-DATABASE_URL="postgresql://passproduct:passproduct_secret_2024@localhost:5434/passproduct?schema=public"
-DIRECT_URL="postgresql://passproduct:passproduct_secret_2024@localhost:5434/passproduct?schema=public"
+DATABASE_URL="postgresql://secondwallet:secondwallet_secret_2024@localhost:5434/secondwallet?schema=public"
+DIRECT_URL="postgresql://secondwallet:secondwallet_secret_2024@localhost:5434/secondwallet?schema=public"
 ```
 
 ### 2. Modificar `.env.local`
 
 ```bash
 # Database - Local Docker
-DATABASE_URL="postgresql://passproduct:passproduct_secret_2024@localhost:5434/passproduct"
-DIRECT_URL="postgresql://passproduct:passproduct_secret_2024@localhost:5434/passproduct"
+DATABASE_URL="postgresql://secondwallet:secondwallet_secret_2024@localhost:5434/secondwallet"
+DIRECT_URL="postgresql://secondwallet:secondwallet_secret_2024@localhost:5434/secondwallet"
 ```
 
 ### 3. Levantar Docker
@@ -77,9 +77,9 @@ Next.js automáticamente usa `.env.local` en desarrollo y las variables de Verce
 ### Docker Local
 - **Host**: localhost
 - **Puerto**: 5434
-- **Usuario**: passproduct
-- **Password**: passproduct_secret_2024
-- **Database**: passproduct
+- **Usuario**: secondwallet
+- **Password**: secondwallet_secret_2024
+- **Database**: secondwallet
 
 ### Supabase
 - **Project ID**: hegdbpfpbuywkwljmgoe

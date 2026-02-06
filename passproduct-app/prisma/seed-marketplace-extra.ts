@@ -615,7 +615,7 @@ async function main() {
 
   // 2. Obtener usuarios existentes (vendedores ya creados)
   const existingSellers = await prisma.user.findMany({
-    where: { email: { contains: "@passproduct.demo" } },
+    where: { email: { contains: "@secondwallet.demo" } },
     select: { id: true }
   });
 

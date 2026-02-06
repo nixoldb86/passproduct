@@ -239,7 +239,7 @@ function VerifyContent() {
                 Verificación de identidad
               </h1>
               <p className="text-foreground-muted mt-2">
-                Para vender en PassProduct necesitamos verificar tu identidad.
+                Para vender en SecondWallet necesitamos verificar tu identidad.
                 Es rápido y seguro.
               </p>
             </div>

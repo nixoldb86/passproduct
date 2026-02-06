@@ -74,7 +74,7 @@ export function AddressAutocomplete({
         {
           headers: {
             // Nominatim requiere un User-Agent identificativo
-            "User-Agent": "PassProduct/1.0 (checkout-address-autocomplete)",
+            "User-Agent": "SecondWallet/1.0 (checkout-address-autocomplete)",
           },
         }
       );

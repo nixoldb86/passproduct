@@ -281,7 +281,7 @@ function SellPageContent() {
           Verificación requerida
         </h1>
         <p className="text-foreground-muted mb-6">
-          Para vender en PassProduct necesitas verificar tu identidad primero.
+          Para vender en SecondWallet necesitas verificar tu identidad primero.
           Es un proceso rápido y seguro.
         </p>
         <div className="space-y-3">
@@ -386,7 +386,7 @@ function SellPageContent() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-foreground">
-          Vender en PassProduct
+          Vender en SecondWallet
         </h1>
         <p className="text-foreground-muted mt-1">Paso {step} de 4</p>
       </div>
@@ -1042,7 +1042,7 @@ function SellPageContent() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-foreground-muted">
-                    Comisión PassProduct (5%)
+                    Comisión SecondWallet (5%)
                   </span>
                   <span className="text-error">
                     -{formatPrice((parseFloat(formData.price) || 0) * 0.05)}

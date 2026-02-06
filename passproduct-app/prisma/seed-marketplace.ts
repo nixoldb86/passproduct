@@ -50,7 +50,7 @@ function generateSellers(count: number) {
     const photoId = 20 + i;
     sellers.push({
       clerkId: `user_marketplace_${i + 1}`,
-      email: `seller${i + 1}@passproduct.demo`,
+      email: `seller${i + 1}@secondwallet.demo`,
       firstName,
       lastName,
       avatarUrl: `https://randomuser.me/api/portraits/${gender}/${photoId}.jpg`,
