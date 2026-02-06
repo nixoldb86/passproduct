@@ -59,10 +59,21 @@ export function MapView({ listings }: MapViewProps) {
   // Añadir coordenadas a los listings basándose en su ubicación
   const listingsWithCoords = useMemo(() => {
     return listings.map((listing) => {
+      // Usar coordenadas reales de la BD si están disponibles
+      if (listing.latitude && listing.longitude) {
+        return {
+          ...listing,
+          lat: listing.latitude,
+          lng: listing.longitude,
+        };
+      }
+
+      // Fallback: usar diccionario de ciudades
       const cityName = listing.location || "Madrid";
       let coords = cityCoordinates[cityName];
-      
+
       if (!coords) {
+        // Si no está en el diccionario, usar Madrid con offset random
         const baseLat = 40.4168;
         const baseLng = -3.7038;
         coords = [
@@ -70,6 +81,7 @@ export function MapView({ listings }: MapViewProps) {
           baseLng + (Math.random() - 0.5) * 0.8,
         ];
       } else {
+        // Añadir pequeño offset para evitar superposición exacta
         coords = [
           coords[0] + (Math.random() - 0.5) * 0.02,
           coords[1] + (Math.random() - 0.5) * 0.02,

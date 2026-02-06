@@ -337,7 +337,7 @@ function MarketplaceContent() {
                   options={[
                     { value: "", label: "Todas las categorías" },
                     ...mockCategories.map((cat) => ({
-                      value: cat.id,
+                      value: cat.slug,
                       label: `${cat.icon} ${cat.name}`,
                     })),
                   ]}
@@ -492,12 +492,12 @@ function MarketplaceContent() {
                     onClick={() =>
                       handleFilterChange(
                         "categoryId",
-                        localFilters.categoryId === cat.id ? undefined : cat.id
+                        localFilters.categoryId === cat.slug ? undefined : cat.slug
                       )
                     }
                     title={cat.name}
                     className={`group/subcat relative flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
-                      localFilters.categoryId === cat.id
+                      localFilters.categoryId === cat.slug
                         ? "bg-accent/20 text-accent border border-accent/30"
                         : "bg-surface-2 text-foreground-muted hover:bg-surface-1 hover:text-foreground"
                     }`}
