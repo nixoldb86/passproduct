@@ -87,38 +87,59 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       
   clearError: () => set({ error: null }),
   
-  // Cargar productos del usuario desde la BD
+  // Cargar productos del usuario desde la BD (con reintentos automáticos)
   fetchProducts: async () => {
     set({ isLoading: true, error: null });
-    try {
-      const response = await fetch("/api/db/products");
-      
-      // Si no está autenticado, devolver lista vacía sin error
-      if (response.status === 401 || response.redirected) {
-        set({ products: [], isLoading: false });
-        return;
+
+    const maxRetries = 3;
+    let lastError: string | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch("/api/db/products");
+
+        // Si no está autenticado, devolver lista vacía sin error
+        if (response.status === 401 || response.redirected) {
+          set({ products: [], isLoading: false });
+          return;
+        }
+
+        // Verificar que la respuesta sea JSON
+        const contentType = response.headers.get("content-type");
+        if (!contentType?.includes("application/json")) {
+          // Si no es JSON, probablemente es una página de login
+          set({ products: [], isLoading: false });
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.products) {
+          const products = data.products.map(transformProductFromAPI);
+          set({ products, isLoading: false });
+          return; // Éxito, salir
+        } else {
+          lastError = data.error || "Error al cargar productos";
+          // Si es un error del servidor, reintentar
+          if (attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, attempt * 500)); // Backoff
+            continue;
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching products (attempt ${attempt}/${maxRetries}):`, error);
+        lastError = "Error de conexión";
+
+        // Reintentar con backoff exponencial
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, attempt * 500));
+          continue;
+        }
       }
-      
-      // Verificar que la respuesta sea JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType?.includes("application/json")) {
-        // Si no es JSON, probablemente es una página de login
-        set({ products: [], isLoading: false });
-        return;
-      }
-      
-      const data = await response.json();
-      
-      if (data.success && data.products) {
-        const products = data.products.map(transformProductFromAPI);
-        set({ products, isLoading: false });
-      } else {
-        set({ products: [], isLoading: false, error: data.error });
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      set({ products: [], isLoading: false, error: "Error de conexión" });
     }
+
+    // Si llegamos aquí, todos los reintentos fallaron
+    set({ products: [], isLoading: false, error: lastError });
   },
   
   // Crear nuevo producto en la BD
