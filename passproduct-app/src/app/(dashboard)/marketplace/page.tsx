@@ -570,7 +570,7 @@ function MarketplaceContent() {
               : "space-y-4"
           }
         >
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence mode="sync">
             {isLoading ? (
               // Loading skeletons
               Array.from({ length: 6 }).map((_, i) => (
@@ -588,10 +588,14 @@ function MarketplaceContent() {
               filteredListings.map((listing, index) => (
                 <motion.div
                   key={listing.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: 0.15,
+                    // Limitar delay máximo a 200ms para mantener interactividad
+                    delay: Math.min(index * 0.02, 0.2)
+                  }}
                 >
                   <ListingCard
                     listing={listing}
