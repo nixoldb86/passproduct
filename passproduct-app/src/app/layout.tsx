@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
 import { Inter } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { I18nProvider } from "@/lib/i18n";
@@ -102,6 +103,7 @@ export default function RootLayout({
           <I18nProvider>
             {children}
           </I18nProvider>
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
