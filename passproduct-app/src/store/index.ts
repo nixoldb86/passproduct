@@ -382,6 +382,10 @@ interface CreateListingData {
 interface MarketplaceState {
   listings: Listing[];
   isLoading: boolean;
+  isLoadingMore: boolean;
+  page: number;
+  hasMore: boolean;
+  total: number;
   selectedListing: Listing | null;
   filters: FilterOptions;
   
@@ -390,12 +394,73 @@ interface MarketplaceState {
   selectListing: (listing: Listing | null) => void;
   setFilters: (filters: FilterOptions) => void;
   fetchListings: (filters?: FilterOptions) => Promise<void>;
+  loadMore: () => Promise<void>;
   createListing: (data: CreateListingData) => Promise<Listing>;
+}
+
+const LISTINGS_PAGE_SIZE = 24;
+
+function listingsQuery(filters: FilterOptions | undefined, page: number): string {
+  const params = new URLSearchParams();
+  // Soportar múltiples categorías (para filtrar por grupo)
+  if (filters?.categories && filters.categories.length > 0) {
+    params.set("category", filters.categories.join(","));
+  } else if (filters?.categoryId) {
+    params.set("category", filters.categoryId);
+  }
+  if (filters?.minPrice) params.set("minPrice", filters.minPrice.toString());
+  if (filters?.maxPrice) params.set("maxPrice", filters.maxPrice.toString());
+  if (filters?.hasWarranty) params.set("hasWarranty", "true");
+  if (filters?.search) params.set("search", filters.search);
+  if (filters?.sortBy) {
+    const sortMap: Record<string, string> = {
+      "date_desc": "recent",
+      "date_asc": "oldest",
+      "price_asc": "price_asc",
+      "price_desc": "price_desc",
+    };
+    params.set("sortBy", sortMap[filters.sortBy] || "recent");
+  }
+  params.set("page", String(page));
+  params.set("limit", String(LISTINGS_PAGE_SIZE));
+  return params.toString();
+}
+
+async function requestListings(
+  filters: FilterOptions | undefined,
+  page: number
+): Promise<{ listings: Listing[]; total: number; hasMore: boolean }> {
+  const response = await fetch(`/api/db/listings?${listingsQuery(filters, page)}`);
+  const data = await response.json();
+  if (!data.success || !data.listings) {
+    throw new Error(data.error || "Error al cargar anuncios");
+  }
+  return {
+    listings: data.listings,
+    total: typeof data.total === "number" ? data.total : data.listings.length,
+    hasMore: Boolean(data.hasMore),
+  };
+}
+
+// Filtros que aún no aplica la API y se resuelven en cliente
+function applyClientFilters(listings: Listing[], filters?: FilterOptions): Listing[] {
+  let filtered = listings;
+  if (filters?.hasVerifiedPurchase) {
+    filtered = filtered.filter((l) => l.hasVerifiedPurchase);
+  }
+  if (filters?.shippingEnabled !== undefined) {
+    filtered = filtered.filter((l) => l.shippingEnabled === filters.shippingEnabled);
+  }
+  return filtered;
 }
 
 export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
   listings: [],
   isLoading: false,
+  isLoadingMore: false,
+  page: 1,
+  hasMore: false,
+  total: 0,
   selectedListing: null,
   filters: {},
 
@@ -407,69 +472,53 @@ export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
   
   fetchListings: async (filters) => {
     set({ isLoading: true });
-    
+
     try {
-      // Construir query params
-      const params = new URLSearchParams();
-      // Soportar múltiples categorías (para filtrar por grupo)
-      if (filters?.categories && filters.categories.length > 0) {
-        params.set("category", filters.categories.join(","));
-      } else if (filters?.categoryId) {
-        params.set("category", filters.categoryId);
-      }
-      if (filters?.minPrice) params.set("minPrice", filters.minPrice.toString());
-      if (filters?.maxPrice) params.set("maxPrice", filters.maxPrice.toString());
-      if (filters?.hasWarranty) params.set("hasWarranty", "true");
-      if (filters?.search) params.set("search", filters.search);
-      if (filters?.sortBy) {
-        const sortMap: Record<string, string> = {
-          "date_desc": "recent",
-          "date_asc": "oldest",
-          "price_asc": "price_asc",
-          "price_desc": "price_desc",
-        };
-        params.set("sortBy", sortMap[filters.sortBy] || "recent");
-      }
-      
-      const response = await fetch(`/api/db/listings?${params.toString()}`);
-      const data = await response.json();
-      
-      if (data.success && data.listings) {
-        // Aplicar filtros adicionales del lado del cliente si es necesario
-        let filtered = data.listings;
-        
-        if (filters?.hasVerifiedPurchase) {
-          filtered = filtered.filter((l: Listing) => l.hasVerifiedPurchase);
-        }
-        if (filters?.shippingEnabled !== undefined) {
-          filtered = filtered.filter((l: Listing) => l.shippingEnabled === filters.shippingEnabled);
-        }
-        
-        set({ listings: filtered, isLoading: false, filters: filters || {} });
-      } else {
-        // Fallback a datos mock si falla la API
-        console.warn("API error, usando datos mock:", data.error);
-    let filtered = [...mockListings];
-    
-    if (filters?.categoryId) {
-      filtered = filtered.filter((l) => l.categoryId === filters.categoryId);
-    }
-    if (filters?.minPrice) {
-      filtered = filtered.filter((l) => l.price >= filters.minPrice!);
-    }
-    if (filters?.maxPrice) {
-      filtered = filtered.filter((l) => l.price <= filters.maxPrice!);
-    }
-        
-        set({ listings: filtered, isLoading: false, filters: filters || {} });
-      }
+      const data = await requestListings(filters, 1);
+      set({
+        listings: applyClientFilters(data.listings, filters),
+        isLoading: false,
+        filters: filters || {},
+        page: 1,
+        hasMore: data.hasMore,
+        total: data.total,
+      });
     } catch (error) {
       console.error("Error fetching listings from API:", error);
       // Fallback a datos mock
-      set({ listings: mockListings, isLoading: false, filters: filters || {} });
+      set({
+        listings: mockListings,
+        isLoading: false,
+        filters: filters || {},
+        page: 1,
+        hasMore: false,
+        total: mockListings.length,
+      });
     }
   },
-  
+
+  loadMore: async () => {
+    const { page, hasMore, isLoadingMore, filters, listings } = get();
+    if (!hasMore || isLoadingMore) return;
+    set({ isLoadingMore: true });
+
+    try {
+      const data = await requestListings(filters, page + 1);
+      const seen = new Set(listings.map((l) => l.id));
+      const fresh = applyClientFilters(data.listings, filters).filter((l) => !seen.has(l.id));
+      set({
+        listings: [...listings, ...fresh],
+        page: page + 1,
+        hasMore: data.hasMore,
+        total: data.total,
+        isLoadingMore: false,
+      });
+    } catch (error) {
+      console.error("Error loading more listings:", error);
+      set({ isLoadingMore: false });
+    }
+  },
+
   createListing: async (listingData) => {
     set({ isLoading: true });
     

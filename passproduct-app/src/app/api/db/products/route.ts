@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { containsDataUrl, DATA_URL_REJECTED } from "@/lib/data-url";
 import { auth } from "@clerk/nextjs/server";
 
 // GET - Obtener productos del usuario actual
@@ -53,7 +54,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log("📦 Creating product with data:", JSON.stringify(body, null, 2));
+    if (containsDataUrl(body.photos) || containsDataUrl(body.proofOfPurchaseUrl) || containsDataUrl(body.stockPhotos)) {
+      return NextResponse.json(
+        { success: false, error: DATA_URL_REJECTED },
+        { status: 400 }
+      );
+    }
     
     const {
       categoryId,

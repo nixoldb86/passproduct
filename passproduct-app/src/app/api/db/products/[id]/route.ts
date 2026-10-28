@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { containsDataUrl, DATA_URL_REJECTED } from "@/lib/data-url";
 import { auth } from "@clerk/nextjs/server";
 
 // GET - Obtener producto por ID
@@ -49,6 +50,12 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
+    if (containsDataUrl(body.photos) || containsDataUrl(body.proofOfPurchaseUrl) || containsDataUrl(body.stockPhotos)) {
+      return NextResponse.json(
+        { success: false, error: DATA_URL_REJECTED },
+        { status: 400 }
+      );
+    }
 
     // Verificar que el producto pertenece al usuario
     const user = await prisma.user.findUnique({ where: { clerkId } });

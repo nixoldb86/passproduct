@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { containsDataUrl, DATA_URL_REJECTED } from "@/lib/data-url";
 import { auth } from "@clerk/nextjs/server";
 
 // Coordenadas de ciudades españolas
@@ -27,6 +28,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    if (containsDataUrl(body.photos)) {
+      return NextResponse.json(
+        { success: false, error: DATA_URL_REJECTED },
+        { status: 400 }
+      );
+    }
     const {
       productId,
       title,
@@ -162,6 +169,11 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search");
     const sortBy = searchParams.get("sortBy") || "recent";
     const productId = searchParams.get("productId");
+    // Paginación: por defecto 24 anuncios por página (máx. 100).
+    // Si se filtra por productId se devuelven todos (son pocos).
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "24", 10) || 24));
+    const paginate = !productId;
 
     // Construir filtros
     const where: Record<string, unknown> = {};
@@ -234,7 +246,8 @@ export async function GET(request: NextRequest) {
         break;
     }
 
-    const listings = await prisma.listing.findMany({
+    const [listings, total] = await Promise.all([
+      prisma.listing.findMany({
       where,
       include: {
         category: true,
@@ -251,7 +264,10 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy,
-    });
+      ...(paginate ? { skip: (page - 1) * limit, take: limit } : {}),
+      }),
+      prisma.listing.count({ where }),
+    ]);
 
     // Transformar para incluir datos del seller en formato SellerProfile
     const transformedListings = listings.map((listing) => ({
@@ -312,7 +328,14 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    return NextResponse.json({ success: true, listings: transformedListings });
+    return NextResponse.json({
+      success: true,
+      listings: transformedListings,
+      total,
+      page: paginate ? page : 1,
+      limit: paginate ? limit : total,
+      hasMore: paginate ? page * limit < total : false,
+    });
   } catch (error) {
     console.error("Error fetching listings:", error);
     return NextResponse.json(

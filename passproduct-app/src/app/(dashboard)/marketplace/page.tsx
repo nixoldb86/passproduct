@@ -46,8 +46,17 @@ function MarketplaceContent() {
   const searchParams = useSearchParams();
   const urlSearchQuery = searchParams.get("search") || "";
   
-  const { listings, isLoading, filters, fetchListings, setFilters } =
-    useMarketplaceStore();
+  const {
+    listings,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    total,
+    filters,
+    fetchListings,
+    loadMore,
+    setFilters,
+  } = useMarketplaceStore();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
@@ -163,7 +172,7 @@ function MarketplaceContent() {
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Marketplace</h1>
           <p className="text-foreground-muted mt-1">
-            {filteredListings.length} anuncios disponibles
+            {Math.max(total, filteredListings.length)} anuncios disponibles
           </p>
         </div>
       </div>
@@ -629,6 +638,15 @@ function MarketplaceContent() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+      )}
+
+      {/* Paginación: cargar la siguiente página de anuncios */}
+      {viewMode !== "map" && !isLoading && hasMore && (
+        <div className="flex justify-center pt-2">
+          <Button variant="secondary" onClick={loadMore} isLoading={isLoadingMore}>
+            Cargar más anuncios
+          </Button>
         </div>
       )}
 

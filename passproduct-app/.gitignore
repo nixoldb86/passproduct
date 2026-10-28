@@ -42,3 +42,6 @@ next-env.d.ts
 
 # logs
 /logs
+
+# fotos subidas en desarrollo (driver local de src/lib/storage.ts)
+/public/uploads

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button, Card, Input, Select, Badge } from "@/components/ui";
+import { uploadPhotos } from "@/lib/upload-photos";
 import { useWalletStore, useMarketplaceStore } from "@/store";
 import { getProductById, mockCategories, getPriceRecommendations } from "@/lib/mock-data";
 import { formatPrice } from "@/lib/utils";
@@ -40,6 +41,8 @@ function SellPageContent() {
   const { user, isLoaded: isUserLoaded } = useUser();
   const { products } = useWalletStore();
   const { createListing } = useMarketplaceStore();
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const productId = searchParams.get("productId");
   const [step, setStep] = useState(1);
@@ -186,27 +189,29 @@ function SellPageContent() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageData = event.target?.result as string;
-        if (imageData) {
-          setFormData(prev => ({
-            ...prev,
-            photos: [...prev.photos, imageData].slice(0, 6) // Max 6 photos
-          }));
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-    
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
     // Reset input value to allow selecting same file again
     e.target.value = "";
     setShowPhotoOptions(false);
+    if (files.length === 0) return;
+
+    const remaining = 6 - formData.photos.length; // Max 6 photos
+    if (remaining <= 0) return;
+
+    setIsUploadingPhotos(true);
+    setPhotoError(null);
+    try {
+      const urls = await uploadPhotos(files.slice(0, remaining), "product");
+      setFormData((prev) => ({
+        ...prev,
+        photos: [...prev.photos, ...urls].slice(0, 6),
+      }));
+    } catch (error) {
+      setPhotoError(error instanceof Error ? error.message : "Error al subir las fotos");
+    } finally {
+      setIsUploadingPhotos(false);
+    }
   };
 
   const removePhoto = (index: number) => {
@@ -491,6 +496,12 @@ function SellPageContent() {
               <h2 className="font-medium text-foreground mb-4">
                 Fotos del producto
               </h2>
+              {isUploadingPhotos && (
+                <p className="text-xs text-foreground-muted mb-3">Subiendo fotos...</p>
+              )}
+              {photoError && (
+                <p className="text-xs text-red-500 mb-3">{photoError}</p>
+              )}
               <div className="grid grid-cols-3 gap-3">
                 {formData.photos.map((photo, i) => (
                   <div
@@ -1073,6 +1084,7 @@ function SellPageContent() {
             onClick={() => setStep(step + 1)}
             disabled={
               (step === 1 && !selectedProduct) ||
+              isUploadingPhotos ||
               (step === 2 && formData.photos.length < 2) ||
               (step === 3 && !formData.price)
             }

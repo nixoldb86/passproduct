@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { Upload, Camera, X, Check, Sparkles, Loader2, Image as ImageIcon, Receipt, AlertCircle, FileText, Package, ShieldPlus, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/ui/modal";
+import { uploadPhotos, dataUrlToFile } from "@/lib/upload-photos";
 import { Button, Input, Select } from "@/components/ui";
 import { useWalletStore } from "@/store";
 import { mockCategories } from "@/lib/mock-data";
@@ -90,6 +91,14 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
   const [enrichedData, setEnrichedData] = useState<EnrichedData | null>(null);
   const [isEnriching, setIsEnriching] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  // URL del justificante ya subido a /api/upload (nunca base64)
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const resetUploadedImage = () => {
+    resetUploadedImage();
+    setProofUrl(null);
+  };
   
   // Multiple products state
   const [multipleProducts, setMultipleProducts] = useState<DetectedProduct[] | null>(null);
@@ -243,6 +252,12 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
 
         // Usar imagen renderizada del PDF si está disponible, sino placeholder
         setUploadedImage(pdfData.image || "/pdf-placeholder.svg");
+        if (pdfData.image) {
+          dataUrlToFile(pdfData.image, "justificante.png")
+            .then((f) => uploadPhotos([f], "proof"))
+            .then((urls) => setProofUrl(urls[0] || null))
+            .catch((err) => console.error("Error subiendo justificante:", err));
+        }
 
         // Paso 2: Analizar el texto con IA
         response = await fetch("/api/extract-product-info", {
@@ -261,6 +276,10 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
         const base64 = imageDataUrl.split(",")[1];
 
         setUploadedImage(imageDataUrl);
+        // El fichero original se sube al almacén; el base64 solo se usa para el OCR y la vista previa
+        uploadPhotos([file], "proof")
+          .then((urls) => setProofUrl(urls[0] || null))
+          .catch((err) => console.error("Error subiendo justificante:", err));
 
         response = await fetch("/api/extract-product-info", {
           method: "POST",
@@ -332,27 +351,29 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
     }
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageData = event.target?.result as string;
-        if (imageData) {
-          setFormData(prev => ({
-            ...prev,
-            photos: [...prev.photos, imageData].slice(0, 6) // Max 6 photos
-          }));
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-    
-    // Reset input value
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    // Reset input value para poder elegir el mismo fichero otra vez
     e.target.value = "";
     setShowPhotoModal(false);
+    if (files.length === 0) return;
+
+    const remaining = 6 - formData.photos.length; // Max 6 photos
+    if (remaining <= 0) return;
+
+    setIsUploadingPhotos(true);
+    setPhotoError(null);
+    try {
+      const urls = await uploadPhotos(files.slice(0, remaining), "product");
+      setFormData((prev) => ({
+        ...prev,
+        photos: [...prev.photos, ...urls].slice(0, 6),
+      }));
+    } catch (error) {
+      setPhotoError(error instanceof Error ? error.message : "Error al subir las fotos");
+    } finally {
+      setIsUploadingPhotos(false);
+    }
   };
 
   const removePhoto = (index: number) => {
@@ -366,6 +387,17 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
     setIsSubmitting(true);
 
     try {
+      // Justificante: usar la URL subida; si aún no está (subida en curso), subirlo ahora
+      let proof: string | undefined = proofUrl || undefined;
+      if (formData.hasTicket && !proof && uploadedImage) {
+        if (uploadedImage.startsWith("data:")) {
+          const file = await dataUrlToFile(uploadedImage, "justificante.png");
+          proof = (await uploadPhotos([file], "proof"))[0];
+        } else {
+          proof = uploadedImage;
+        }
+      }
+
       // Preparar datos del producto para guardar en BD
       const productData = {
         categoryId: formData.categoryId,
@@ -379,8 +411,8 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
         warrantyEndDate: formData.warrantyEndDate ? new Date(formData.warrantyEndDate) : undefined,
         warrantyNotes: formData.warrantyNotes || undefined,
         warrantyContact: enrichedData?.warrantyContact || undefined,
-        proofOfPurchaseUrl: formData.hasTicket ? uploadedImage || undefined : undefined,
-        photos: formData.photos, // Guardar todas las fotos (URLs y base64)
+        proofOfPurchaseUrl: formData.hasTicket ? proof : undefined,
+        photos: formData.photos, // URLs devueltas por /api/upload
         stockPhotos: formData.photos.length === 0 ? enrichedData?.stockImages || undefined : undefined,
         accessories: formData.accessories,
         hasAdditionalInsurance: formData.hasAdditionalInsurance || undefined,
@@ -439,7 +471,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
     });
     setExtractedData(null);
     setEnrichedData(null);
-    setUploadedImage(null);
+    resetUploadedImage();
     setMultipleProducts(null);
     setCommonInvoiceData(null);
     setAnalyzeError(null);
@@ -509,7 +541,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
             Siguiente
           </Button>
         ) : (
-          <Button onClick={handleSubmit} isLoading={isSubmitting || isEnriching} disabled={!canProceed()}>
+          <Button onClick={handleSubmit} isLoading={isSubmitting || isEnriching || isUploadingPhotos} disabled={!canProceed()}>
             {isEnriching ? "Cargando info..." : "Guardar producto"}
           </Button>
         )}
@@ -836,6 +868,12 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
               <label className="block text-sm font-medium text-foreground-muted mb-2">
                 Fotos del producto (opcional)
               </label>
+              {isUploadingPhotos && (
+                <p className="text-xs text-foreground-muted mb-2">Subiendo fotos...</p>
+              )}
+              {photoError && (
+                <p className="text-xs text-red-500 mb-2">{photoError}</p>
+              )}
               <div className="grid grid-cols-4 gap-3">
                 {formData.photos.map((photo, i) => (
                   <div

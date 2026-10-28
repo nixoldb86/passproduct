@@ -17,6 +17,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/infer-category(.*)",
   "/api/verify/(.*)",
   "/api/market-prices(.*)", // Análisis de precios de mercado
+  "/api/upload(.*)", // Comprueba la sesión en el propio handler y responde 401 en JSON
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

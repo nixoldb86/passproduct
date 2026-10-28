@@ -105,6 +105,34 @@ npm run db:studio     # Abrir Prisma Studio
 npm run db:reset      # Reset BD (cuidado!)
 ```
 
+## Almacenamiento de fotos
+
+Las fotos **nunca se guardan en la base de datos**: `/api/upload` las redimensiona,
+las convierte a WebP con `sharp` y las sube a un almacén de ficheros. En la BD solo
+queda la URL. La lógica está en `src/lib/storage.ts` y tiene dos drivers:
+
+| Entorno | Driver | Configuración |
+|---------|--------|---------------|
+| Local (`npm run dev`) | Sistema de ficheros, `public/uploads` (ignorado por git) | Ninguna |
+| Vercel / producción | Supabase Storage (bucket público) | Variables de abajo |
+
+```env
+SUPABASE_URL=https://<project-id>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service role key>   # Supabase > Settings > API
+SUPABASE_STORAGE_BUCKET=photos                  # bucket PÚBLICO creado en Storage
+```
+
+Si una base de datos ya tiene imágenes en base64 (versiones anteriores), migrarlas:
+
+```bash
+set -a; source .env.local; set +a
+npx tsx scripts/migrate-base64-photos.ts --dry-run   # solo informa
+npx tsx scripts/migrate-base64-photos.ts             # convierte y actualiza la BD
+```
+
+La API `GET /api/db/listings` está paginada (`page`, `limit`, por defecto 24, máx. 100)
+y devuelve `total` y `hasMore`.
+
 ## 🔐 Configuración de Clerk
 
 1. Crea una cuenta en [Clerk](https://dashboard.clerk.com)
